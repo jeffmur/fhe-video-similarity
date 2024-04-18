@@ -8,6 +8,55 @@ import 'package:flutter/material.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'package:image_picker/image_picker.dart';
 
+import 'package:flutter_fhe_video_similarity/media/storage.dart';
+import 'package:flutter_fhe_video_similarity/media/upload.dart';
+
+
+// def frame_count(video_path, manual=False):
+//     def manual_count(handler):
+//         frames = 0
+//         while True:
+//             status, frame = handler.read()
+//             if not status:
+//                 break
+//             frames += 1
+//         return frames 
+
+//     cap = cv2.VideoCapture(video_path)
+//     # Slow, inefficient but 100% accurate method 
+//     if manual:
+//         frames = manual_count(cap)
+//     # Fast, efficient but inaccurate method
+//     else:
+//         try:
+//             frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+//         except:
+//             frames = manual_count(cap)
+//     cap.release()
+//     return frames
+
+Future<int> frameCountManual(cv.VideoCapture video) async {
+  var frames = 0;
+  var (success, _) = video.read();
+  while (success) {
+    frames += 1;
+    (success, _) = video.read();
+  }
+  print("Manual Frame count: $frames");
+  return frames;
+}
+
+Future<int> frameCount(cv.VideoCapture video) async {
+  final frames = video.get(cv.CAP_PROP_FRAME_COUNT).toInt();
+
+  // CAP_PROP_FRAME_COUNT is not supported by all codecs
+  if (frames == 0) {
+    return frameCountManual(video);
+  }
+  print("Frame count: $frames");
+  return frames;
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -46,6 +95,39 @@ class _MyAppState extends State<MyApp> {
     return ret;
   }
 
+  Future<Uint8List> thumbnail(Uint8List buffer, {size = (500, 500)}) async {
+    final ret = Isolate.run(() {
+      final im = cv.imdecode(buffer, cv.IMREAD_COLOR);
+      final thumb = cv.resize(im, size, interpolation: cv.INTER_AREA);
+      return cv.imencode(cv.ImageFormat.png.ext, thumb);
+    });
+    return ret;
+  }
+
+  Future<List<Uint8List>> videoFrames(cv.VideoCapture video, int length) async {
+    List<Uint8List> frames = [];
+
+    if (video.isOpened & (length > 0)) {
+      var frameIds = [0];
+      if (length >= 4) {
+        frameIds = [0, length ~/ 4, length ~/ 2, 3 * length ~/ 4];
+      }
+      var count = 0;
+      var (success, image) = video.read();
+      while (success) {
+        if (frameIds.contains(count)) {
+          print("Read Frame $count");
+          frames.add(
+            cv.imencode(cv.ImageFormat.png.ext, image),
+          );
+        }
+        (success, image) = video.read();
+        count += 1;
+      }
+    }
+    return frames;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -59,33 +141,40 @@ class _MyAppState extends State<MyApp> {
             children: [
               ElevatedButton(
                 onPressed: () async {
-                  final picker = ImagePicker();
-                  final img = await picker.pickImage(source: ImageSource.gallery);
-                  if (img != null) {
-                    final path = img.path;
-                    final mat = cv.imread(path);
-                    print("cv.imread: width: ${mat.cols}, height: ${mat.rows}, path: $path");
-                    final bytes = cv.imencode(".png", mat);
-                    // heavy computation
-                    final (gray, blur) = await heavyTask(bytes);
-                    setState(() {
-                      images = [bytes, gray, blur];
-                    });
+                  final vid = await selectVideo(ImageSource.gallery);
+                  // save video to application storage
+                  final storedVideo = XFileStorage.fromXFile(vid);
+                  await storedVideo.write();
+
+                  final path = await storedVideo.path;
+                  final video = cv.VideoCapture.fromFile(path);
+                  final copy = cv.VideoCapture.fromFile(path);
+                  
+                  final length = await frameCount(copy);
+                  copy.release();
+                  final frames = await videoFrames(video, length);
+                  video.release();
+                  if (frames.isNotEmpty) {
+                    print("Frames: ${frames.length}");
+                    for (var frame in frames) {
+                        final thumb = await thumbnail(frame);
+                        images.add(thumb);
+                    }
+                    setState(() { });
                   }
+                  // });
+                  // if (img != null) {
+                    // final path = img.path;
+                    // final mat = cv.imread(path);
+                    // print("cv.imread: width: ${mat.cols}, height: ${mat.rows}, path: $path");
+                    // final bytes = cv.imencode(".png", mat);
+                    
+
+                    // heavy computation
+                    // final (gray, blur) = await heavyTask(bytes);
+                  // }
                 },
-                child: const Text("Pick Image"),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final data = await DefaultAssetBundle.of(context).load("images/lenna.png");
-                  final bytes = data.buffer.asUint8List();
-                  // heavy computation
-                  final (gray, blur) = await heavyTask(bytes);
-                  setState(() {
-                    images = [bytes, gray, blur];
-                  });
-                },
-                child: const Text("Process"),
+                child: const Text("Pick Video"),
               ),
               Expanded(
                 flex: 2,
