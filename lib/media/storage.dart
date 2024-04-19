@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -21,7 +20,7 @@ abstract class ApplicationStorage {
 }
 
 class XFileStorage extends ApplicationStorage {
-  late XFile xfile;
+  XFile xfile;
   // List<String> get supportedFormats => supportedExtensions;
 
   XFileStorage.fromXFile(this.xfile) {

@@ -6,10 +6,10 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter_fhe_video_similarity/media/primatives.dart' show Video;
 
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
-import 'package:flutter_fhe_video_similarity/media/upload.dart';
+import 'package:flutter_fhe_video_similarity/media/uploader.dart';
 
 
 // def frame_count(video_path, manual=False):
@@ -95,39 +95,6 @@ class _MyAppState extends State<MyApp> {
     return ret;
   }
 
-  Future<Uint8List> thumbnail(Uint8List buffer, {size = (500, 500)}) async {
-    final ret = Isolate.run(() {
-      final im = cv.imdecode(buffer, cv.IMREAD_COLOR);
-      final thumb = cv.resize(im, size, interpolation: cv.INTER_AREA);
-      return cv.imencode(cv.ImageFormat.png.ext, thumb);
-    });
-    return ret;
-  }
-
-  Future<List<Uint8List>> videoFrames(cv.VideoCapture video, int length) async {
-    List<Uint8List> frames = [];
-
-    if (video.isOpened & (length > 0)) {
-      var frameIds = [0];
-      if (length >= 4) {
-        frameIds = [0, length ~/ 4, length ~/ 2, 3 * length ~/ 4];
-      }
-      var count = 0;
-      var (success, image) = video.read();
-      while (success) {
-        if (frameIds.contains(count)) {
-          print("Read Frame $count");
-          frames.add(
-            cv.imencode(cv.ImageFormat.png.ext, image),
-          );
-        }
-        (success, image) = video.read();
-        count += 1;
-      }
-    }
-    return frames;
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -135,47 +102,19 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('Native Packages'),
         ),
+        floatingActionButton: selectVideoFromGallery(context, (vid) async {
+          final storedVideo = XFileStorage.fromXFile(vid);
+          await storedVideo.write();
+
+          final video = Video(storedVideo.xfile);
+          setState(() async {
+            images.add(await video.thumbnail.buffer);
+          }); // Rebuild the widget
+        }),
         body: Container(
           alignment: Alignment.center,
           child: Column(
             children: [
-              ElevatedButton(
-                onPressed: () async {
-                  final vid = await selectVideo(ImageSource.gallery);
-                  // save video to application storage
-                  final storedVideo = XFileStorage.fromXFile(vid);
-                  await storedVideo.write();
-
-                  final path = await storedVideo.path;
-                  final video = cv.VideoCapture.fromFile(path);
-                  final copy = cv.VideoCapture.fromFile(path);
-                  
-                  final length = await frameCount(copy);
-                  copy.release();
-                  final frames = await videoFrames(video, length);
-                  video.release();
-                  if (frames.isNotEmpty) {
-                    print("Frames: ${frames.length}");
-                    for (var frame in frames) {
-                        final thumb = await thumbnail(frame);
-                        images.add(thumb);
-                    }
-                    setState(() { });
-                  }
-                  // });
-                  // if (img != null) {
-                    // final path = img.path;
-                    // final mat = cv.imread(path);
-                    // print("cv.imread: width: ${mat.cols}, height: ${mat.rows}, path: $path");
-                    // final bytes = cv.imencode(".png", mat);
-                    
-
-                    // heavy computation
-                    // final (gray, blur) = await heavyTask(bytes);
-                  // }
-                },
-                child: const Text("Pick Video"),
-              ),
               Expanded(
                 flex: 2,
                 child: Row(
