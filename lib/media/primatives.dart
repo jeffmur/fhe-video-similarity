@@ -1,4 +1,5 @@
 // import 'dart:isolate';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:image_picker/image_picker.dart' show XFile;
@@ -26,11 +27,27 @@ class Video extends Media {
   late Thumbnail thumbnail;
   
   Video(super.file) {
-    video = cv.VideoCapture.fromFile(file.path);
+
+    video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
+
+    print('Video codec: ${video.codec}');
+
+    // Generate a thumbnail from the first frame
     thumbnail = Thumbnail(XFile.fromData(
       thumbnailFromFrame(
         videoFrames().first)
     ));
+  }
+
+  /// Get the OpenCV API preference based on the platform
+  ///
+  int get _cvApiPreference {
+    switch (Platform.operatingSystem) {
+      case 'android':
+        return cv.CAP_ANDROID;
+      default:
+        return cv.CAP_ANY;
+    }
   }
 
   /// Step through the video frame by frame and count the number of frames

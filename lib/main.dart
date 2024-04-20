@@ -107,9 +107,8 @@ class _MyAppState extends State<MyApp> {
           await storedVideo.write();
 
           final video = Video(storedVideo.xfile);
-          setState(() async {
-            images.add(await video.thumbnail.buffer);
-          }); // Rebuild the widget
+          images.add(await video.thumbnail.buffer);
+          setState(() { }); // Rebuild the widget
         }),
         body: Container(
           alignment: Alignment.center,
