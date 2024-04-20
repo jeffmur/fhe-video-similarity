@@ -1,6 +1,15 @@
+import 'package:flutter/material.dart';
+import 'dart:io';
+
 import 'uploader.dart';
 import 'storage.dart';
 import 'processor.dart';
+import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
+
+// Expose additional classes so caller doesn't have to import them separately
+export 'primatives.dart' show Video;
+
+enum MediaType { video }
 
 /// Singleton class to manage all the media related operations
 /// 
@@ -15,8 +24,52 @@ class Manager {
   /// Initialize the manager
   Manager._internal();
 
-  /// Select a video from the gallery
-  // Future<Media> 
-  
+  /// Upload media from the gallery
+  ///
+  Future<XFile> xFileFromGallery(MediaType source) async {
+    switch (source) {
+      case MediaType.video:
+        return selectVideo(ImageSource.gallery);
+      default:
+        throw UnsupportedError('Unsupported media type');
+    }
+  }
+
+  /// Select media from the gallery
+  ///
+  FloatingActionButton floatingSelectMediaFromGallery(
+    MediaType mediaType,
+    BuildContext context,
+    Function(XFile) onMediaSelected
+  ) {
+    switch (mediaType) {
+      case MediaType.video:
+        return selectVideoFromGallery(context, onMediaSelected);
+      default:
+        throw UnsupportedError('Unsupported media type');
+    }
+  }
+
+  /// Store the video file
+  /// 
+  /// Store the video file in the application directory, and compute the SHA-256 hash of the file.
+  /// The first 8 characters of the hash are used as the parent directory.
+  ///
+  Future<XFileStorage> storeVideo(XFile video) async {
+    final sha256 = await sha256ofFile(video.path);
+    // First 8 characters of the SHA-256 hash
+    final sha = sha256.toString().substring(0, 8);
+    return storeMedia(sha, video);
+  }
+
+  /// Cache the media file nested the parent key
+  ///
+  Future<XFileStorage> storeMedia(String parentDirectory, XFile media) async {
+    final stored = XFileStorage(parentDirectory, media);
+
+    File atRest = await stored.write();
+    print('Stored media at: ${atRest.path}');
+    return stored;
+  }
   
 }

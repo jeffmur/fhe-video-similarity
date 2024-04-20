@@ -25,8 +25,8 @@ Future<XFile> selectVideo(ImageSource source) async {
 /// 
 FloatingActionButton selectVideoFromGallery(
   BuildContext context,
-  Function(XFile) onVideoSelected)
-  {
+  Function(XFile) onVideoSelected
+) {
   return FloatingActionButton(
     onPressed: () async {
       final XFile video = await selectVideo(ImageSource.gallery);

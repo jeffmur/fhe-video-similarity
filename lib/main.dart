@@ -5,57 +5,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/media/primatives.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
-import 'package:flutter_fhe_video_similarity/media/primatives.dart' show Video;
-
-import 'package:flutter_fhe_video_similarity/media/storage.dart';
-import 'package:flutter_fhe_video_similarity/media/uploader.dart';
-
-
-// def frame_count(video_path, manual=False):
-//     def manual_count(handler):
-//         frames = 0
-//         while True:
-//             status, frame = handler.read()
-//             if not status:
-//                 break
-//             frames += 1
-//         return frames 
-
-//     cap = cv2.VideoCapture(video_path)
-//     # Slow, inefficient but 100% accurate method 
-//     if manual:
-//         frames = manual_count(cap)
-//     # Fast, efficient but inaccurate method
-//     else:
-//         try:
-//             frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-//         except:
-//             frames = manual_count(cap)
-//     cap.release()
-//     return frames
-
-Future<int> frameCountManual(cv.VideoCapture video) async {
-  var frames = 0;
-  var (success, _) = video.read();
-  while (success) {
-    frames += 1;
-    (success, _) = video.read();
-  }
-  print("Manual Frame count: $frames");
-  return frames;
-}
-
-Future<int> frameCount(cv.VideoCapture video) async {
-  final frames = video.get(cv.CAP_PROP_FRAME_COUNT).toInt();
-
-  // CAP_PROP_FRAME_COUNT is not supported by all codecs
-  if (frames == 0) {
-    return frameCountManual(video);
-  }
-  print("Frame count: $frames");
-  return frames;
-}
+import 'package:flutter_fhe_video_similarity/media/manager.dart';
 
 void main() {
   runApp(const MyApp());
@@ -97,19 +49,22 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    Manager m = Manager();
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Native Packages'),
         ),
-        floatingActionButton: selectVideoFromGallery(context, (vid) async {
-          final storedVideo = XFileStorage.fromXFile(vid);
-          await storedVideo.write();
+        floatingActionButton: m.floatingSelectMediaFromGallery(
+          MediaType.video, context, (vid) async {
+            final stored = await m.storeVideo(vid);
 
-          final video = Video(storedVideo.xfile);
-          images.add(await video.thumbnail.buffer);
-          setState(() { }); // Rebuild the widget
-        }),
+            final video = Video(stored.xfile);
+            Thumbnail frame0 = Thumbnail(video, 0);
+            images.add(frame0.buffer);
+            setState(() { }); // Rebuild the widget
+          }
+        ),
         body: Container(
           alignment: Alignment.center,
           child: Column(

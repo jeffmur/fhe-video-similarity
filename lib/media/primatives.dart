@@ -5,38 +5,23 @@ import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
-class Media {
+class ExistingMedia {
   XFile file;
-  Media(this.file);
+  ExistingMedia(this.file);
 
   String get path => file.path;
 
   Future<Uint8List> get buffer async => await file.readAsBytes();
 }
 
-class Thumbnail extends Media {
-
-  Thumbnail(super.file);
-
-  // TODO: preview image as pop up?
-  
-}
-
-class Video extends Media {
+class Video extends ExistingMedia {
   late cv.VideoCapture video;
-  late Thumbnail thumbnail;
   
   Video(super.file) {
 
     video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
 
     print('Video codec: ${video.codec}');
-
-    // Generate a thumbnail from the first frame
-    thumbnail = Thumbnail(XFile.fromData(
-      thumbnailFromFrame(
-        videoFrames().first)
-    ));
   }
 
   /// Get the OpenCV API preference based on the platform
@@ -86,32 +71,15 @@ class Video extends Media {
     return frames;
   }
 
-  /// Generate a thumbnail from the video
-  /// 
-  /// The thumbnail is generated from a frame [buffer] of the video
-  ///
-  Uint8List thumbnailFromFrame(Uint8List buffer, {(int, int) size = (500, 500)}) {
-    // final ret = Isolate.run(() {
-    //   final im = cv.imdecode(buffer, cv.IMREAD_COLOR);
-    //   final thumb = cv.resize(im, size, interpolation: cv.INTER_AREA);
-    //   return cv.imencode(cv.ImageFormat.png.ext, thumb);
-    // });
-    // return ret;
-    // thumbnail = Image(XFile.fromData(await ret));
-    final im = cv.imdecode(buffer, cv.IMREAD_COLOR);
-    final thumb = cv.resize(im, size, interpolation: cv.INTER_AREA);
-    return cv.imencode(cv.ImageFormat.png.ext, thumb);
-  }
-
   /// Extract frames from the video
   ///
   /// Encode frames at the specified [frameIds], by default, extract 
   /// the first frame, the frame at 1/4, 1/2, and 3/4 of the video length.
   ///
-  List<Uint8List> videoFrames(
+  List<Uint8List> frames(
     {List<int> frameIds = const [0],
-     cv.ImageFormat frameFormat = cv.ImageFormat.png}) {
-
+     cv.ImageFormat frameFormat = cv.ImageFormat.png}
+  ) {
     var frames = <Uint8List>[];
     int length = frameIds.length; // Length of the video
 
@@ -138,4 +106,39 @@ class Video extends Media {
     video.release();
     return frames;
   }
+}
+
+class Thumbnail {
+  Video video;
+  int frameIdx;
+  (int, int) dimensions = (500, 500);
+
+  Thumbnail(this.video, this.frameIdx);
+
+  /// The thumbnail is generated from a frame [buffer] of the video
+  ///
+  Uint8List thumbnailFromFrame(Uint8List buffer) {
+    // final ret = Isolate.run(() {
+    //   final im = cv.imdecode(buffer, cv.IMREAD_COLOR);
+    //   final thumb = cv.resize(im, size, interpolation: cv.INTER_AREA);
+    //   return cv.imencode(cv.ImageFormat.png.ext, thumb);
+    // });
+    // return ret;
+    // thumbnail = Image(XFile.fromData(await ret));
+    final im = cv.imdecode(buffer, cv.IMREAD_COLOR);
+    final thumb = cv.resize(im, dimensions, interpolation: cv.INTER_AREA);
+    return cv.imencode(cv.ImageFormat.png.ext, thumb);
+  }
+
+  /// Generate the thumbnail from the [Video]
+  /// 
+  /// The thumbnail is generated from the frame at [frameIdx] of the video.
+  ///
+  XFile get thumbnail => XFile.fromData(buffer);
+
+  /// Get the frame buffer from the video
+  ///
+  Uint8List get buffer =>
+    thumbnailFromFrame(
+      video.frames().elementAt(frameIdx));
 }
