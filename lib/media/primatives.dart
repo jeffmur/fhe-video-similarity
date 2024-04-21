@@ -2,8 +2,11 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:opencv_dart/opencv_dart.dart' as cv;
+
+String get opencvInfo => cv.getBuildInformation();
 
 class ExistingMedia {
   XFile file;
@@ -16,12 +19,33 @@ class ExistingMedia {
 
 class Video extends ExistingMedia {
   late cv.VideoCapture video;
+  late Duration duration;
   
-  Video(super.file) {
+  Video(XFile file, [Duration start = Duration.zero, Duration end = Duration.zero]) : super(file) {
 
     video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
 
     print('Video codec: ${video.codec}');
+
+    // Get FPS
+    final fps = video.get(cv.CAP_PROP_FPS);
+    print('Video FPS: $fps');
+
+    // Get frame count
+    final frames = frameCount();
+    print('Video Frames: $frames');
+
+    duration = Duration(milliseconds: (frames ~/ fps * 1000));
+    print('Video Duration: $duration');
+
+    // Set the start and end positions
+    if (start > Duration.zero) {
+      final frame = (start.inSeconds * fps ~/ 1000);
+      video.set(cv.CAP_PROP_POS_FRAMES, frame.toDouble());
+    }
+    if (end != Duration.zero) {
+      video.set(cv.CAP_PROP_POS_AVI_RATIO, end.inMilliseconds.toDouble());
+    }
   }
 
   /// Get the OpenCV API preference based on the platform
@@ -83,14 +107,15 @@ class Video extends ExistingMedia {
     var frames = <Uint8List>[];
     int length = frameIds.length; // Length of the video
 
-    if (length <= 1) {
+    // if (length < 1) {
+    //   frameIds = [0, length ~/ 4, length ~/ 2, 3 * length ~/ 4];
+    // }
 
-      frameIds = [0, length ~/ 4, length ~/ 2, 3 * length ~/ 4];
-    }
+    final copy = cv.VideoCapture.fromFile(file.path);
 
-    if (video.isOpened & (length > 0)) {
+    if (copy.isOpened & (length > 0)) {
       var count = 0;
-      var (success, image) = video.read();
+      var (success, image) = copy.read();
       while (success) {
         if (frameIds.contains(count)) {
           print("[videoFrames] Reading Frame $count");
@@ -98,12 +123,13 @@ class Video extends ExistingMedia {
             cv.imencode(frameFormat.ext, image), // Mat -> Uint8List
           );
         }
-        (success, image) = video.read();
+        (success, image) = copy.read();
         count += 1;
       }
     }
     // Clear the video buffer
-    video.release();
+    copy.release();
+    print("[frames] Extracted ${frames.length} frames");
     return frames;
   }
 }
@@ -140,5 +166,8 @@ class Thumbnail {
   ///
   Uint8List get buffer =>
     thumbnailFromFrame(
-      video.frames().elementAt(frameIdx));
+      video.frames(frameIds: [frameIdx]).first);
+
+  /// Get the thumbnail as a widget
+  Widget get widget => Image.memory(buffer);
 }

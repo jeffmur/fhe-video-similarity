@@ -4,10 +4,11 @@ import 'dart:io';
 import 'uploader.dart';
 import 'storage.dart';
 import 'processor.dart';
+import 'primatives.dart' show opencvInfo;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
-export 'primatives.dart' show Video;
+export 'primatives.dart' show Video, Thumbnail;
 
 enum MediaType { video }
 
@@ -23,6 +24,15 @@ class Manager {
 
   /// Initialize the manager
   Manager._internal();
+
+  /// Backend library build information
+  String get backendInfo => opencvInfo;
+
+  /// Widget to display the backend library information
+  Widget get backendInfoWidget =>
+    Expanded(
+      child: SingleChildScrollView(
+        child: Text(backendInfo)));
 
   /// Upload media from the gallery
   ///
@@ -59,13 +69,13 @@ class Manager {
     final sha256 = await sha256ofFile(video.path);
     // First 8 characters of the SHA-256 hash
     final sha = sha256.toString().substring(0, 8);
-    return storeMedia(sha, video);
+    return storeMedia(sha, 'raw', video);
   }
 
   /// Cache the media file nested the parent key
   ///
-  Future<XFileStorage> storeMedia(String parentDirectory, XFile media) async {
-    final stored = XFileStorage(parentDirectory, media);
+  Future<XFileStorage> storeMedia(String parentDirectory, String filename, XFile media) async {
+    final stored = XFileStorage(parentDirectory, filename, media);
 
     File atRest = await stored.write();
     print('Stored media at: ${atRest.path}');

@@ -31,15 +31,17 @@ class ApplicationStorage extends Storage {
 }
 
 class XFileStorage extends ApplicationStorage {
-  String parentDir;
-  XFile xfile;
+  String parentDir; // parent directory
+  String name;      // name of the file
+  XFile xfile;      // the file content to store
 
-  XFileStorage(this.parentDir, this.xfile) : super(parentDir);
+  XFileStorage(this.parentDir, this.name, this.xfile) : super(parentDir);
 
   @override
   Future<String> get path async {
     final path = await super.path;
-    return '$path/${xfile.name}';
+    String ext = xfile.name.split('.').last;
+    return '$path/$name.$ext';
   }
 
   Future<File> get file async {
