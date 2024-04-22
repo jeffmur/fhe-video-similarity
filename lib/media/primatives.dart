@@ -18,35 +18,47 @@ class ExistingMedia {
 }
 
 class Video extends ExistingMedia {
+  int startFrame = 0;
+
+  late int endFrame;
   late cv.VideoCapture video;
-  late Duration duration;
+  late int totalFrames;
   
-  Video(XFile file, [Duration start = Duration.zero, Duration end = Duration.zero]) : super(file) {
+  Video(XFile file, {Duration start = Duration.zero, Duration end = Duration.zero}) : super(file) {
 
     video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
 
-    print('Video codec: ${video.codec}');
-
     // Get FPS
     final fps = video.get(cv.CAP_PROP_FPS);
-    print('Video FPS: $fps');
 
     // Get frame count
-    final frames = frameCount();
-    print('Video Frames: $frames');
+    totalFrames = frameCount();
 
-    duration = Duration(milliseconds: (frames ~/ fps * 1000));
-    print('Video Duration: $duration');
-
+    // Set the end frame (used for trimming)
+    endFrame = totalFrames - 1;
+  
     // Set the start and end positions
-    if (start > Duration.zero) {
-      final frame = (start.inSeconds * fps ~/ 1000);
-      video.set(cv.CAP_PROP_POS_FRAMES, frame.toDouble());
-    }
-    if (end != Duration.zero) {
-      video.set(cv.CAP_PROP_POS_AVI_RATIO, end.inMilliseconds.toDouble());
-    }
+    trim(start, end);
+
+    printStats(); // TODO: Remove
   }
+
+  Map get stats => {
+    'duration': duration,
+    'fps': video.get(cv.CAP_PROP_FPS),
+    'frameCount': totalFrames,
+    'codec': video.codec
+  };
+
+  void printStats() {
+    print('--- Video Information ---');
+    print(' * Codec: ${stats['codec']}');
+    print(' * Duration: ${stats['duration']}');
+    print(' * FPS: ${stats['fps']}');
+    print(' * Frame Count: ${stats['frameCount']}');
+  }
+
+  Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ video.get(cv.CAP_PROP_FPS));
 
   /// Get the OpenCV API preference based on the platform
   ///
@@ -56,6 +68,25 @@ class Video extends ExistingMedia {
         return cv.CAP_ANDROID;
       default:
         return cv.CAP_ANY;
+    }
+  }
+
+  /// Seek to a specific position in the video
+  ///
+  void trim(Duration start, Duration end) {
+    final fps = video.get(cv.CAP_PROP_FPS);
+    int trimStart = (start.inSeconds * fps).toInt();
+    int trimLast = (end.inSeconds * fps).toInt();
+
+    // Check if the target frame is within the video frame range
+    if (trimStart >= 0) {
+      print("[trim] Seeking $trimStart frames from the start");
+      startFrame = trimStart;
+    }
+
+    if (trimLast > 0 && trimLast < endFrame) {
+      print("[trim] Cutting ${endFrame - trimLast} frames from the end");
+      endFrame = trimLast;
     }
   }
 
@@ -107,16 +138,20 @@ class Video extends ExistingMedia {
     var frames = <Uint8List>[];
     int length = frameIds.length; // Length of the video
 
-    // if (length < 1) {
-    //   frameIds = [0, length ~/ 4, length ~/ 2, 3 * length ~/ 4];
-    // }
+    // Adjust the frameIds to the startFrame
+    frameIds = frameIds.map((idx) => idx + startFrame).toList();
 
+    // Create a copy of the video to not interfere with the original
     final copy = cv.VideoCapture.fromFile(file.path);
 
+    // Iterate through the video and extract the frames
     if (copy.isOpened & (length > 0)) {
       var count = 0;
       var (success, image) = copy.read();
       while (success) {
+        // Break if the endFrame is reached
+        if (count > endFrame) { break; }
+        // Skip if the frame is selected
         if (frameIds.contains(count)) {
           print("[videoFrames] Reading Frame $count");
           frames.add(

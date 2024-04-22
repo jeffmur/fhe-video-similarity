@@ -37,7 +37,9 @@ class _MyAppState extends State<MyApp> {
           MediaType.video, context, (vid) async {
             final stored = await m.storeVideo(vid);
 
-            final video = Video(stored.xfile, const Duration(seconds: 2));
+            final video = Video(stored.xfile,
+              start: const Duration(seconds: 1),
+              end: const Duration(seconds: 10));
             Thumbnail frame0 = Thumbnail(video, 0);
             images.add(frame0);
             // Thumbnail frame1 = Thumbnail(video, 1);
