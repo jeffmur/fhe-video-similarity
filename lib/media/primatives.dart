@@ -84,6 +84,12 @@ class Video extends ExistingMedia {
     int trimStart = (start.inSeconds * fps).toInt();
     int trimLast = (end.inSeconds * fps).toInt();
 
+    if (startFrame > endFrame || startFrame < 0
+        || trimStart > totalFrames || trimLast > totalFrames
+        || (trimStart + trimLast) > totalFrames) {
+      throw ArgumentError('Invalid trim range');
+    }
+
     // Check if the target frame is within the video frame range
     if (trimStart >= 0) {
       print("[trim] Seeking $trimStart frames from the start");
@@ -91,8 +97,8 @@ class Video extends ExistingMedia {
     }
 
     if (trimLast > 0 && trimLast < endFrame) {
-      print("[trim] Cutting ${endFrame - trimLast} frames from the end");
-      endFrame = trimLast;
+      print("[trim] Cutting $trimLast frames from the end");
+      endFrame = (endFrame - trimLast);
     }
   }
 
