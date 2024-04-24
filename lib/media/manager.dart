@@ -77,7 +77,15 @@ class Manager {
   Future<XFileStorage> storeMedia(String parentDirectory, String filename, XFile media) async {
     final stored = XFileStorage(parentDirectory, filename, media);
 
+    // Check if the media is already stored
+    if (await stored.exists()) {
+      print('Media already stored at: ${await stored.path}');
+      return stored;
+    }
     File atRest = await stored.write();
+    DateTime lastAccessed = await media.lastModified();
+    atRest.setLastAccessedSync(lastAccessed);
+
     print('Stored media at: ${atRest.path}');
     return stored;
   }

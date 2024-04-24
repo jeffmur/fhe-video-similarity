@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const MaterialApp(home: MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -58,12 +58,20 @@ class _MyAppState extends State<MyApp> {
                     Expanded(
                       child: ListView.builder(
                         itemCount: images.length,
-                        itemBuilder: (ctx, idx) => Card(
-                          child: images[idx].widget,
-                        ),
+                        itemBuilder: (ctx, idx) => Card(child:
+                          Column(children: [
+                            images[idx].widget,
+                            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Text("Duration: ${images[idx].video.duration.inSeconds} seconds"),
+                              Text("Last Modified: ${images[idx].video.modified.toLocal()}")                              
+                            ]),
+                          ],
+                        )),
                       ),
                     ),
-                    m.backendInfoWidget,
+
+                    // m.backendInfoWidget,
                   ],
                 ),
               ),

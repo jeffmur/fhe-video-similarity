@@ -1,6 +1,7 @@
 // import 'dart:isolate';
 import 'dart:io';
 import 'dart:typed_data';
+// import 'package:logging/logging.dart';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
@@ -11,6 +12,11 @@ String get opencvInfo => cv.getBuildInformation();
 class ExistingMedia {
   XFile file;
   ExistingMedia(this.file);
+  
+  DateTime get modified => FileStat.statSync(file.path).modified;
+  // DateTime get accessed => FileStat.statSync(file.path).accessed;
+
+  // DateTime get created => PROMPT USER
 
   String get path => file.path;
 
@@ -18,6 +24,7 @@ class ExistingMedia {
 }
 
 class Video extends ExistingMedia {
+  // Logger log = Logger('Video');
   int startFrame = 0;
 
   late int endFrame;
@@ -27,9 +34,6 @@ class Video extends ExistingMedia {
   Video(XFile file, {Duration start = Duration.zero, Duration end = Duration.zero}) : super(file) {
 
     video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
-
-    // Get FPS
-    final fps = video.get(cv.CAP_PROP_FPS);
 
     // Get frame count
     totalFrames = frameCount();
@@ -56,6 +60,8 @@ class Video extends ExistingMedia {
     print(' * Duration: ${stats['duration']}');
     print(' * FPS: ${stats['fps']}');
     print(' * Frame Count: ${stats['frameCount']}');
+    // print(' * Last Modified: ${modified.toLocal()}');
+    // print(' * Last Accessed: ${accessed.toLocal()}');
   }
 
   Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ video.get(cv.CAP_PROP_FPS));

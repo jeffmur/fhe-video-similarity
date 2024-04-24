@@ -54,4 +54,8 @@ class XFileStorage extends ApplicationStorage {
     final file = await this.file;
     return file.writeAsBytes(await xfile.readAsBytes());
   }
+
+  Future<bool> exists() async {
+    return (await file).exists();
+  }
 }
