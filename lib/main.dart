@@ -34,12 +34,12 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Native Packages'),
         ),
         floatingActionButton: m.floatingSelectMediaFromGallery(
-          MediaType.video, context, (vid) async {
+          MediaType.video, context, (vid, timestamp, trimStart, trimEnd) async {
             final stored = await m.storeVideo(vid);
 
             final video = Video(stored.xfile,
-              start: const Duration(seconds: 1),
-              end: const Duration(seconds: 10));
+              start: Duration(seconds: trimStart),
+              end: Duration(seconds: trimEnd));
             Thumbnail frame0 = Thumbnail(video, 0);
             images.add(frame0);
             // Thumbnail frame1 = Thumbnail(video, 1);

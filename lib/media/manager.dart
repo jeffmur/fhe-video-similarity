@@ -50,7 +50,7 @@ class Manager {
   FloatingActionButton floatingSelectMediaFromGallery(
     MediaType mediaType,
     BuildContext context,
-    Function(XFile) onMediaSelected
+    Function(XFile, DateTime, int, int) onMediaSelected
   ) {
     switch (mediaType) {
       case MediaType.video:

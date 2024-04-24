@@ -25,59 +25,24 @@ Future<XFile> selectVideo(ImageSource source) async {
 /// 
 FloatingActionButton selectVideoFromGallery(
   BuildContext context,
-  Function(XFile) onVideoSelected
+  Function(XFile, DateTime, int, int) onVideoSelected
 ) {
-  TextEditingController videoStartDateTimeController = TextEditingController();
   return FloatingActionButton(
     onPressed: () async {
-      videoContextDialog(context, videoStartDateTimeController,
-      () async {
+      videoContextDialog(context,
+      (DateTime start, int trimStart, int trimEnd) async {
         final XFile video = await selectVideo(ImageSource.gallery);
         print('Selected video: ${video.path}');
-        print('Start DateTime: ${videoStartDateTimeController.text}');
-        onVideoSelected(video);
+        print('Start DateTime: ${start.toIso8601String()}');
+        print('Trim Start: $trimStart');
+        print('Trim End: $trimEnd');
+
+        onVideoSelected(video, start, trimStart, trimEnd);
       });
     },
     tooltip: 'Select video',
     child: const Icon(Icons.image),
   );
-}
-
-
-class SelectDate extends StatefulWidget {
-  const SelectDate({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<SelectDate> createState() => _SelectDate();
-}
-
-class _SelectDate extends State<SelectDate> {
-  DateTime selectedDate = DateTime.now();
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime(2015, 8),
-        lastDate: DateTime(2101));
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-    );
-  }
-
 }
 
 /// Format a [DateTime] object as a string.
@@ -100,9 +65,15 @@ String formatDateTime(DateTime dateTime) {
 /// 
 Future<void> videoContextDialog(
   BuildContext context,
-  TextEditingController videoStartDateTimeController,
-  Function() callback,
+  // TextEditingController videoStartDateTimeController,
+  Function(DateTime startTime, int trimStart, int trimEnd) callback,
 ) async {
+  TextEditingController videoStartDateTimeController = TextEditingController();
+  // TextEditingController videoTrimStartController = TextEditingController();
+  // TextEditingController videoTrimEndController = TextEditingController();
+  DateTime timestamp = DateTime.now();
+  int trimStart = 0;
+  int trimEnd = 0;
   await
   showDialog(context: context,
     builder: (BuildContext context) {
@@ -121,10 +92,7 @@ Future<void> videoContextDialog(
                   labelText: "YYYY-MM-DDTHH:MM:SSZ",
                   hintText: "Enter the date and time the video was taken",
                 ),
-                onSaved: (String? value) {
-                  // This optional block of code can be used to run
-                  // code when the user saves the form.
-                },
+                onSaved: (String? value) => timestamp = DateTime.parse(value!),
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
                     return 'Required field';
@@ -139,7 +107,11 @@ Future<void> videoContextDialog(
                 children: <Widget>[
                   TextButton(
                     onPressed: () => videoStartDateTimeController.text = formatDateTime(DateTime.now()),
-                    child: const Text('Today'),
+                    child: const Text('Now'),
+                  ),
+                  TextButton(
+                    onPressed: () => videoStartDateTimeController.text = formatDateTime(DateTime.now().subtract(const Duration(hours: 1))),
+                    child: const Text('Last Hour'),
                   ),
                   TextButton(
                     onPressed: () => videoStartDateTimeController.text = formatDateTime(DateTime.now().subtract(const Duration(days: 1))),
@@ -147,12 +119,54 @@ Future<void> videoContextDialog(
                   ),
                 ],
               ),
-              // const TextField(
-              //   // controller: qualityController,
-              //   keyboardType: TextInputType.number,
-              //   decoration: InputDecoration(
-              //       hintText: 'Enter quality if desired'),
-              // ),
+              TextFormField(
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  icon: Icon(Icons.start),
+                  hintText: "Duration in seconds",
+                  labelText: "Trim the first N seconds of the video",
+                ),
+                onSaved: (String? value) {
+                  if (value != null && value.isNotEmpty) {
+                    trimStart = int.parse(value);
+                  }
+                },
+                validator: (String? value) {
+                  if (value == null || value.isEmpty) {
+                    return null;
+                  }
+                  try {
+                    int.parse(value);
+                    return null;
+                  } catch (e) {
+                    return 'Invalid number';
+                  }
+                },
+              ),
+              TextFormField(
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  icon: Icon(Icons.stop),
+                  hintText: "Duration in seconds",
+                  labelText: "Trim the last N seconds of the video",
+                ),
+                onSaved: (String? value) {
+                  if (value != null && value.isNotEmpty) {
+                    trimEnd = int.parse(value);
+                  }
+                },
+                validator: (String? value) {
+                  if (value == null || value.isEmpty) {
+                    return null;
+                  }
+                  try {
+                    int.parse(value);
+                    return null;
+                  } catch (e) {
+                    return 'Invalid number';
+                  }
+                },
+              ),
               ButtonBar(
                 children: <Widget>[
                   TextButton(
@@ -166,7 +180,7 @@ Future<void> videoContextDialog(
                       if(formKey.currentState!.validate()) {
                         formKey.currentState!.save();
                         Navigator.of(context).pop();
-                        callback();
+                        callback(timestamp, trimStart, trimEnd);
                       }
                     },
                     child: const Text('OK'),
