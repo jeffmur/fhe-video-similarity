@@ -36,10 +36,13 @@ class _MyAppState extends State<MyApp> {
         floatingActionButton: m.floatingSelectMediaFromGallery(
           MediaType.video, context, (vid, timestamp, trimStart, trimEnd) async {
             final stored = await m.storeVideo(vid);
-
-            final video = Video(stored.xfile,
+            final video = Video(stored.xfile, timestamp,
               start: Duration(seconds: trimStart),
               end: Duration(seconds: trimEnd));
+
+            final meta = await m.storeVideoMetadata(video, timestamp);
+            print("Wrote metafile: ${meta.name}");
+            
             Thumbnail frame0 = Thumbnail(video, 0);
             images.add(frame0);
             // Thumbnail frame1 = Thumbnail(video, 1);
@@ -64,7 +67,7 @@ class _MyAppState extends State<MyApp> {
                             Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Text("Duration: ${images[idx].video.duration.inSeconds} seconds"),
-                              Text("Last Modified: ${images[idx].video.modified.toLocal()}")                              
+                              Text("Created: ${images[idx].video.created.toLocal()}")                              
                             ]),
                           ],
                         )),

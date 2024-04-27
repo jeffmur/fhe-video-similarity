@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-
 import 'uploader.dart';
 import 'storage.dart';
 import 'processor.dart';
-import 'primatives.dart' show opencvInfo;
+import 'primatives.dart' show Video, opencvInfo;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
@@ -66,15 +65,14 @@ class Manager {
   /// The first 8 characters of the hash are used as the parent directory.
   ///
   Future<XFileStorage> storeVideo(XFile video) async {
-    final sha256 = await sha256ofFile(video.path);
-    // First 8 characters of the SHA-256 hash
-    final sha = sha256.toString().substring(0, 8);
-    return storeMedia(sha, 'raw', video);
+    final sha = await sha256ofFileAsString(video.path, 8);
+    final ext = video.path.split('.').last;
+    return storeMediaFromXFile(sha, 'raw.$ext', video);
   }
 
   /// Cache the media file nested the parent key
   ///
-  Future<XFileStorage> storeMedia(String parentDirectory, String filename, XFile media) async {
+  Future<XFileStorage> storeMediaFromXFile(String parentDirectory, String filename, XFile media) async {
     final stored = XFileStorage(parentDirectory, filename, media);
 
     // Check if the media is already stored
@@ -88,6 +86,31 @@ class Manager {
 
     print('Stored media at: ${atRest.path}');
     return stored;
+  }
+
+  Future<XFileStorage> storeNewMedia(List<int> bytes, String parentDirectory, String filename, {String extension="txt"}) async {
+
+    XFileStorage storage = XFileStorage.fromBytes(parentDirectory, "$filename.$extension", bytes);
+
+    await storage.write();
+
+    print('Wrote new media at: $parentDirectory/$filename');
+
+    return storage;
+  }
+
+  /// Store the metadata for the video
+  ///
+  Future<XFileStorage> storeVideoMetadata(Video video, DateTime timestamp) async {
+    Map stats = video.stats;
+    stats['timestamp'] = timestamp.toString();
+    // convert stats to Uint8List
+    final content = stats.toString().codeUnits;
+
+    final parentDir = await video.sha256(chars: 8);
+    final filename = '${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
+    
+    return storeNewMedia(content, parentDir, filename, extension: "meta");
   }
   
 }

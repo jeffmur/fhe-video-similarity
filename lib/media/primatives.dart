@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
+import 'processor.dart';
+
 String get opencvInfo => cv.getBuildInformation();
 
 class ExistingMedia {
@@ -26,14 +28,16 @@ class ExistingMedia {
 class Video extends ExistingMedia {
   // Logger log = Logger('Video');
   int startFrame = 0;
+  DateTime created = DateTime.now();
 
   late int endFrame;
   late cv.VideoCapture video;
   late int totalFrames;
   
-  Video(XFile file, {Duration start = Duration.zero, Duration end = Duration.zero}) : super(file) {
+  Video(XFile file, DateTime timestamp, {Duration start = Duration.zero, Duration end = Duration.zero}) : super(file) {
 
     video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
+    created = timestamp;
 
     // Get frame count
     totalFrames = frameCount();
@@ -48,11 +52,15 @@ class Video extends ExistingMedia {
   }
 
   Map get stats => {
-    'duration': duration,
+    'codec': video.codec,
     'fps': video.get(cv.CAP_PROP_FPS),
     'frameCount': totalFrames,
-    'codec': video.codec
+    'duration': duration,
+    'startFrame': startFrame,
+    'endFrame': endFrame,
   };
+
+  Future<String> sha256({chars=16}) async => await sha256ofFileAsString(file.path, 8);
 
   void printStats() {
     print('--- Video Information ---');

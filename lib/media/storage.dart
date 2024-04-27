@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -33,15 +34,18 @@ class ApplicationStorage extends Storage {
 class XFileStorage extends ApplicationStorage {
   String parentDir; // parent directory
   String name;      // name of the file
-  XFile xfile;      // the file content to store
+  late XFile xfile;      // the file content to store
 
   XFileStorage(this.parentDir, this.name, this.xfile) : super(parentDir);
+
+  XFileStorage.fromBytes(this.parentDir, this.name, List<int> bytes) : super(parentDir) {
+    xfile = XFile.fromData(Uint8List.fromList(bytes), name: name);
+  }
 
   @override
   Future<String> get path async {
     final path = await super.path;
-    String ext = xfile.name.split('.').last;
-    return '$path/$name.$ext';
+    return '$path/$name';
   }
 
   Future<File> get file async {
