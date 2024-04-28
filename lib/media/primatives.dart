@@ -60,8 +60,6 @@ class Video extends ExistingMedia {
     'endFrame': endFrame,
   };
 
-  Future<String> sha256({chars=16}) async => await sha256ofFileAsString(file.path, 8);
-
   void printStats() {
     print('--- Video Information ---');
     print(' * Codec: ${stats['codec']}');
@@ -72,7 +70,10 @@ class Video extends ExistingMedia {
     // print(' * Last Accessed: ${accessed.toLocal()}');
   }
 
-  Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ video.get(cv.CAP_PROP_FPS));
+  Future<String> sha256({chars=16}) async => await sha256ofFileAsString(file.path, 8);
+
+  int get fps => video.get(cv.CAP_PROP_FPS).toInt();
+  Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ fps);
 
   /// Get the OpenCV API preference based on the platform
   ///
@@ -187,6 +188,30 @@ class Video extends ExistingMedia {
     print("[frames] Extracted ${frames.length} frames");
     return frames;
   }
+
+  /// Extract frames from the video within a range
+  ///
+  List<Uint8List> framesFromRange(int start, int end) {
+    return frames(frameIds: List<int>.generate(end - start, (i) => i + start));
+  }
+
+  /// Generate ranges of frames based on the [segmentDuration]
+  /// 
+  List<List<int>> getVideoSegments(Duration segmentDuration) {
+    List<List<int>> segments = [];
+    int start = startFrame;
+    int end = endFrame;
+    int nextFrame = segmentDuration.inSeconds * fps;
+    for (int i = start; i < end; i += nextFrame) {
+      print("[getVideoSegments] Segment: $i - ${i + nextFrame}");
+      segments.add(
+        // List<int>.generate(nextFrame, (inc) => i + inc)
+        [i, i + nextFrame]
+      );
+    }
+    return segments;
+  }
+
 }
 
 class Thumbnail {
