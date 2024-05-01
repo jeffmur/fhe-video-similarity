@@ -23,7 +23,7 @@ class NormalizedByteArray {
   /// Convert the video into a normalized byte array
   ///
   /// Returns a map of startFrame to normalized byte arrays
-  /// { 'frame'}
+  ///
   Map preprocess(Video video) {
     switch (type) {
       case PreprocessType.sso:
@@ -82,7 +82,6 @@ List<List<int>> countBytesInVideoSegment(Video video, Duration segment) {
   final frameRanges = video.frameIndexFromSegment(segment);
 
   for (var range in frameRanges) {
-    print('Target Frame Range (${range.first} - ${range.last})');
     print('[DEBUG] Range: $range');
     final frames = video.frames(frameIds: range);
   
@@ -92,9 +91,6 @@ List<List<int>> countBytesInVideoSegment(Video video, Duration segment) {
     }
 
     byteLengths.add(frameByteLengths);
-    print('[DEBUG] Byte Lengths: $byteLengths');
-
   }  
   return byteLengths;
 }
-

@@ -72,7 +72,9 @@ class _MyAppState extends State<MyApp> {
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.compare_outlined),
-                                    onPressed: () => m.preprocessVideo(images[idx].video, PreprocessType.sso)
+                                    onPressed: () {
+                                      m.storeProcessedVideoCSV(images[idx].video, PreprocessType.sso);
+                                    }
                                   ),
                                 ]
                             )]),

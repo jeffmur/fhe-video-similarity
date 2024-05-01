@@ -51,13 +51,13 @@ class Video extends ExistingMedia {
     printStats(); // TODO: Remove
   }
 
-  Map get stats => {
+  Map<String,String> get stats => {
     'codec': video.codec,
-    'fps': video.get(cv.CAP_PROP_FPS),
-    'frameCount': totalFrames,
-    'duration': duration,
-    'startFrame': startFrame,
-    'endFrame': endFrame,
+    'fps': video.get(cv.CAP_PROP_FPS).toString(),
+    'frameCount': "$totalFrames",
+    'duration': duration.toString(),
+    'startFrame': "$startFrame",
+    'endFrame': "$endFrame",
   };
 
   void printStats() {
