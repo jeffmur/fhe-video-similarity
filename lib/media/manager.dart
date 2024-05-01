@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
 export 'primatives.dart' show Video, Thumbnail;
-export 'processor.dart' show Preprocessor, PreprocessType;
+export 'processor.dart' show PreprocessType;
 
 enum MediaType { video }
 
@@ -115,7 +115,7 @@ class Manager {
   }
 
   /// Preprocess the video
-  List<double> preprocessVideo(Video video, PreprocessType type) {
+  Map preprocessVideo(Video video, PreprocessType type) {
     return NormalizedByteArray(type).preprocess(video);
   }
   

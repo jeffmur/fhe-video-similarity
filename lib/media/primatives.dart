@@ -157,31 +157,29 @@ class Video extends ExistingMedia {
      cv.ImageFormat frameFormat = cv.ImageFormat.png}
   ) {
     var frames = <Uint8List>[];
-    int length = frameIds.length; // Length of the video
+    int length = frameIds.length; // Number of frames to extract
 
-    // Adjust the frameIds to the startFrame
-    frameIds = frameIds.map((idx) => idx + startFrame).toList();
+    print("$frameIds of $endFrame frames");
 
     // Create a copy of the video to not interfere with the original
     final copy = cv.VideoCapture.fromFile(file.path);
 
     // Iterate through the video and extract the frames
     if (copy.isOpened & (length > 0)) {
-      var count = 0;
+      var idx = 0;
       var (success, image) = copy.read();
-      while (success) {
-        // Break if the endFrame is reached
-        if (count > endFrame) { break; }
-        // Skip if the frame is selected
-        if (frameIds.contains(count)) {
-          print("[videoFrames] Reading Frame $count");
+      while (success && idx <= endFrame) {
+        // Read when the frame is selected
+        if (frameIds.contains(idx)) {
+          print("[videoFrames] Reading Frame $idx");
           frames.add(
             cv.imencode(frameFormat.ext, image), // Mat -> Uint8List
           );
         }
         (success, image) = copy.read();
-        count += 1;
+        idx += 1;
       }
+      print('[videoFrames] end of video: $idx');
     }
     // Clear the video buffer
     copy.release();
@@ -195,23 +193,51 @@ class Video extends ExistingMedia {
     return frames(frameIds: List<int>.generate(end - start, (i) => i + start));
   }
 
-  /// Generate ranges of frames based on the [segmentDuration]
-  /// 
-  List<List<int>> getVideoSegments(Duration segmentDuration) {
-    List<List<int>> segments = [];
-    int start = startFrame;
-    int end = endFrame;
-    int nextFrame = segmentDuration.inSeconds * fps;
-    for (int i = start; i < end; i += nextFrame) {
-      print("[getVideoSegments] Segment: $i - ${i + nextFrame}");
-      segments.add(
-        // List<int>.generate(nextFrame, (inc) => i + inc)
-        [i, i + nextFrame]
-      );
+  /// Estimate the timestamps at the start of each segment
+  ///
+  List<DateTime> timestampsFromSegment(Video video, Duration segmentDuration) {
+    List<DateTime> segments = [];
+    for (int i = startFrame; i < endFrame; i += segmentDuration.inSeconds * fps) {
+      segments.add(created.add(Duration(seconds: i ~/ fps)));
     }
     return segments;
   }
 
+  /// Generate ranges of frame indices based on the [segmentDuration]
+  /// 
+  List<List<int>> frameIndexFromSegment(Duration segmentDuration, {FrameCount frameCount = FrameCount.firstLast}) {
+    List<List<int>> segments = [];
+    int segment = segmentDuration.inSeconds * fps;
+
+    for (int i = startFrame; i < endFrame; i += segment) {
+      // Drop all values greater than the end frame
+      var inc = List<int>.generate(segment, (inc) => i + inc);
+      var all = inc.where((idx) => idx <= endFrame).toList();
+
+      switch (frameCount) {
+        case FrameCount.firstLast:
+          segments.add([all.first, all.last]);
+          break;
+        case FrameCount.even:
+          segments.add(all.where((idx) => idx % 2 == 0).toList());
+          break;
+        case FrameCount.odd:
+          segments.add(all.where((idx) => idx % 2 != 0).toList());
+          break;
+        case FrameCount.all:
+          segments.add(all);
+          break;
+      }
+    }
+    return segments;
+  }
+}
+
+enum FrameCount {
+  all,
+  even,
+  odd,
+  firstLast
 }
 
 class Thumbnail {

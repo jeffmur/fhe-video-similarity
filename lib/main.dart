@@ -67,12 +67,12 @@ class _MyAppState extends State<MyApp> {
                             Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Text("Duration: ${images[idx].video.duration.inSeconds} seconds"),
-                              Text("Created: ${images[idx].video.created.toLocal()}"),
+                              Text("Created: ${images[idx].video.created}"),
                               ButtonBar(
                                 children: [
                                   IconButton(
                                     icon: const Icon(Icons.compare_outlined),
-                                    onPressed: () => m.preprocessVideo(images[idx].video, PreprocessType.size)
+                                    onPressed: () => m.preprocessVideo(images[idx].video, PreprocessType.sso)
                                   ),
                                 ]
                             )]),
