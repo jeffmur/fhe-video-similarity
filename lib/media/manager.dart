@@ -96,9 +96,6 @@ class Manager {
     XFileStorage storage = XFileStorage.fromBytes(parentDirectory, "$filename.$extension", bytes);
 
     await storage.write();
-
-    print('Wrote new media at: $parentDirectory/$filename');
-
     return storage;
   }
 
@@ -127,7 +124,7 @@ class Manager {
 
   Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) async {
     final parentDir = await video.sha256(chars: 8);
-    final filename = metaFilename(video, DateTime.now());
+    final filename = metaFilename(video, video.created);
     final content = preprocessVideo(video, type);
 
     final List<List<int>> bytes = content['bytes'];

@@ -53,8 +53,7 @@ class XFileStorage extends ApplicationStorage {
   }
 
   Future<File> write() async {
-    Directory parent = await Directory(await super.path).create();
-    print('Wrote parent directory: ${parent.path}');
+    await Directory(await super.path).create(); // If needed
     final file = await this.file;
     return file.writeAsBytes(await xfile.readAsBytes());
   }

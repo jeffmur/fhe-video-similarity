@@ -159,8 +159,6 @@ class Video extends ExistingMedia {
     var frames = <Uint8List>[];
     int length = frameIds.length; // Number of frames to extract
 
-    print("$frameIds of $endFrame frames");
-
     // Create a copy of the video to not interfere with the original
     final copy = cv.VideoCapture.fromFile(file.path);
 
