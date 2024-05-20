@@ -68,6 +68,8 @@ Iterable<T> flatten<T>(Iterable<Iterable<T>> items) sync* {
 
 /// Normalize the array by the sum of the elements by element
 /// 
+/// Returns a list of normalized values, whose sum equals 1
+///
 List<double> normalizeSumOfElements(List<int> values) {
   // Find the sum of the values
   final sum = values.reduce((value, element) => value + element);
