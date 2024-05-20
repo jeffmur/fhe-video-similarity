@@ -1,0 +1,31 @@
+# A workflow to test the Flutter application.
+
+name: Test 🧪
+
+on: push
+  # push:
+  #   branches-ignore:
+  #     - main
+
+
+jobs:
+  smoke-test:
+    name: Unit 📦
+    strategy:
+      matrix:
+        os: [ ubuntu-latest ] # , macos-latest, windows-latest ]
+        flutter-version: [ 3.19.6 ]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ matrix.flutter-version }}
+
+      - run: flutter pub get
+      - run: flutter test
+      - run: flutter build apk # Android
