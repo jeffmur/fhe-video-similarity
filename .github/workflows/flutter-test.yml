@@ -9,8 +9,8 @@ on: push
 
 
 jobs:
-  smoke-test:
-    name: Unit 📦
+  flutter-test:
+    name: Flutter 📦
     strategy:
       matrix:
         os: [ ubuntu-latest ] # , macos-latest, windows-latest ]
