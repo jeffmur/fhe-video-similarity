@@ -5,6 +5,7 @@ import 'dart:io';
 import 'uploader.dart';
 import 'storage.dart';
 import 'processor.dart';
+import 'cache.dart' show manifest;
 import 'primatives.dart' show Video, Thumbnail, opencvInfo;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
@@ -91,13 +92,13 @@ class Manager {
     return stored;
   }
 
-  Future<XFileStorage> storeNewMedia(List<int> bytes, String parentDirectory, String filename, {String extension="txt"}) async {
+  // Future<XFileStorage> storeNewMedia(List<int> bytes, String parentDirectory, String filename, {String extension="txt"}) async {
 
-    XFileStorage storage = XFileStorage.fromBytes(parentDirectory, "$filename.$extension", bytes);
+  //   XFileStorage storage = XFileStorage.fromBytes(parentDirectory, "$filename.$extension", bytes);
 
-    await storage.write();
-    return storage;
-  }
+  //   await storage.write();
+  //   return storage;
+  // }
 
   Future<String> workingDirectory(Video video, DateTime timestamp) async {
     final parentDir = await video.sha256(chars: 8);
@@ -114,7 +115,7 @@ class Manager {
     final content = jsonEncode(stats).codeUnits;
     final pwd = await workingDirectory(video, timestamp);
     
-    return storeNewMedia(content, pwd, "meta", extension: "json");
+    return manifest.write(content, pwd, "meta.json");
   }
 
   /// Store the thumbnail for the video
@@ -122,7 +123,7 @@ class Manager {
   Future<XFileStorage> storeThumbnail(Thumbnail thumbnail) async {
     final pwd = await workingDirectory(thumbnail.video, thumbnail.video.created);
     final bytes = thumbnail.buffer.toList();
-    return storeNewMedia(bytes, pwd, "thumbnail", extension: "jpg");
+    return manifest.write(bytes, pwd, "thumbnail.jpg");
   }
 
   /// Preprocess the video
@@ -148,7 +149,7 @@ class Manager {
       rows.add(data);
     }
 
-    return storeNewMedia(csv.convert(rows).codeUnits, pwd, type.name, extension: "csv");
+    return manifest.write(csv.convert(rows).codeUnits, pwd, "${type.name}.csv");
 
   }
   
