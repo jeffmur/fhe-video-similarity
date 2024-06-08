@@ -51,7 +51,16 @@ class _SelectableGridState extends State<SelectableGrid> {
               widget.items[idx].widget,
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 Text("Duration: ${widget.items[idx].video.duration}"),
-                Text("Created: ${widget.items[idx].video.created.toLocal()}")
+                Text("Created: ${widget.items[idx].video.created.toLocal()}"),
+                ButtonBar(children: [
+                  IconButton(
+                    icon: const Icon(Icons.compare_outlined),
+                    onPressed: () {
+                      m.storeProcessedVideoCSV(widget.items[idx].video, PreprocessType.sso);
+                    }
+                  ),
+                ]
+            ),
               ])
             ]));
           }),
@@ -64,7 +73,11 @@ class _SelectableGridState extends State<SelectableGrid> {
                     const SizedBox(height: 10),
                     _selectImages(_selected, widget.items, context),
                   ]
-                : [_upload(m, context, widget.items, refreshState)]));
+                : [
+                    _upload(m, context, widget.items, refreshState)
+                  ]
+        )
+    );
   }
 }
 
@@ -76,15 +89,15 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> images,
     final video = Video(stored.xfile, timestamp,
         start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
 
-    final meta = await m.storeVideoMetadata(video, timestamp);
+    final meta = await m.storeVideoMetadata(video);
     print("Wrote metafile: ${meta.name}");
-
-    Thumbnail frame0 = Thumbnail(video, 0);
+    
+    final frame0 = Thumbnail(video, 0);
+    final thumbnail = await m.storeThumbnail(frame0);
+    print("Wrote thumbnail: ${thumbnail.name}");
     images.add(frame0);
 
     setParentState();
-    // Thumbnail frame1 = Thumbnail(video, 1);
-    // images.add(frame1);
   });
 }
 

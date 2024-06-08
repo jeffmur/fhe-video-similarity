@@ -5,7 +5,7 @@ import 'dart:io';
 import 'uploader.dart';
 import 'storage.dart';
 import 'processor.dart';
-import 'primatives.dart' show Video, opencvInfo;
+import 'primatives.dart' show Video, Thumbnail, opencvInfo;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
@@ -99,22 +99,30 @@ class Manager {
     return storage;
   }
 
-  String metaFilename(Video video, DateTime timestamp) {
-    return '${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
+  Future<String> workingDirectory(Video video, DateTime timestamp) async {
+    final parentDir = await video.sha256(chars: 8);
+    return '$parentDir/${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
   }
 
   /// Store the metadata for the video
   ///
-  Future<XFileStorage> storeVideoMetadata(Video video, DateTime timestamp) async {
+  Future<XFileStorage> storeVideoMetadata(Video video) async {
     Map stats = video.stats;
+    final timestamp = video.created;
     stats['timestamp'] = timestamp.toString();
     // convert stats to Uint8List
     final content = jsonEncode(stats).codeUnits;
-
-    final parentDir = await video.sha256(chars: 8);
-    final filename = metaFilename(video, timestamp);
+    final pwd = await workingDirectory(video, timestamp);
     
-    return storeNewMedia(content, parentDir, filename, extension: "json");
+    return storeNewMedia(content, pwd, "meta", extension: "json");
+  }
+
+  /// Store the thumbnail for the video
+  ///
+  Future<XFileStorage> storeThumbnail(Thumbnail thumbnail) async {
+    final pwd = await workingDirectory(thumbnail.video, thumbnail.video.created);
+    final bytes = thumbnail.buffer.toList();
+    return storeNewMedia(bytes, pwd, "thumbnail", extension: "jpg");
   }
 
   /// Preprocess the video
@@ -123,8 +131,7 @@ class Manager {
   }
 
   Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) async {
-    final parentDir = await video.sha256(chars: 8);
-    final filename = metaFilename(video, video.created);
+    final pwd = await workingDirectory(video, video.created);
     final content = preprocessVideo(video, type);
 
     final List<List<int>> bytes = content['bytes'];
@@ -141,7 +148,7 @@ class Manager {
       rows.add(data);
     }
 
-    return storeNewMedia(csv.convert(rows).codeUnits, parentDir, filename, extension: "csv");
+    return storeNewMedia(csv.convert(rows).codeUnits, pwd, type.name, extension: "csv");
 
   }
   

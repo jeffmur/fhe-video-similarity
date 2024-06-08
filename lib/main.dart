@@ -44,7 +44,7 @@ class _MyAppState extends State<MyApp> {
               start: Duration(seconds: trimStart),
               end: Duration(seconds: trimEnd));
 
-          final meta = await m.storeVideoMetadata(video, timestamp);
+          final meta = await m.storeVideoMetadata(video);
           print("Wrote metafile: ${meta.name}");
 
           Thumbnail frame0 = Thumbnail(video, 0);
