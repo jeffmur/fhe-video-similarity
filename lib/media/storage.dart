@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
+export 'package:image_picker/image_picker.dart' show XFile;
+
 /// A class that provides a template to store data.
 /// 
 /// Provide a shared template to interface with asynchronous file operations.

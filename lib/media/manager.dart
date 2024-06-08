@@ -114,14 +114,11 @@ class Manager {
     return manifest.write(bytes, pwd, "thumbnail.jpg");
   }
 
-  /// Preprocess the video
-  Map preprocessVideo(Video video, PreprocessType type) {
-    return NormalizedByteArray(type).preprocess(video);
-  }
-
+  /// Store the processed video as a CSV file
+  ///
   Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) async {
     final pwd = await workingDirectory(video, video.created);
-    final content = preprocessVideo(video, type);
+    final content = NormalizedByteArray(type).preprocess(video);
 
     final List<List<int>> bytes = content['bytes'];
     final List<List<double>> normalized = content['normalized'];

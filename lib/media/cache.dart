@@ -44,7 +44,24 @@ class Manifest {
   // List of cached media files
   Map<String, dynamic> _media = {};
 
-  Map<String, dynamic> get hashmap => _media;
+  Map<String, dynamic> get map => _media;
+
+  /// Read the manifest from the cache
+  ///
+  Future<void> initAsync() async {
+    ApplicationStorage storage = ApplicationStorage('manifest.json');
+    XFile manifest = XFile(await storage.path);
+    final ctx = await manifest.readAsString();
+    if (ctx.isNotEmpty) {
+      _media = jsonDecode(ctx);
+    }
+  }
+
+  void init() {
+    initAsync().then(
+      (_) => print('Manifest initialized: $_media')
+    );
+  }
 
   /// Add a media file to the manifest
   /// 

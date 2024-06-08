@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
+import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
 
 class SelectableGrid extends StatefulWidget {
   List<Thumbnail> items;
@@ -28,6 +29,7 @@ class _SelectableGridState extends State<SelectableGrid> {
   @override
   Widget build(BuildContext context) {
     Manager m = Manager();
+    manifest.init();
     return Scaffold(
         appBar: AppBar(
           title: const Text('GhostPeerShare'),
