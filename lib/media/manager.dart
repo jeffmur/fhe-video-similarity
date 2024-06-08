@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:csv/csv.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'uploader.dart';
 import 'storage.dart';
@@ -8,6 +10,7 @@ import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
 export 'primatives.dart' show Video, Thumbnail;
+export 'processor.dart' show PreprocessType;
 
 enum MediaType { video }
 
@@ -93,10 +96,11 @@ class Manager {
     XFileStorage storage = XFileStorage.fromBytes(parentDirectory, "$filename.$extension", bytes);
 
     await storage.write();
-
-    print('Wrote new media at: $parentDirectory/$filename');
-
     return storage;
+  }
+
+  String metaFilename(Video video, DateTime timestamp) {
+    return '${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
   }
 
   /// Store the metadata for the video
@@ -105,12 +109,40 @@ class Manager {
     Map stats = video.stats;
     stats['timestamp'] = timestamp.toString();
     // convert stats to Uint8List
-    final content = stats.toString().codeUnits;
+    final content = jsonEncode(stats).codeUnits;
 
     final parentDir = await video.sha256(chars: 8);
-    final filename = '${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
+    final filename = metaFilename(video, timestamp);
     
-    return storeNewMedia(content, parentDir, filename, extension: "meta");
+    return storeNewMedia(content, parentDir, filename, extension: "json");
+  }
+
+  /// Preprocess the video
+  Map preprocessVideo(Video video, PreprocessType type) {
+    return NormalizedByteArray(type).preprocess(video);
+  }
+
+  Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) async {
+    final parentDir = await video.sha256(chars: 8);
+    final filename = metaFilename(video, video.created);
+    final content = preprocessVideo(video, type);
+
+    final List<List<int>> bytes = content['bytes'];
+    final List<List<double>> normalized = content['normalized'];
+    final List<DateTime> timestamps = content['timestamps'];
+
+    // Translate to CSV rows
+    ListToCsvConverter csv = const ListToCsvConverter();
+
+    List<List<dynamic>> rows = [['index', 'timestamp', 'normalized', 'byte']];
+
+    for (var i = 0; i < bytes.length; i++) {
+      List<dynamic> data = [i, timestamps[i].toString(), normalized[i], bytes[i]];
+      rows.add(data);
+    }
+
+    return storeNewMedia(csv.convert(rows).codeUnits, parentDir, filename, extension: "csv");
+
   }
   
 }

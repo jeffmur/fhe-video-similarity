@@ -68,15 +68,20 @@ class _MyAppState extends State<MyApp> {
                             child: Column(
                           children: [
                             images[idx].widget,
-                            Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                            Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Text("Duration: ${images[idx].video.duration.inSeconds} seconds"),
+                              Text("Created: ${images[idx].video.created}"),
+                              ButtonBar(
                                 children: [
-                                  Text(
-                                      "Duration: ${images[idx].video.duration.inSeconds} seconds"),
-                                  Text(
-                                      "Created: ${images[idx].video.created.toLocal()}")
-                                ]),
+                                  IconButton(
+                                    icon: const Icon(Icons.compare_outlined),
+                                    onPressed: () {
+                                      m.storeProcessedVideoCSV(images[idx].video, PreprocessType.sso);
+                                    }
+                                  ),
+                                ]
+                            )]),
                           ],
                         )),
                       ),

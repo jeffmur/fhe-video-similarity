@@ -51,16 +51,14 @@ class Video extends ExistingMedia {
     printStats(); // TODO: Remove
   }
 
-  Map get stats => {
+  Map<String,String> get stats => {
     'codec': video.codec,
-    'fps': video.get(cv.CAP_PROP_FPS),
-    'frameCount': totalFrames,
-    'duration': duration,
-    'startFrame': startFrame,
-    'endFrame': endFrame,
+    'fps': video.get(cv.CAP_PROP_FPS).toString(),
+    'frameCount': "$totalFrames",
+    'duration': duration.toString(),
+    'startFrame': "$startFrame",
+    'endFrame': "$endFrame",
   };
-
-  Future<String> sha256({chars=16}) async => await sha256ofFileAsString(file.path, 8);
 
   void printStats() {
     print('--- Video Information ---');
@@ -72,7 +70,10 @@ class Video extends ExistingMedia {
     // print(' * Last Accessed: ${accessed.toLocal()}');
   }
 
-  Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ video.get(cv.CAP_PROP_FPS));
+  Future<String> sha256({chars=16}) async => await sha256ofFileAsString(file.path, 8);
+
+  int get fps => video.get(cv.CAP_PROP_FPS).toInt();
+  Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ fps);
 
   /// Get the OpenCV API preference based on the platform
   ///
@@ -156,37 +157,85 @@ class Video extends ExistingMedia {
      cv.ImageFormat frameFormat = cv.ImageFormat.png}
   ) {
     var frames = <Uint8List>[];
-    int length = frameIds.length; // Length of the video
-
-    // Adjust the frameIds to the startFrame
-    frameIds = frameIds.map((idx) => idx + startFrame).toList();
+    int length = frameIds.length; // Number of frames to extract
 
     // Create a copy of the video to not interfere with the original
     final copy = cv.VideoCapture.fromFile(file.path);
 
     // Iterate through the video and extract the frames
     if (copy.isOpened & (length > 0)) {
-      var count = 0;
+      var idx = 0;
       var (success, image) = copy.read();
-      while (success) {
-        // Break if the endFrame is reached
-        if (count > endFrame) { break; }
-        // Skip if the frame is selected
-        if (frameIds.contains(count)) {
-          print("[videoFrames] Reading Frame $count");
+      while (success && idx <= endFrame) {
+        // Read when the frame is selected
+        if (frameIds.contains(idx)) {
+          print("[videoFrames] Reading Frame $idx");
           frames.add(
             cv.imencode(frameFormat.ext, image), // Mat -> Uint8List
           );
         }
         (success, image) = copy.read();
-        count += 1;
+        idx += 1;
       }
+      print('[videoFrames] end of video: $idx');
     }
     // Clear the video buffer
     copy.release();
     print("[frames] Extracted ${frames.length} frames");
     return frames;
   }
+
+  /// Extract frames from the video within a range
+  ///
+  List<Uint8List> framesFromRange(int start, int end) {
+    return frames(frameIds: List<int>.generate(end - start, (i) => i + start));
+  }
+
+  /// Estimate the timestamps at the start of each segment
+  ///
+  List<DateTime> timestampsFromSegment(Video video, Duration segmentDuration) {
+    List<DateTime> segments = [];
+    for (int i = startFrame; i < endFrame; i += segmentDuration.inSeconds * fps) {
+      segments.add(created.add(Duration(seconds: i ~/ fps)));
+    }
+    return segments;
+  }
+
+  /// Generate ranges of frame indices based on the [segmentDuration]
+  /// 
+  List<List<int>> frameIndexFromSegment(Duration segmentDuration, {FrameCount frameCount = FrameCount.firstLast}) {
+    List<List<int>> segments = [];
+    int segment = segmentDuration.inSeconds * fps;
+
+    for (int i = startFrame; i < endFrame; i += segment) {
+      // Drop all values greater than the end frame
+      var inc = List<int>.generate(segment, (inc) => i + inc);
+      var all = inc.where((idx) => idx <= endFrame).toList();
+
+      switch (frameCount) {
+        case FrameCount.firstLast:
+          segments.add([all.first, all.last]);
+          break;
+        case FrameCount.even:
+          segments.add(all.where((idx) => idx % 2 == 0).toList());
+          break;
+        case FrameCount.odd:
+          segments.add(all.where((idx) => idx % 2 != 0).toList());
+          break;
+        case FrameCount.all:
+          segments.add(all);
+          break;
+      }
+    }
+    return segments;
+  }
+}
+
+enum FrameCount {
+  all,
+  even,
+  odd,
+  firstLast
 }
 
 class Thumbnail {
