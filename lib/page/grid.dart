@@ -85,9 +85,12 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> images,
     Function setParentState) {
   return m.floatingSelectMediaFromGallery(MediaType.video, context,
       (vid, timestamp, trimStart, trimEnd) async {
-    final stored = await m.storeVideo(vid);
-    final video = Video(stored.xfile, timestamp,
-        start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
+    final raw = await m.storeRawVideo(vid, timestamp);
+    print("Wrote video: ${raw.name}");
+    final video = Video(
+      raw.xfile, timestamp,
+      start: Duration(seconds: trimStart),
+      end: Duration(seconds: trimEnd));
 
     final meta = await m.storeVideoMetadata(video);
     print("Wrote metafile: ${meta.name}");

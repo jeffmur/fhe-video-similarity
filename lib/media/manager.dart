@@ -63,46 +63,34 @@ class Manager {
     }
   }
 
-  /// Store the video file
-  /// 
-  /// Store the video file in the application directory, and compute the SHA-256 hash of the file.
-  /// The first 8 characters of the hash are used as the parent directory.
-  ///
-  Future<XFileStorage> storeVideo(XFile video) async {
-    final sha = await sha256ofFileAsString(video.path, 8);
-    final ext = video.path.split('.').last;
-    return storeMediaFromXFile(sha, 'raw.$ext', video);
-  }
-
-  /// Cache the media file nested the parent key
-  ///
-  Future<XFileStorage> storeMediaFromXFile(String parentDirectory, String filename, XFile media) async {
-    final stored = XFileStorage(parentDirectory, filename, media);
-
-    // Check if the media is already stored
-    if (await stored.exists()) {
-      print('Media already stored at: ${await stored.path}');
-      return stored;
-    }
-    File atRest = await stored.write();
-    DateTime lastAccessed = await media.lastModified();
-    atRest.setLastAccessedSync(lastAccessed);
-
-    print('Stored media at: ${atRest.path}');
-    return stored;
-  }
-
-  // Future<XFileStorage> storeNewMedia(List<int> bytes, String parentDirectory, String filename, {String extension="txt"}) async {
-
-  //   XFileStorage storage = XFileStorage.fromBytes(parentDirectory, "$filename.$extension", bytes);
-
-  //   await storage.write();
-  //   return storage;
-  // }
-
   Future<String> workingDirectory(Video video, DateTime timestamp) async {
     final parentDir = await video.sha256(chars: 8);
     return '$parentDir/${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
+  }
+
+  /// Store the raw video file for processing
+  /// 
+  Future<XFileStorage> storeRawVideo(XFile video, DateTime timestamp) async {
+    final sha = await sha256ofFileAsString(video.path, 8);
+    final ext = video.path.split('.').last;
+    final stored = XFileStorage(sha, '${timestamp.millisecondsSinceEpoch}.$ext', video);
+
+    // Add the media to the manifest
+    manifest.add(sha, stored.name);
+
+    // Check if the media is already stored
+    if (await stored.exists()) {
+      print('Video already exists at: ${await stored.path}');
+      return stored;
+    }
+    File atRest = await stored.write();
+
+    // Trust the desired timestamp
+    atRest.setLastModifiedSync(timestamp);
+    atRest.setLastAccessedSync(timestamp);
+
+    print('Wrote media at: ${atRest.path}');
+    return stored;
   }
 
   /// Store the metadata for the video

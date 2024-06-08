@@ -56,9 +56,6 @@ String formatDateTime(DateTime dateTime) {
          '${dateTime.hour.toString().padLeft(2, '0')}:'
          '${dateTime.minute.toString().padLeft(2, '0')}:'
          '${dateTime.second.toString().padLeft(2, '0')}Z';
-
-
-  //return '${dateTime.year}-${dateTime.month}-${dateTime.day}T${dateTime.hour}:${dateTime.minute}:${dateTime.second}Z';
 }
 
 /// Prompt the user to add context to the video.
@@ -71,7 +68,7 @@ Future<void> videoContextDialog(
   TextEditingController videoStartDateTimeController = TextEditingController();
   // TextEditingController videoTrimStartController = TextEditingController();
   // TextEditingController videoTrimEndController = TextEditingController();
-  DateTime timestamp = DateTime.now();
+  DateTime timestamp = DateTime.now().toUtc();
   int trimStart = 0;
   int trimEnd = 0;
   await
@@ -90,9 +87,9 @@ Future<void> videoContextDialog(
                 decoration: const InputDecoration(
                   icon: Icon(Icons.calendar_today),
                   labelText: "YYYY-MM-DDTHH:MM:SSZ",
-                  hintText: "Enter the date and time the video was taken",
+                  hintText: "UTC Date and Time the video was taken",
                 ),
-                onSaved: (String? value) => timestamp = DateTime.parse(value!),
+                onSaved: (String? value) => timestamp = DateTime.parse(value!).toLocal(),
                 validator: (String? value) {
                   if (value == null || value.isEmpty) {
                     return 'Required field';
@@ -106,15 +103,15 @@ Future<void> videoContextDialog(
               ButtonBar(
                 children: <Widget>[
                   TextButton(
-                    onPressed: () => videoStartDateTimeController.text = formatDateTime(DateTime.now()),
+                    onPressed: () => videoStartDateTimeController.text = formatDateTime(timestamp),
                     child: const Text('Now'),
                   ),
                   TextButton(
-                    onPressed: () => videoStartDateTimeController.text = formatDateTime(DateTime.now().subtract(const Duration(hours: 1))),
+                    onPressed: () => videoStartDateTimeController.text = formatDateTime(timestamp.subtract(const Duration(hours: 1))),
                     child: const Text('Last Hour'),
                   ),
                   TextButton(
-                    onPressed: () => videoStartDateTimeController.text = formatDateTime(DateTime.now().subtract(const Duration(days: 1))),
+                    onPressed: () => videoStartDateTimeController.text = formatDateTime(timestamp.subtract(const Duration(days: 1))),
                     child: const Text('Yesterday'),
                   ),
                 ],
