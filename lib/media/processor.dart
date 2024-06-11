@@ -1,15 +1,9 @@
-import 'dart:io';
-
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
-import 'primatives.dart';
+import 'video.dart';
 
-Future<Digest> sha256ofFile(String path) =>
-    File(path).openRead().transform(sha256).first;
-
-Future<String> sha256ofFileAsString(String path, int chars) async {
-  final hash = await sha256ofFile(path);
-  return hash.toString().substring(0, chars);
-}
+String sha256ofBytes(Uint8List bytes, int chars) =>
+    sha256.convert(bytes).toString().substring(0, chars);
 
 enum PreprocessType {
   sso, // https://faculty.washington.edu/lagesse/publications/SSO.pdf

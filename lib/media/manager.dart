@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
-import 'dart:convert';
-import 'dart:io';
 import 'uploader.dart';
 import 'storage.dart';
 import 'processor.dart';
 import 'cache.dart' show manifest;
-import 'primatives.dart' show Video, Thumbnail, opencvInfo;
+import 'primatives.dart' show opencvInfo;
+import 'video.dart' show Video;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
-export 'primatives.dart' show Video, Thumbnail;
+export 'video.dart' show Video, Thumbnail;
 export 'processor.dart' show PreprocessType;
 
 enum MediaType { video }
@@ -63,57 +62,6 @@ class Manager {
     }
   }
 
-  Future<String> workingDirectory(Video video, DateTime timestamp) async {
-    final parentDir = await video.sha256(chars: 8);
-    return '$parentDir/${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
-  }
-
-  /// Store the raw video file for processing
-  /// 
-  Future<XFileStorage> storeRawVideo(XFile video, DateTime timestamp) async {
-    final sha = await sha256ofFileAsString(video.path, 8);
-    final ext = video.path.split('.').last;
-    final stored = XFileStorage(sha, '${timestamp.millisecondsSinceEpoch}.$ext', video);
-
-    // Add the media to the manifest
-    manifest.add(sha, stored.name);
-
-    // Check if the media is already stored
-    if (await stored.exists()) {
-      print('Video already exists at: ${await stored.path}');
-      return stored;
-    }
-    File atRest = await stored.write();
-
-    // Trust the desired timestamp
-    atRest.setLastModifiedSync(timestamp);
-    atRest.setLastAccessedSync(timestamp);
-
-    print('Wrote media at: ${atRest.path}');
-    return stored;
-  }
-
-  /// Store the metadata for the video
-  ///
-  Future<XFileStorage> storeVideoMetadata(Video video) async {
-    Map stats = video.stats;
-    final timestamp = video.created;
-    stats['timestamp'] = timestamp.toString();
-    // convert stats to Uint8List
-    final content = jsonEncode(stats).codeUnits;
-    final pwd = await workingDirectory(video, timestamp);
-    
-    return manifest.write(content, pwd, "meta.json");
-  }
-
-  /// Store the thumbnail for the video
-  ///
-  Future<XFileStorage> storeThumbnail(Thumbnail thumbnail) async {
-    final pwd = await workingDirectory(thumbnail.video, thumbnail.video.created);
-    final bytes = thumbnail.buffer.toList();
-    return manifest.write(bytes, pwd, "thumbnail.jpg");
-  }
-
   // Future<Thumbnail> loadThumbnail(Video video) async {
   //   final pwd = await workingDirectory(video, video.created);
   //   final bytes = await manifest.read(pwd, "thumbnail.jpg");
@@ -122,8 +70,7 @@ class Manager {
 
   /// Store the processed video as a CSV file
   ///
-  Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) async {
-    final pwd = await workingDirectory(video, video.created);
+  Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) {
     final content = NormalizedByteArray(type).preprocess(video);
 
     final List<List<int>> bytes = content['bytes'];
@@ -140,7 +87,7 @@ class Manager {
       rows.add(data);
     }
 
-    return manifest.write(csv.convert(rows).codeUnits, pwd, "${type.name}.csv");
+    return manifest.write(csv.convert(rows).codeUnits, video.pwd, "${type.name}.csv");
 
   }
   

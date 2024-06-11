@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
+import 'package:flutter_fhe_video_similarity/media/video.dart' show Video, Thumbnail;
 
 class SelectableGrid extends StatefulWidget {
 
@@ -13,12 +14,12 @@ class SelectableGrid extends StatefulWidget {
 class _SelectableGridState extends State<SelectableGrid> {
   List<bool> _selected = [];
   bool _allowMultiSelect = false;
-  List<Thumbnail> items = [];
+  List<Thumbnail> render = [];
 
   @override
   void initState() {
     super.initState();
-    _selected = List.filled(items.length, false);
+    _selected = List.filled(render.length, false);
   }
 
   void refreshState() {
@@ -61,18 +62,26 @@ class _SelectableGridState extends State<SelectableGrid> {
         ),
         body: GridView.count(
           crossAxisCount: 2,
-          children: List.generate(items.length, (idx) {
+          children: List.generate(render.length, (idx) {
             return GridTile(
                 child: Column(children: [
-              items[idx].widget,
+              FutureBuilder<Widget>(
+                  future: render[idx].widget,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      return snapshot.data!;
+                    } else {
+                      return const CircularProgressIndicator();
+                    }
+              }),
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                Text("Duration: ${items[idx].video.duration}"),
-                Text("Created: ${items[idx].video.created.toLocal()}"),
+                Text("Duration: ${render[idx].video.duration}"),
+                Text("Created: ${render[idx].video.created.toLocal()}"),
                 ButtonBar(children: [
                   IconButton(
                     icon: const Icon(Icons.compare_outlined),
                     onPressed: () {
-                      m.storeProcessedVideoCSV(items[idx].video, PreprocessType.sso);
+                      m.storeProcessedVideoCSV(render[idx].video, PreprocessType.sso);
                     }
                   ),
                 ]
@@ -85,37 +94,46 @@ class _SelectableGridState extends State<SelectableGrid> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: _allowMultiSelect
                 ? [
-                    _upload(m, context, items, refreshState),
+                    _upload(m, context, render, refreshState),
                     const SizedBox(height: 10),
-                    _selectImages(_selected, items, context),
+                    _selectImages(_selected, render, context),
                   ]
                 : [
-                    _upload(m, context, items, refreshState)
+                    _upload(m, context, render, refreshState)
                   ]
         )
     );
   }
 }
 
-Widget _upload(Manager m, BuildContext context, List<Thumbnail> images,
-    Function setParentState) {
+Widget _upload(Manager m, BuildContext context, List<Thumbnail> render, Function setParentState) {
   return m.floatingSelectMediaFromGallery(MediaType.video, context,
-      (vid, timestamp, trimStart, trimEnd) async {
-    final raw = await m.storeRawVideo(vid, timestamp);
-    print("Wrote video: ${raw.name}");
+    (xfile, timestamp, trimStart, trimEnd) async {
+
+    // Cache the video + metadata
+    // Target: /{sha256}/{start}-{end}-{timestamp}/raw.mp4
     final video = Video(
-      raw.xfile, timestamp,
+      xfile, timestamp,
       start: Duration(seconds: trimStart),
       end: Duration(seconds: trimEnd));
 
-    final meta = await m.storeVideoMetadata(video);
-    print("Wrote metafile: ${meta.name}");
-    
-    final frame0 = Thumbnail(video, 0);
-    final thumbnail = await m.storeThumbnail(frame0);
-    print("Wrote thumbnail: ${thumbnail.name}");
-    images.add(frame0);
+    video.cache();
 
+    // Store the video metadata
+    // Target: /{sha256}/{start}-{end}-{timestamp}/meta.json
+    // final meta = await m.storeVideoMetadata(video);
+    // print("Wrote metafile: ${meta.name}");
+
+    // Store the thumbnail
+    // Target: /{sha256}/{start}-{end}-{timestamp}/thumbnail.png
+    final frame0 = Thumbnail(video, 0);
+
+    frame0.cache();
+    // final thumbnail = await m.storeThumbnail(frame0);
+    // print("Wrote thumbnail: ${thumbnail.name}");
+
+    // Add the thumbnail to the render list
+    render.add(frame0);
     setParentState();
   });
 }
