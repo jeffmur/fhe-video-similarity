@@ -3,9 +3,8 @@ import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
 
 class SelectableGrid extends StatefulWidget {
-  List<Thumbnail> items;
 
-  SelectableGrid({Key? key, required this.items}) : super(key: key);
+  SelectableGrid({Key? key}) : super(key: key);
 
   @override
   State<SelectableGrid> createState() => _SelectableGridState();
@@ -14,11 +13,12 @@ class SelectableGrid extends StatefulWidget {
 class _SelectableGridState extends State<SelectableGrid> {
   List<bool> _selected = [];
   bool _allowMultiSelect = false;
+  List<Thumbnail> items = [];
 
   @override
   void initState() {
     super.initState();
-    _selected = List.filled(widget.items.length, false);
+    _selected = List.filled(items.length, false);
   }
 
   void refreshState() {
@@ -36,6 +36,20 @@ class _SelectableGridState extends State<SelectableGrid> {
           actions: [
             Row(
               children: [
+                const Text('Load'),
+                ButtonBar(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        // items = m.loadThumbnails();
+                        print(manifest.map.keys.toList());
+                        refreshState();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 10),
                 const Text('Select'),
                 Checkbox(
                   value: _allowMultiSelect,
@@ -47,18 +61,18 @@ class _SelectableGridState extends State<SelectableGrid> {
         ),
         body: GridView.count(
           crossAxisCount: 2,
-          children: List.generate(widget.items.length, (idx) {
+          children: List.generate(items.length, (idx) {
             return GridTile(
                 child: Column(children: [
-              widget.items[idx].widget,
+              items[idx].widget,
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                Text("Duration: ${widget.items[idx].video.duration}"),
-                Text("Created: ${widget.items[idx].video.created.toLocal()}"),
+                Text("Duration: ${items[idx].video.duration}"),
+                Text("Created: ${items[idx].video.created.toLocal()}"),
                 ButtonBar(children: [
                   IconButton(
                     icon: const Icon(Icons.compare_outlined),
                     onPressed: () {
-                      m.storeProcessedVideoCSV(widget.items[idx].video, PreprocessType.sso);
+                      m.storeProcessedVideoCSV(items[idx].video, PreprocessType.sso);
                     }
                   ),
                 ]
@@ -71,12 +85,12 @@ class _SelectableGridState extends State<SelectableGrid> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: _allowMultiSelect
                 ? [
-                    _upload(m, context, widget.items, refreshState),
+                    _upload(m, context, items, refreshState),
                     const SizedBox(height: 10),
-                    _selectImages(_selected, widget.items, context),
+                    _selectImages(_selected, items, context),
                   ]
                 : [
-                    _upload(m, context, widget.items, refreshState)
+                    _upload(m, context, items, refreshState)
                   ]
         )
     );

@@ -114,6 +114,12 @@ class Manager {
     return manifest.write(bytes, pwd, "thumbnail.jpg");
   }
 
+  // Future<Thumbnail> loadThumbnail(Video video) async {
+  //   final pwd = await workingDirectory(video, video.created);
+  //   final bytes = await manifest.read(pwd, "thumbnail.jpg");
+  //   return Thumbnail.fromBytes(video, bytes);
+  // }
+
   /// Store the processed video as a CSV file
   ///
   Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) async {

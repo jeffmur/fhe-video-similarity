@@ -41,7 +41,7 @@ class Manifest {
 
   Manifest._internal();
 
-  // List of cached media files
+  /// List of cached media files
   Map<String, dynamic> _media = {};
 
   Map<String, dynamic> get map => _media;
@@ -79,6 +79,36 @@ class Manifest {
 
     print('Added to manifest: $_media');
     
+  }
+
+  /// Read the media from the cache
+  ///
+  /// [filename] must include appropriate extension
+  ///
+  Future<List<int>> read(String pwd, String filename) async {
+    // Path to working directory (pwd) may contain nested paths
+    final paths = pwd.split('/');
+
+    // Extract the file extension
+    final file = filename.split('.').first;
+    final ext = filename.split('.').last;
+
+    // Traverse the manifest to find the media
+    Map<String, dynamic> tmp = _media;
+    for (final path in paths) {
+      if (tmp[path] is Map) {
+        tmp = tmp[path];
+      } else {
+        throw Exception('Path not found: $path');
+      }
+    }
+
+    // Retrieve the media
+    if (tmp[file] == ext) {
+      return tmp[file];
+    } else {
+      throw Exception('File not found: $file.$ext');
+    }
   }
 
   /// Write the media [bytes] to the cache
