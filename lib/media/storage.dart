@@ -54,6 +54,10 @@ class XFileStorage extends ApplicationStorage {
     return File(await path);
   }
 
+  Future<Uint8List> readAsBytes() async {
+    return await xfile.readAsBytes();
+  }
+
   Future<File> write() async {
     await Directory(await super.path).create(recursive: true); // If needed
     final file = await this.file;

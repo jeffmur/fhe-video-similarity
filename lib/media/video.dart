@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
+import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
@@ -244,12 +245,12 @@ class Video extends UploadedMedia {
   ///
   /// A thumbnail is generated from the frame at [frameIdx] of the video.
   ///
-  Image thumbnail([frameIdx = 0]) {
+  Image thumbnail(String filename, [frameIdx = 0]) {
 
     Uint8List frameFromIndex = frames(frameIds: [frameIdx]).first;
     Uint8List resizedFrame = resize(frameFromIndex, cv.ImageFormat.jpg, 500, 500);
 
-    return Image.fromBytes(resizedFrame, created, xfile.path, "thumbnail.jpg");
+    return Image.fromBytes(resizedFrame, created, xfile.path, filename);
   }
 }
 
@@ -260,20 +261,25 @@ class Thumbnail {
   Video video;
   int frameIdx;
   bool isCached = false;
+  String filename = "thumbnail.jpg";
 
   Thumbnail(this.video, this.frameIdx);
 
-  Image get image =>
-    // (isCached) ? Image.fromBytes(, video.created, video.xfile.path, "thumbnail.jpg")
-    video.thumbnail(frameIdx);
+  Image get image => video.thumbnail(filename, frameIdx);
+
+  Future<Uint8List> get cachedBytes async {
+    final xfile = await manifest.read(video.pwd, filename);
+    return await xfile.readAsBytes();
+  }
 
   void cache() async {
     final bytes = await image.asBytes;
-    manifest.write(bytes.toList(), video.pwd, "thumbnail.jpg");
+    manifest.write(bytes.toList(), video.pwd, filename);
     isCached = true;
   }
 
-  Future<mat.Widget> get widget async => mat.Image.memory(await image.asBytes);
-  
-}
+  Future<mat.Widget> get widget async => mat.Image.memory(
+    (isCached) ? await cachedBytes : await image.asBytes
+  );
 
+}

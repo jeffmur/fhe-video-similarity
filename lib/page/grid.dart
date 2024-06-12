@@ -68,8 +68,11 @@ class _SelectableGridState extends State<SelectableGrid> {
               FutureBuilder<Widget>(
                   future: render[idx].widget,
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
                       return snapshot.data!;
+                    }
+                    else if (snapshot.hasError) {
+                      return Text('Error loading image: ${snapshot.error}');
                     } else {
                       return const CircularProgressIndicator();
                     }
@@ -111,7 +114,8 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> render, Function
     (xfile, timestamp, trimStart, trimEnd) async {
 
     // Cache the video + metadata
-    // Target: /{sha256}/{start}-{end}-{timestamp}/raw.mp4
+    // Targets: {sha256}/{start}-{end}-{timestamp}/raw.mp4
+    //          {sha256}/{start}-{end}-{timestamp}/meta.json
     final video = Video(
       xfile, timestamp,
       start: Duration(seconds: trimStart),
@@ -119,18 +123,10 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> render, Function
 
     video.cache();
 
-    // Store the video metadata
-    // Target: /{sha256}/{start}-{end}-{timestamp}/meta.json
-    // final meta = await m.storeVideoMetadata(video);
-    // print("Wrote metafile: ${meta.name}");
-
     // Store the thumbnail
-    // Target: /{sha256}/{start}-{end}-{timestamp}/thumbnail.png
+    // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
     final frame0 = Thumbnail(video, 0);
-
     frame0.cache();
-    // final thumbnail = await m.storeThumbnail(frame0);
-    // print("Wrote thumbnail: ${thumbnail.name}");
 
     // Add the thumbnail to the render list
     render.add(frame0);
