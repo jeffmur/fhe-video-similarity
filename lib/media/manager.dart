@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
 import 'uploader.dart';
+import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
 import 'cache.dart' show manifest;
 import 'primatives.dart' show opencvInfo;
-import 'video.dart' show Video;
+import 'video.dart' show Thumbnail, Video, VideoMeta;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
@@ -62,11 +63,24 @@ class Manager {
     }
   }
 
-  // Future<Thumbnail> loadThumbnail(Video video) async {
-  //   final pwd = await workingDirectory(video, video.created);
-  //   final bytes = await manifest.read(pwd, "thumbnail.jpg");
-  //   return Thumbnail.fromBytes(video, bytes);
-  // }
+  Future<Video> loadVideo(String pwd, String filename, VideoMeta meta) async {
+    XFile cached = await manifest.read(pwd, filename);
+    
+    return Video.fromeCache(cached, meta.created, meta.sha256, meta.startFrame, meta.endFrame, meta.totalFrames);
+  }
+
+  Future<VideoMeta> loadMeta(String pwd, String filename) async {
+    XFile cached = await manifest.read(pwd, filename);
+    return VideoMeta.fromJSON(jsonDecode(await cached.readAsString()));
+  }
+
+  Future<Thumbnail> loadThumbnail(String pwd, String filename) async {
+    VideoMeta meta = await loadMeta(pwd, filename);
+    Video video = await loadVideo(pwd, filename, meta);
+  
+    XFile cached = await manifest.read(pwd, filename);
+    return Thumbnail.fromBytes(await cached.readAsBytes(), video, 0);
+  }
 
   /// Store the processed video as a CSV file
   ///

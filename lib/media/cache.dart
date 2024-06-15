@@ -46,6 +46,23 @@ class Manifest {
 
   Map<String, dynamic> get map => _media;
 
+  /// Retrieve all paths in the manifest
+  /// 
+  List<String> get paths {
+    List<String> paths = [];
+    void traverse(Map node, String path) {
+      node.forEach((key, val) {
+        if (val is Map) {
+          traverse(val, '$path/$key');
+        } else {
+          paths.add('$path/$key.$val');
+        }
+      });
+    }
+    traverse(_media, '');
+    return paths;
+  }
+
   /// Read the manifest from the cache
   ///
   Future<void> initAsync() async {

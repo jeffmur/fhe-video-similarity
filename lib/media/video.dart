@@ -4,12 +4,75 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
-import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 import 'processor.dart';
 import 'primatives.dart';
 import 'image.dart';
+
+class VideoMeta extends Meta {
+  final String codec;
+  final int fps;
+  final Duration duration;
+  final String sha256;
+  final int startFrame;
+  final int endFrame;
+  final int totalFrames;
+
+  VideoMeta({
+    required this.codec,
+    required this.fps,
+    required this.totalFrames,
+    required this.duration,
+    required this.sha256,
+    required this.startFrame,
+    required this.endFrame,
+    required String name,
+    required String extension,
+    required DateTime created,
+    required DateTime modified,
+    required String path
+  }) : super(name, extension, created, modified, path);
+
+  @override
+  Map toJson() => {
+    ...super.toJson(),
+    'codec': codec,
+    'fps': fps,
+    'totalFrames': totalFrames,
+    'sha256': sha256,
+    'duration': duration.inSeconds,
+    'startFrame': startFrame,
+    'endFrame': endFrame
+  };
+
+  VideoMeta.fromJSON(Map<String, dynamic> json) : this(
+    codec: json['codec'],
+    fps: json['fps'],
+    totalFrames: json['totalFrames'],
+    duration: Duration(seconds: json['duration']),
+    sha256: json['sha256'],
+    startFrame: json['startFrame'],
+    endFrame: json['endFrame'],
+    name: json['name'],
+    extension: json['extension'],
+    created: DateTime.parse(json['created']),
+    modified: DateTime.parse(json['modified']),
+    path: json['path']
+  );
+
+  void pprint() {
+    print('--- Video Information ---');
+    print(' * Codec: $codec');
+    print(' * Duration: $duration');
+    print(' * FPS: $fps');
+    print(' * Frame Count: $totalFrames');
+    print(' * Start Frame: $startFrame');
+    print(' * End Frame: $endFrame');
+    print(' * Path: $path');
+    print('-------------------------');
+  }
+}
 
 enum FrameCount {
   all,
@@ -46,27 +109,29 @@ class Video extends UploadedMedia {
 
     printStats(); // TODO: Remove
   }
+  
+  Video.fromeCache(XFile file, DateTime timestamp, this.hash, this.startFrame, this.endFrame, this.totalFrames) : super(file, timestamp) {
+    video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
+    created = timestamp;
+  }
 
-  Map<String,String> get stats => {
-    'codec': video.codec,
-    'fps': video.get(cv.CAP_PROP_FPS).toString(),
-    'frameCount': "$totalFrames",
-    'duration': duration.toString(),
-    'startFrame': "$startFrame",
-    'endFrame': "$endFrame",
-  };
+  VideoMeta get stats => VideoMeta(
+    codec: video.codec,
+    fps: video.get(cv.CAP_PROP_FPS).toInt(),
+    totalFrames: totalFrames,
+    duration: duration,
+    sha256: hash,
+    startFrame: startFrame,
+    endFrame: endFrame,
+    name: xfile.name,
+    extension: xfile.path.split('.').last,
+    created: created,
+    modified: lastModified,
+    path: xfile.path
+  );
 
   void printStats() {
-    print('--- Video Information ---');
-    print(' * Codec: ${stats['codec']}');
-    print(' * Duration: ${stats['duration']}');
-    print(' * FPS: ${stats['fps']}');
-    print(' * Hash: $hash');
-    print(' * Frame Count: ${stats['frameCount']}');
-    print(' * Start Frame: ${stats['startFrame']}');
-    print(' * End Frame: ${stats['endFrame']}');
-    // print(' * Last Modified: ${modified.toLocal()}');
-    // print(' * Last Accessed: ${accessed.toLocal()}');
+    stats.pprint();
   }
 
   // Future<String> sha256({chars=8}) async => await sha256ofFileAsString(xfile.path, chars);
@@ -80,7 +145,7 @@ class Video extends UploadedMedia {
 
     // Store the metadata
     final meta = jsonEncode(stats).codeUnits;
-    manifest.write(meta, await pwd, "meta.json");
+    manifest.write(meta, pwd, "meta.json");
   }
 
   int get fps => video.get(cv.CAP_PROP_FPS).toInt();
@@ -264,6 +329,11 @@ class Thumbnail {
   String filename = "thumbnail.jpg";
 
   Thumbnail(this.video, this.frameIdx);
+
+  Thumbnail.fromBytes(Uint8List bytes, this.video, this.frameIdx) {
+    final xfile = XFileStorage.fromBytes(video.pwd, filename, bytes);
+    isCached = true;
+  }
 
   Image get image => video.thumbnail(filename, frameIdx);
 
