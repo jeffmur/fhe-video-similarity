@@ -47,7 +47,7 @@ class Manifest {
   Map<String, dynamic> get map => _media;
 
   /// Retrieve all paths in the manifest
-  /// 
+  ///
   List<String> get paths {
     List<String> paths = [];
     void traverse(Map node, String path) {
@@ -66,11 +66,14 @@ class Manifest {
   /// Read the manifest from the cache
   ///
   Future<void> initAsync() async {
-    ApplicationStorage storage = ApplicationStorage('manifest.json');
-    XFile manifest = XFile(await storage.path);
-    final ctx = await manifest.readAsString();
-    if (ctx.isNotEmpty) {
+    try {
+      XFile manifest = await read('', 'manifest.json');
+      final ctx = await manifest.readAsString();
       _media = jsonDecode(ctx);
+    }
+    catch (e) {
+      print('Manifest not found');
+      return;
     }
   }
 
@@ -98,7 +101,7 @@ class Manifest {
     
   }
 
-  /// Read the [xFile] from the cache
+  /// Read the [XFile] from the cache
   /// 
   Future<XFile> read(String pwd, String filename) async {
     final cache = ApplicationStorage(pwd);
@@ -119,7 +122,7 @@ class Manifest {
 
     // save the manifest
     
-    XFileStorage manifest = XFileStorage.fromBytes('', 'manifest.json', jsonEncode(_media).codeUnits);
+    XFileStorage manifest = XFileStorage.fromBytes('', 'manifest.json', utf8.encode(jsonEncode(_media)));
     await manifest.write();
 
     return storage;

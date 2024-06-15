@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
@@ -141,11 +140,9 @@ class Video extends UploadedMedia {
 
   void cache() async {
     final bytes = await asBytes; // TODO: trim?
-    manifest.write(bytes.toList(), await pwd, "video.mp4");
+    manifest.write(bytes.toList(), pwd, "video.mp4");
 
-    // Store the metadata
-    final meta = jsonEncode(stats).codeUnits;
-    manifest.write(meta, pwd, "meta.json");
+    stats.cache(pwd);
   }
 
   int get fps => video.get(cv.CAP_PROP_FPS).toInt();

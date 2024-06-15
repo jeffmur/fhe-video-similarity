@@ -63,20 +63,23 @@ class Manager {
     }
   }
 
-  Future<Video> loadVideo(String pwd, String filename, VideoMeta meta) async {
+  Future<Video> loadVideo(String pwd, VideoMeta meta, [String filename="video.mp4"]) async {
     XFile cached = await manifest.read(pwd, filename);
     
     return Video.fromeCache(cached, meta.created, meta.sha256, meta.startFrame, meta.endFrame, meta.totalFrames);
   }
 
-  Future<VideoMeta> loadMeta(String pwd, String filename) async {
+  Future<VideoMeta> loadMeta(String pwd, [String filename="meta.json"]) async {
     XFile cached = await manifest.read(pwd, filename);
     return VideoMeta.fromJSON(jsonDecode(await cached.readAsString()));
   }
 
-  Future<Thumbnail> loadThumbnail(String pwd, String filename) async {
-    VideoMeta meta = await loadMeta(pwd, filename);
-    Video video = await loadVideo(pwd, filename, meta);
+  Future<Thumbnail> loadThumbnail(String pwd, [String filename="thumbnail.jpg"]) async {
+    if (pwd.contains(filename)) {
+      pwd = pwd.substring(1, pwd.indexOf(filename) - 1);
+    }
+    VideoMeta meta = await loadMeta(pwd);
+    Video video = await loadVideo(pwd, meta);
   
     XFile cached = await manifest.read(pwd, filename);
     return Thumbnail.fromBytes(await cached.readAsBytes(), video, 0);

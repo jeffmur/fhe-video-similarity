@@ -43,9 +43,19 @@ class _SelectableGridState extends State<SelectableGrid> {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        // items = m.loadThumbnails();
-                        print(manifest.map.keys.toList());
-                        refreshState();
+                        // Removal of all thumbnails
+                        render.clear();
+
+                        List<String> thumbnailPaths = manifest.paths.where((path) 
+                          => path.contains('thumbnail')).toList();
+
+                        thumbnailPaths.forEach((path) async {
+                          print(path);
+                          final thumbnail = await m.loadThumbnail(path);
+                          render.add(thumbnail);
+                          refreshState();
+                        });
+                        
                       },
                     ),
                   ],

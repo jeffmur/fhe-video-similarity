@@ -1,5 +1,7 @@
 // import 'dart:isolate';
 import 'dart:typed_data';
+import 'dart:convert';
+import 'cache.dart' show manifest;
 // import 'package:logging/logging.dart';
 
 import 'storage.dart';
@@ -34,6 +36,12 @@ class Meta {
     DateTime.parse(json['modified']),
     json['path']
   );
+
+  void cache(String pwd) {
+    // Store the metadata as UTF-8 encoded JSON
+    final List<int> bytes = utf8.encode(jsonEncode(toJson())).toList();
+    manifest.write(bytes, pwd, "meta.json");
+  }
 
 }
 
