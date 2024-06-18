@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
-import 'dart:convert';
-import 'dart:io';
 import 'uploader.dart';
+import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
-import 'primatives.dart' show Video, opencvInfo;
+import 'cache.dart' show manifest;
+import 'primatives.dart' show opencvInfo;
+import 'video.dart' show Thumbnail, Video, VideoMeta;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
-export 'primatives.dart' show Video, Thumbnail;
+export 'video.dart' show Video, Thumbnail;
 export 'processor.dart' show PreprocessType;
 
 enum MediaType { video }
@@ -62,70 +63,32 @@ class Manager {
     }
   }
 
-  /// Store the video file
-  /// 
-  /// Store the video file in the application directory, and compute the SHA-256 hash of the file.
-  /// The first 8 characters of the hash are used as the parent directory.
-  ///
-  Future<XFileStorage> storeVideo(XFile video) async {
-    final sha = await sha256ofFileAsString(video.path, 8);
-    final ext = video.path.split('.').last;
-    return storeMediaFromXFile(sha, 'raw.$ext', video);
-  }
-
-  /// Cache the media file nested the parent key
-  ///
-  Future<XFileStorage> storeMediaFromXFile(String parentDirectory, String filename, XFile media) async {
-    final stored = XFileStorage(parentDirectory, filename, media);
-
-    // Check if the media is already stored
-    if (await stored.exists()) {
-      print('Media already stored at: ${await stored.path}');
-      return stored;
-    }
-    File atRest = await stored.write();
-    DateTime lastAccessed = await media.lastModified();
-    atRest.setLastAccessedSync(lastAccessed);
-
-    print('Stored media at: ${atRest.path}');
-    return stored;
-  }
-
-  Future<XFileStorage> storeNewMedia(List<int> bytes, String parentDirectory, String filename, {String extension="txt"}) async {
-
-    XFileStorage storage = XFileStorage.fromBytes(parentDirectory, "$filename.$extension", bytes);
-
-    await storage.write();
-    return storage;
-  }
-
-  String metaFilename(Video video, DateTime timestamp) {
-    return '${video.startFrame}-${video.endFrame}-${timestamp.millisecondsSinceEpoch}';
-  }
-
-  /// Store the metadata for the video
-  ///
-  Future<XFileStorage> storeVideoMetadata(Video video, DateTime timestamp) async {
-    Map stats = video.stats;
-    stats['timestamp'] = timestamp.toString();
-    // convert stats to Uint8List
-    final content = jsonEncode(stats).codeUnits;
-
-    final parentDir = await video.sha256(chars: 8);
-    final filename = metaFilename(video, timestamp);
+  Future<Video> loadVideo(String pwd, VideoMeta meta, [String filename="video.mp4"]) async {
+    XFile cached = await manifest.read(pwd, filename);
     
-    return storeNewMedia(content, parentDir, filename, extension: "json");
+    return Video.fromeCache(cached, meta.created, meta.sha256, meta.startFrame, meta.endFrame, meta.totalFrames);
   }
 
-  /// Preprocess the video
-  Map preprocessVideo(Video video, PreprocessType type) {
-    return NormalizedByteArray(type).preprocess(video);
+  Future<VideoMeta> loadMeta(String pwd, [String filename="meta.json"]) async {
+    XFile cached = await manifest.read(pwd, filename);
+    return VideoMeta.fromJSON(jsonDecode(await cached.readAsString()));
   }
 
-  Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) async {
-    final parentDir = await video.sha256(chars: 8);
-    final filename = metaFilename(video, video.created);
-    final content = preprocessVideo(video, type);
+  Future<Thumbnail> loadThumbnail(String pwd, [String filename="thumbnail.jpg"]) async {
+    if (pwd.contains(filename)) {
+      pwd = pwd.substring(1, pwd.indexOf(filename) - 1);
+    }
+    VideoMeta meta = await loadMeta(pwd);
+    Video video = await loadVideo(pwd, meta);
+  
+    XFile cached = await manifest.read(pwd, filename);
+    return Thumbnail.fromBytes(await cached.readAsBytes(), video, 0);
+  }
+
+  /// Store the processed video as a CSV file
+  ///
+  Future<XFileStorage> storeProcessedVideoCSV(Video video, PreprocessType type) {
+    final content = NormalizedByteArray(type).preprocess(video);
 
     final List<List<int>> bytes = content['bytes'];
     final List<List<double>> normalized = content['normalized'];
@@ -141,7 +104,7 @@ class Manager {
       rows.add(data);
     }
 
-    return storeNewMedia(csv.convert(rows).codeUnits, parentDir, filename, extension: "csv");
+    return manifest.write(csv.convert(rows).codeUnits, video.pwd, "${type.name}.csv");
 
   }
   

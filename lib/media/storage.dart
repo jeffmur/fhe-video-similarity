@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
+export 'package:image_picker/image_picker.dart' show XFile;
+
 /// A class that provides a template to store data.
 /// 
 /// Provide a shared template to interface with asynchronous file operations.
@@ -52,8 +54,12 @@ class XFileStorage extends ApplicationStorage {
     return File(await path);
   }
 
+  Future<Uint8List> readAsBytes() async {
+    return await xfile.readAsBytes();
+  }
+
   Future<File> write() async {
-    await Directory(await super.path).create(); // If needed
+    await Directory(await super.path).create(recursive: true); // If needed
     final file = await this.file;
     return file.writeAsBytes(await xfile.readAsBytes());
   }

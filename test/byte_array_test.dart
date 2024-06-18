@@ -8,7 +8,7 @@ void main() {
     ];
     final flat = flatten(bytes).toList();
     final actual = normalizeSumOfElements(flat);
-    expect(actual, [0.1, 0.2, 0.4, 0.1, 0.2,]);
+    expect(actual, [0.1, 0.2, 0.4, 0.1, 0.2]);
 
     final actualSum = actual.reduce((value, element) => value + element);
     expect(actualSum, 1);
