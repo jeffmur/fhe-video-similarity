@@ -23,6 +23,9 @@ jobs:
     runs-on: ${{ matrix.test.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.30.x'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
