@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
-import 'package:flutter_fhe_video_similarity/media/video.dart' show Video, Thumbnail;
 
 class SelectableGrid extends StatefulWidget {
 
@@ -50,12 +49,11 @@ class _SelectableGridState extends State<SelectableGrid> {
                           => path.contains('thumbnail')).toList();
 
                         thumbnailPaths.forEach((path) async {
-                          print(path);
                           final thumbnail = await m.loadThumbnail(path);
                           render.add(thumbnail);
                           refreshState();
+                          _selected = List.filled(render.length, false);
                         });
-                        
                       },
                     ),
                   ],
@@ -90,15 +88,16 @@ class _SelectableGridState extends State<SelectableGrid> {
               Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                 Text("Duration: ${render[idx].video.duration}"),
                 Text("Created: ${render[idx].video.created.toLocal()}"),
-                ButtonBar(children: [
-                  IconButton(
-                    icon: const Icon(Icons.compare_outlined),
-                    onPressed: () {
-                      m.storeProcessedVideoCSV(render[idx].video, PreprocessType.sso);
-                    }
-                  ),
-                ]
-            ),
+                // Create a checkbox, visible only if multi-select is enabled
+                if (_allowMultiSelect)
+                  Checkbox(
+                    value: _selected[idx],
+                    onChanged: (val) {
+                      setState(() {
+                        _selected[idx] = val!;
+                      });
+                    },
+                  )
               ])
             ]));
           }),
@@ -109,7 +108,7 @@ class _SelectableGridState extends State<SelectableGrid> {
                 ? [
                     _upload(m, context, render, refreshState),
                     const SizedBox(height: 10),
-                    _selectImages(_selected, render, context),
+                    _selectImages(_selected, render, context, m),
                   ]
                 : [
                     _upload(m, context, render, refreshState)
@@ -145,7 +144,7 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> render, Function
 }
 
 Widget _selectImages(
-    List<bool> selected, List<Thumbnail> thumbnails, BuildContext context,
+    List<bool> selected, List<Thumbnail> thumbnails, BuildContext context, Manager m,
     {int amount = 2}) {
   return FloatingActionButton(
     child: const Icon(Icons.check),
@@ -160,7 +159,6 @@ Widget _selectImages(
           ),
         );
       } else {
-        // Do something with the selected items (e.g., print them)
         List<Thumbnail> selectedItems = [];
         for (int i = 0; i < selected.length; i++) {
           if (selected[i]) {
@@ -168,6 +166,7 @@ Widget _selectImages(
           }
         }
         print('Selected Items: $selectedItems');
+        
       }
     },
   );

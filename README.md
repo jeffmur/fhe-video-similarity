@@ -1,17 +1,31 @@
 # flutter_fhe_video_similarity
 
-A new Flutter project.
+Compute and Compare the similarity between two videos using Flutter and FHE (Fully Homomorphic Encryption).
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Setup dependencies:
 
-A few resources to get you started if this is your first Flutter project:
+* [opencv_dart](https://pub.dev/packages/opencv_dart)
+* [fhel](https://pub.dev/packages/fhel)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+flutter pub get
+dart run opencv_dart:setup $PLATFORM --arch $ARCH
+dart run fhel:setup $PLATFORM --arch $ARCH
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Linux
 
+From the root of this project, run the application:
+
+```bash
+flutter pub get
+dart run opencv_dart:setup linux --arch x64
+dart run fhel:setup linux --arch x64
+flutter run -d linux
+```
+
+### Android
+
+This platform is automatically supported by the plugin. No additional setup is required.

@@ -73,6 +73,11 @@ class VideoMeta extends Meta {
   }
 }
 
+enum ImageFormat {
+  jpg,
+  png
+}
+
 enum FrameCount {
   all,
   even,
@@ -88,7 +93,7 @@ class Video extends UploadedMedia {
   late int totalFrames;
   late cv.VideoCapture video;
   late String hash;
-  
+
   Video(XFile file, DateTime timestamp, {Duration start = Duration.zero, Duration end = Duration.zero}) : super(file, timestamp) {
 
     video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
@@ -99,7 +104,7 @@ class Video extends UploadedMedia {
 
     // Set the end frame (used for trimming)
     endFrame = totalFrames - 1;
-  
+
     // Set the start and end positions
     trim(start, end);
 
@@ -108,7 +113,7 @@ class Video extends UploadedMedia {
 
     printStats(); // TODO: Remove
   }
-  
+
   Video.fromeCache(XFile file, DateTime timestamp, this.hash, this.startFrame, this.endFrame, this.totalFrames) : super(file, timestamp) {
     video = cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
     created = timestamp;
@@ -204,7 +209,7 @@ class Video extends UploadedMedia {
   }
 
   /// Calculate the number of frames in the video
-  /// 
+  ///
   /// The number of frames is calculated using the CAP_PROP_FRAME_COUNT property
   /// of the video. If the property is not supported by the codec, the number of
   /// frames is calculated manually.
@@ -222,12 +227,12 @@ class Video extends UploadedMedia {
 
   /// Extract frames from the video
   ///
-  /// Encode frames at the specified [frameIds], by default, extract 
+  /// Encode frames at the specified [frameIds], by default, extract
   /// the first frame, the frame at 1/4, 1/2, and 3/4 of the video length.
   ///
   List<Uint8List> frames(
     {List<int> frameIds = const [0],
-     cv.ImageFormat frameFormat = cv.ImageFormat.png}
+     ImageFormat frameFormat = ImageFormat.png}
   ) {
     var frames = <Uint8List>[];
     int length = frameIds.length; // Number of frames to extract
@@ -244,7 +249,7 @@ class Video extends UploadedMedia {
         if (frameIds.contains(idx)) {
           print("[videoFrames] Reading Frame $idx");
           frames.add(
-            cv.imencode(frameFormat.ext, image), // Mat -> Uint8List
+            cv.imencode(frameFormat.name, image).$2, // Mat -> Uint8List
           );
         }
         (success, image) = copy.read();
@@ -275,7 +280,7 @@ class Video extends UploadedMedia {
   }
 
   /// Generate ranges of frame indices based on the [segmentDuration]
-  /// 
+  ///
   List<List<int>> frameIndexFromSegment(Duration segmentDuration, {FrameCount frameCount = FrameCount.firstLast}) {
     List<List<int>> segments = [];
     int segment = segmentDuration.inSeconds * fps;
@@ -310,7 +315,7 @@ class Video extends UploadedMedia {
   Image thumbnail(String filename, [frameIdx = 0]) {
 
     Uint8List frameFromIndex = frames(frameIds: [frameIdx]).first;
-    Uint8List resizedFrame = resize(frameFromIndex, cv.ImageFormat.jpg, 500, 500);
+    Uint8List resizedFrame = resize(frameFromIndex, ImageFormat.png, 500, 500);
 
     return Image.fromBytes(resizedFrame, created, xfile.path, filename);
   }
