@@ -23,9 +23,9 @@ jobs:
     runs-on: ${{ matrix.test.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: '3.30.x'
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build g++ cmake
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
