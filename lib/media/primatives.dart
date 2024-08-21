@@ -70,3 +70,17 @@ class UploadedMedia {
     xfile.path);
 
 }
+
+dynamic resolveNestedValue(Map<String, dynamic> json, List<String> keyPath) {
+  dynamic current = json;
+
+  for (String key in keyPath) {
+    if (current is Map && current.containsKey(key)) {
+      current = current[key];
+    } else {
+      return null; // Key not found at some level
+    }
+  }
+
+  return current;
+}

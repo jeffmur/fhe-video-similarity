@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
+import 'package:flutter_fhe_video_similarity/page/experiment.dart'
+    show Experiment;
+import 'package:flutter_fhe_video_similarity/page/thumbnail.dart'
+    show ThumbnailWidget, OverlayWidget;
 
 class SelectableGrid extends StatefulWidget {
-
   SelectableGrid({Key? key}) : super(key: key);
 
   @override
@@ -12,7 +15,6 @@ class SelectableGrid extends StatefulWidget {
 
 class _SelectableGridState extends State<SelectableGrid> {
   List<bool> _selected = [];
-  bool _allowMultiSelect = false;
   List<Thumbnail> render = [];
 
   @override
@@ -45,8 +47,9 @@ class _SelectableGridState extends State<SelectableGrid> {
                         // Removal of all thumbnails
                         render.clear();
 
-                        List<String> thumbnailPaths = manifest.paths.where((path) 
-                          => path.contains('thumbnail')).toList();
+                        List<String> thumbnailPaths = manifest.paths
+                            .where((path) => path.contains('thumbnail'))
+                            .toList();
 
                         thumbnailPaths.forEach((path) async {
                           final thumbnail = await m.loadThumbnail(path);
@@ -58,12 +61,12 @@ class _SelectableGridState extends State<SelectableGrid> {
                     ),
                   ],
                 ),
-                const SizedBox(width: 10),
-                const Text('Select'),
-                Checkbox(
-                  value: _allowMultiSelect,
-                  onChanged: (val) => setState(() => _allowMultiSelect = val!),
-                )
+                // const SizedBox(width: 10),
+                // const Text('Select'),
+                // Checkbox(
+                //   value: _allowMultiSelect,
+                //   onChanged: (val) => setState(() => _allowMultiSelect = val!),
+                // )
               ],
             ),
           ],
@@ -71,64 +74,50 @@ class _SelectableGridState extends State<SelectableGrid> {
         body: GridView.count(
           crossAxisCount: 2,
           children: List.generate(render.length, (idx) {
-            return GridTile(
-                child: Column(children: [
-              FutureBuilder<Widget>(
-                  future: render[idx].widget,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return snapshot.data!;
-                    }
-                    else if (snapshot.hasError) {
-                      return Text('Error loading image: ${snapshot.error}');
-                    } else {
-                      return const CircularProgressIndicator();
-                    }
-              }),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                Text("Duration: ${render[idx].video.duration}"),
-                Text("Created: ${render[idx].video.created.toLocal()}"),
-                // Create a checkbox, visible only if multi-select is enabled
-                if (_allowMultiSelect)
-                  Checkbox(
-                    value: _selected[idx],
-                    onChanged: (val) {
-                      setState(() {
-                        _selected[idx] = val!;
-                      });
-                    },
-                  )
-              ])
-            ]));
+            return OverlayWidget(
+                onTap: () {
+                  setState(() {
+                    _selected[idx] = !_selected[idx];
+                  });
+                },
+                overlay: Container(
+                  color: Colors.black.withOpacity(0.5), // Semi-transparent background
+                  child: const Center(
+                    child: Text(
+                      'Selected',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                ),
+                child: ThumbnailWidget(
+                  thumbnail: render[idx]
+                ));
           }),
         ),
         floatingActionButton: Column(
             mainAxisAlignment: MainAxisAlignment.end,
-            children: _allowMultiSelect
+            children: _selected.contains(true)
                 ? [
-                    _upload(m, context, render, refreshState),
-                    const SizedBox(height: 10),
                     _selectImages(_selected, render, context, m),
+                    const SizedBox(height: 10),
+                    _upload(m, context, render, refreshState),
                   ]
-                : [
-                    _upload(m, context, render, refreshState)
-                  ]
-        )
-    );
+                : [_upload(m, context, render, refreshState)]));
   }
 }
 
-Widget _upload(Manager m, BuildContext context, List<Thumbnail> render, Function setParentState) {
+Widget _upload(Manager m, BuildContext context, List<Thumbnail> render,
+    Function setParentState) {
   return m.floatingSelectMediaFromGallery(MediaType.video, context,
-    (xfile, timestamp, trimStart, trimEnd) async {
-
+      (xfile, timestamp, trimStart, trimEnd) async {
     // Cache the video + metadata
     // Targets: {sha256}/{start}-{end}-{timestamp}/raw.mp4
     //          {sha256}/{start}-{end}-{timestamp}/meta.json
-    final video = Video(
-      xfile, timestamp,
-      start: Duration(seconds: trimStart),
-      end: Duration(seconds: trimEnd));
+    final video = Video(xfile, timestamp,
+        start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
 
     video.cache();
 
@@ -143,11 +132,11 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> render, Function
   });
 }
 
-Widget _selectImages(
-    List<bool> selected, List<Thumbnail> thumbnails, BuildContext context, Manager m,
-    {int amount = 2}) {
+Widget _selectImages(List<bool> selected, List<Thumbnail> thumbnails,
+    BuildContext context, Manager m) {
   return FloatingActionButton(
-    child: const Icon(Icons.check),
+    heroTag: 'experiment',
+    child: const Icon(Icons.compare_arrows),
     onPressed: () {
       // Implement your logic for handling selected items here
       int selectedCount = selected.where((element) => element).length;
@@ -165,8 +154,15 @@ Widget _selectImages(
             selectedItems.add(thumbnails[i]);
           }
         }
-        print('Selected Items: $selectedItems');
-        
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Experiment(
+              baseline: selectedItems[0],
+              comparison: selectedItems[1],
+            ),
+          ),
+        );
       }
     },
   );

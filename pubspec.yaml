@@ -37,6 +37,7 @@ dependencies:
   image_picker: ^1.1.0 # Select images from native file system
   opencv_dart: ^1.2.1 # OpenCV
   fhel: ^0.0.8 # Fully Homomorphic Encryption Library
+  fhe_similarity_score: ^0.0.1 # Similarity Score Calculation
 
   crypto: ^3.0.3 # sha256
 

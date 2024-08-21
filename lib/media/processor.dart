@@ -22,7 +22,7 @@ class NormalizedByteArray {
     switch (type) {
       case PreprocessType.sso:
         const segment = Duration(seconds: 1);
-        final bytes = countBytesInVideoSegment(video, segment);
+        final bytes = countBytesInVideoSegment(video, segment, FrameCount.even);
 
         // Normalize each segment with the sum of ALL elements
         final flatNormalized = normalizeSumOfElements(flatten(bytes).toList());
@@ -47,7 +47,7 @@ class NormalizedByteArray {
         };
       case PreprocessType.motion:
         // preprocessMotion(video);
-        throw UnimplementedError('Motion preprocessing not implemented');
+        throw UnsupportedError('Motion preprocessing not implemented');
     }
   }
 }
@@ -61,7 +61,7 @@ Iterable<T> flatten<T>(Iterable<Iterable<T>> items) sync* {
 }
 
 /// Normalize the array by the sum of the elements by element
-/// 
+///
 /// Returns a list of normalized values, whose sum equals 1
 ///
 List<double> normalizeSumOfElements(List<int> values) {
@@ -73,20 +73,20 @@ List<double> normalizeSumOfElements(List<int> values) {
 
 /// Count the number of bytes within each video segment
 ///
-List<List<int>> countBytesInVideoSegment(Video video, Duration segment) {
+List<List<int>> countBytesInVideoSegment(Video video, Duration segment, FrameCount frameCount) {
   List<List<int>> byteLengths = [];
-  final frameRanges = video.frameIndexFromSegment(segment);
+  final frameRanges = video.frameIndexFromSegment(segment, frameCount);
 
   for (var range in frameRanges) {
     print('[DEBUG] Range: $range');
     final frames = video.frames(frameIds: range);
-  
+
     List<int> frameByteLengths = [];
     for (var frame in frames) {
       frameByteLengths.add(frame.length);
     }
 
     byteLengths.add(frameByteLengths);
-  }  
+  }
   return byteLengths;
 }

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 /// Pop up a dialog to select an image from the [ImageSource].
-/// 
+///
 Future<XFile> selectImage(ImageSource source) async {
   final ImagePicker picker = ImagePicker();
   final XFile? image = await picker.pickImage(source: source);
@@ -14,7 +14,7 @@ Future<XFile> selectImage(ImageSource source) async {
 }
 
 /// Pop up a dialog to select a video from the [ImageSource].
-/// 
+///
 Future<XFile> selectVideo(ImageSource source) async {
   final ImagePicker picker = ImagePicker();
   final XFile? video = await picker.pickVideo(source: source);
@@ -22,12 +22,13 @@ Future<XFile> selectVideo(ImageSource source) async {
 }
 
 /// A floating action button to select an image.
-/// 
+///
 FloatingActionButton selectVideoFromGallery(
   BuildContext context,
   Function(XFile, DateTime, int, int) onVideoSelected
 ) {
   return FloatingActionButton(
+    heroTag: 'selectVideoFromGallery',
     onPressed: () async {
       videoContextDialog(context,
       (DateTime start, int trimStart, int trimEnd) async {
@@ -59,7 +60,7 @@ String formatDateTime(DateTime dateTime) {
 }
 
 /// Prompt the user to add context to the video.
-/// 
+///
 Future<void> videoContextDialog(
   BuildContext context,
   // TextEditingController videoStartDateTimeController,

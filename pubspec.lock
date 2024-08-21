@@ -105,6 +105,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
+  fhe_similarity_score:
+    dependency: "direct main"
+    description:
+      name: fhe_similarity_score
+      sha256: "3a90ed655d01d6012b0926f5f9d4672263485d3bf28728e72107bf799edabd66"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.1"
   fhel:
     dependency: "direct main"
     description:

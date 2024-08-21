@@ -11,7 +11,7 @@ Uint8List resize(Uint8List bytes, ImageFormat format, int length, int width) {
   final thumb = cv.resize(im, (length, width), interpolation: cv.INTER_AREA);
 
   // Replace the image with the new thumbnail
-  return cv.imencode(format.name, thumb).$2;
+  return cv.imencode(".${format.name}", thumb).$2;
 }
 
 class Image extends UploadedMedia {
