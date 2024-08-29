@@ -18,11 +18,11 @@ class NormalizedByteArray {
   ///
   /// Returns a map of startFrame to normalized byte arrays
   ///
-  Map preprocess(Video video) {
+  Map preprocess(Video video, FrameCount frameCount) {
     switch (type) {
       case PreprocessType.sso:
         const segment = Duration(seconds: 1);
-        final bytes = countBytesInVideoSegment(video, segment, FrameCount.even);
+        final bytes = countBytesInVideoSegment(video, segment, frameCount);
 
         // Normalize each segment with the sum of ALL elements
         final flatNormalized = normalizeSumOfElements(flatten(bytes).toList());

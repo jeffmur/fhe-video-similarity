@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fhe_video_similarity/media/video.dart' show Thumbnail;
+import 'package:flutter_fhe_video_similarity/media/video.dart' show Thumbnail, FrameCount;
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
@@ -19,7 +19,8 @@ class PreprocessForm extends StatefulWidget {
 }
 
 class _PreprocessFormState extends State<PreprocessForm> {
-  PreprocessType _selected = PreprocessType.sso;
+  PreprocessType _type = PreprocessType.sso;
+  FrameCount _frameCount = FrameCount.firstLast;
   PreprocessState _state = PreprocessState.readCache;
   final Manager _manager = Manager();
   bool _isCached = false;
@@ -30,12 +31,12 @@ class _PreprocessFormState extends State<PreprocessForm> {
     _reloadCache();
   }
 
-  Widget _buildDropdown() {
+  Widget preprocessTypeDropdown() {
     return DropdownButton<PreprocessType>(
-      value: _selected,
+      value: _type,
       onChanged: (PreprocessType? value) {
         setState(() {
-          _selected = value!;
+          _type = value!;
           _state = PreprocessState.readCache;
           _reloadCache();
         });
@@ -49,10 +50,29 @@ class _PreprocessFormState extends State<PreprocessForm> {
     );
   }
 
+  Widget frameCountDropdown() {
+    return DropdownButton<FrameCount>(
+      value: _frameCount,
+      onChanged: (FrameCount? value) {
+        setState(() {
+          _frameCount = value!;
+          _state = PreprocessState.readCache;
+          _reloadCache();
+        });
+      },
+      items: FrameCount.values
+          .map((frameCount) => DropdownMenuItem(
+                value: frameCount,
+                child: Text(frameCount.toString()),
+              ))
+          .toList(),
+    );
+  }
+
   void _reloadCache() {
     setState(() {
       _state = PreprocessState.idle;
-      _isCached = _manager.isProcessed(widget.thumbnail.video, _selected);
+      _isCached = _manager.isProcessed(widget.thumbnail.video, _type);
       print("Is cached? $_isCached");
     });
   }
@@ -62,9 +82,9 @@ class _PreprocessFormState extends State<PreprocessForm> {
       _state = PreprocessState.writeCache;
     });
     try {
-      await _manager.storeProcessedVideoCSV(widget.thumbnail.video, _selected);
+      await _manager.storeProcessedVideoCSV(widget.thumbnail.video, _type, _frameCount);
     } on UnsupportedError catch (_) {
-      print("Unsupported PreprocessType: ${_selected.name}");
+      print("Unsupported PreprocessType: ${_type.name}");
       // TODO: Show error message
     }
     setState(() {
@@ -72,21 +92,25 @@ class _PreprocessFormState extends State<PreprocessForm> {
     });
   }
 
-  Widget _buildButton() {
+  Widget submit() {
     return Row(
       children: [
-        if ([PreprocessState.readCache, PreprocessState.writeCache]
-            .contains(_state))
-          const CircularProgressIndicator(),
+        (PreprocessState.idle == _state)
+            ? ElevatedButton(
+                onPressed: _preprocess,
+                child: const Text("Preprocess"),
+              )
+            : const CircularProgressIndicator(),
+      ],
+    );
+  }
 
-        if (!_isCached && PreprocessState.idle == _state)
-          ElevatedButton(
-            onPressed: _preprocess,
-            child: const Text("Preprocess"),
-          ),
-
-        if (_isCached && PreprocessState.idle == _state) // Processed
-          const Icon(Icons.check, color: Colors.green), // Green checkmark
+  Widget status() {
+    return Row(
+      children: [
+        _isCached
+          ? const Icon(Icons.check, color: Colors.green) // Green checkmark
+          : const Icon(Icons.close, color: Colors.red) // Red X
       ],
     );
   }
@@ -96,12 +120,28 @@ class _PreprocessFormState extends State<PreprocessForm> {
     return Form(
       child: Column(
         children: [
-          const Text("Algorithm: ",
-              style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic)),
-          const SizedBox(width: 10),
-          _buildDropdown(),
-          const SizedBox(width: 10),
-          _buildButton(),
+          Row(children: [
+            const Text("Algorithm: ",
+                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
+            const SizedBox(width: 10),
+            preprocessTypeDropdown(),
+          ]),
+          Row(children: [
+            const Text("Frame Count: ",
+                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
+            const SizedBox(width: 10),
+            frameCountDropdown(),
+          ]),
+          Row(
+            children: [
+              const Text("Status: ",
+                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
+              const SizedBox(width: 10),
+              submit(),
+              const SizedBox(width: 10),
+              status(),
+            ],
+          )
         ],
       ),
     );
@@ -163,6 +203,24 @@ class Experiment extends StatefulWidget {
 class _ExperimentState extends State<Experiment> {
   Widget? _comparison;
   final Manager _manager = Manager();
+  SimilarityType _similarityType = SimilarityType.kld;
+
+  Widget similarityTypeDropdown() {
+    return DropdownButton<SimilarityType>(
+      value: _similarityType,
+      onChanged: (SimilarityType? value) {
+        setState(() {
+          _similarityType = value!;
+        });
+      },
+      items: SimilarityType.values
+          .map((type) => DropdownMenuItem(
+                value: type,
+                child: Text(type.toString()),
+              ))
+          .toList(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,16 +242,27 @@ class _ExperimentState extends State<Experiment> {
               ],
             ),
           ),
-          // Comparison controls
+          // Comparison controls, centered
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Similarity Type: ", style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
+              const SizedBox(width: 10),
+              similarityTypeDropdown(),
+            ]
+          ),
           ElevatedButton(
             onPressed: () async {
               final similarity = Similarity(SimilarityType.kld);
               int percentage = similarity.percentile(
-                await _manager.getCachedNormalized(widget.baseline.video, PreprocessType.sso),
-                await _manager.getCachedNormalized(widget.comparison.video, PreprocessType.sso),
+                await _manager.getCachedNormalized(
+                    widget.baseline.video, PreprocessType.sso),
+                await _manager.getCachedNormalized(
+                    widget.comparison.video, PreprocessType.sso),
               );
               setState(() {
-                _comparison = Text("$percentage% similar");
+                _comparison = Text("${_similarityType.name.toUpperCase()}: $percentage% similar", style: const TextStyle(fontSize: 16));
               });
             },
             child: const Text("Compare"),

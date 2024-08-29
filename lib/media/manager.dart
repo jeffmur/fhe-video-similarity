@@ -6,7 +6,7 @@ import 'storage.dart';
 import 'processor.dart';
 import 'cache.dart' show manifest;
 import 'primatives.dart' show opencvInfo, resolveNestedValue;
-import 'video.dart' show Thumbnail, Video, VideoMeta;
+import 'video.dart' show Thumbnail, Video, VideoMeta, FrameCount;
 import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
@@ -100,8 +100,8 @@ class Manager {
   /// Store the processed video as a CSV file
   ///
   Future<XFileStorage> storeProcessedVideoCSV(
-      Video video, PreprocessType type) {
-    final content = NormalizedByteArray(type).preprocess(video);
+      Video video, PreprocessType type, FrameCount frameCount) {
+    final content = NormalizedByteArray(type).preprocess(video, frameCount);
 
     final List<List<int>> bytes = content['bytes'];
     final List<List<double>> normalized = content['normalized'];

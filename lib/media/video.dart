@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:math';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
@@ -75,7 +76,7 @@ class VideoMeta extends Meta {
 
 enum ImageFormat { jpg, png }
 
-enum FrameCount { all, even, odd, firstLast }
+enum FrameCount { all, even, odd, firstLast, random5, randomHalf }
 
 class Video extends UploadedMedia {
   // Logger log = Logger('Video');
@@ -281,7 +282,8 @@ class Video extends UploadedMedia {
 
   /// Generate ranges of frame indices based on the [segmentDuration]
   ///
-  List<List<int>> frameIndexFromSegment(Duration segmentDuration, FrameCount frameCount) {
+  List<List<int>> frameIndexFromSegment(
+      Duration segmentDuration, FrameCount frameCount) {
     List<List<int>> segments = [];
     int segment = segmentDuration.inSeconds * fps;
 
@@ -302,6 +304,16 @@ class Video extends UploadedMedia {
           break;
         case FrameCount.all:
           segments.add(all);
+          break;
+        case FrameCount.random5:
+          final allRandom = all;
+          allRandom.shuffle();
+          segments.add(allRandom.take(5).toList());
+          break;
+        case FrameCount.randomHalf:
+          final halfRandom = all;
+          halfRandom.shuffle(Random());
+          segments.add(halfRandom.take(all.length ~/ 2).toList());
           break;
       }
     }
