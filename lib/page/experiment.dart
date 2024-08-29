@@ -118,30 +118,15 @@ class _PreprocessFormState extends State<PreprocessForm> {
   @override
   Widget build(BuildContext context) {
     return Form(
-      child: Column(
+      child: Wrap(
         children: [
+          preprocessTypeDropdown(),
+          frameCountDropdown(),
           Row(children: [
-            const Text("Algorithm: ",
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
-            const SizedBox(width: 10),
-            preprocessTypeDropdown(),
-          ]),
-          Row(children: [
-            const Text("Frame Count: ",
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
-            const SizedBox(width: 10),
-            frameCountDropdown(),
-          ]),
-          Row(
-            children: [
-              const Text("Status: ",
-                  style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
-              const SizedBox(width: 10),
-              submit(),
-              const SizedBox(width: 10),
-              status(),
-            ],
-          )
+            submit(),
+            const SizedBox(width: 5),
+            status(),
+          ])
         ],
       ),
     );
@@ -167,19 +152,11 @@ class _ConfigureState extends State<Configure> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
       ),
-      body: Column(
+      body: ListView(
         children: [
-          Expanded(
-            child: Column(
-              children: [
-                Text("${widget.thumbnail.video.stats.toJson()}"),
-                // Video player?
-                PreprocessForm(thumbnail: widget.thumbnail),
-              ],
-            ),
-          ),
-          // Preprocessing controls
-          // Close button
+          Text("${widget.thumbnail.video.stats.toJson()}"),
+          // Video player?
+          PreprocessForm(thumbnail: widget.thumbnail),
         ],
       ),
     );
@@ -251,33 +228,34 @@ class _ExperimentState extends State<Experiment> {
               const SizedBox(width: 10),
               similarityTypeDropdown(),
             ]
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final similarity = Similarity(SimilarityType.kld);
-              int percentage = similarity.percentile(
-                await _manager.getCachedNormalized(
-                    widget.baseline.video, PreprocessType.sso),
-                await _manager.getCachedNormalized(
-                    widget.comparison.video, PreprocessType.sso),
-              );
-              setState(() {
-                _comparison = Text("${_similarityType.name.toUpperCase()}: $percentage% similar", style: const TextStyle(fontSize: 16));
-              });
-            },
-            child: const Text("Compare"),
-          ),
-          const SizedBox(height: 10),
-          // Log output
-          Expanded(
-            child: ListView(
-              children: [
-                // Log messages
-                _comparison ?? const Text("No comparison yet"),
-              ],
-            ),
-          ),
+          )
         ],
+      ),
+      bottomNavigationBar: SizedBox(
+        height: 100,
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            ElevatedButton(
+              onPressed: () async {
+                final similarity = Similarity(SimilarityType.kld);
+                int percentage = similarity.percentile(
+                  await _manager.getCachedNormalized(
+                      widget.baseline.video, PreprocessType.sso),
+                  await _manager.getCachedNormalized(
+                      widget.comparison.video, PreprocessType.sso),
+                );
+                setState(() {
+                  _comparison = Text("${_similarityType.name.toUpperCase()}: $percentage% similar", style: const TextStyle(fontSize: 16));
+                });
+              },
+              child: const Text("Compare"),
+            ),
+            const SizedBox(height: 10),
+              // Log messages
+              _comparison ?? const Text("No comparison yet"),
+          ],
+        ),
       ),
     );
   }
