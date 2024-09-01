@@ -29,39 +29,34 @@ class ThumbnailWidget extends StatefulWidget {
 
 class _ThumbnailWidgetState extends State<ThumbnailWidget> {
   final textStyle = const TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 16,
-    color: Colors.white,
-    backgroundColor: Colors.grey
-  );
+      fontWeight: FontWeight.bold,
+      fontSize: 16,
+      color: Colors.white,
+      backgroundColor: Colors.grey);
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       // onTap: () => widget.onTap(widget.thumbnail),
       child: GridTile(
-          header: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text("Duration: ${widget.thumbnail.video.duration}", style: textStyle),
-            Text("Created: ${widget.thumbnail.video.created.toLocal()}", style: textStyle)
+          header: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+            Text("Duration: ${widget.thumbnail.video.duration}",
+                style: textStyle),
+            Text("Created: ${widget.thumbnail.video.created.toLocal()}",
+                style: textStyle)
           ]),
-          child: Wrap(
-            spacing: 8.0,
-            children: [
-              FutureBuilder<Widget>(
-                  future: widget.thumbnail.widget,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return snapshot.data!;
-                    } else if (snapshot.hasError) {
-                      return Text('Error loading image: ${snapshot.error}');
-                    } else {
-                      return const CircularProgressIndicator();
-                    }
+          child: Wrap(spacing: 8.0, children: [
+            FutureBuilder<Widget>(
+                future: widget.thumbnail.widget,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return snapshot.data!;
+                  } else if (snapshot.hasError) {
+                    return Text('Error loading image: ${snapshot.error}');
+                  } else {
+                    return const CircularProgressIndicator();
+                  }
                 }),
-            ]
-        )
-      ),
+          ])),
     );
   }
 }
@@ -98,7 +93,8 @@ class _OverlayWidgetState extends State<OverlayWidget> {
       child: Stack(
         children: [
           Container(
-            color: Colors.transparent, // Optional background color for the container
+            color: Colors
+                .transparent, // Optional background color for the container
 
             child: Center(
               child: widget.child,

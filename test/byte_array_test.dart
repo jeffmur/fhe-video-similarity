@@ -13,5 +13,4 @@ void main() {
     final actualSum = actual.reduce((value, element) => value + element);
     expect(actualSum, 1);
   });
-
 }

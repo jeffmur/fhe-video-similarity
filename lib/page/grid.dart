@@ -81,7 +81,8 @@ class _SelectableGridState extends State<SelectableGrid> {
                   });
                 },
                 overlay: Container(
-                  color: Colors.black.withOpacity(0.5), // Semi-transparent background
+                  color: Colors.black
+                      .withOpacity(0.5), // Semi-transparent background
                   child: const Center(
                     child: Text(
                       'Selected',
@@ -92,9 +93,7 @@ class _SelectableGridState extends State<SelectableGrid> {
                     ),
                   ),
                 ),
-                child: ThumbnailWidget(
-                  thumbnail: render[idx]
-                ));
+                child: ThumbnailWidget(thumbnail: render[idx]));
           }),
         ),
         floatingActionButton: Column(

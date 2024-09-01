@@ -65,9 +65,9 @@ class Manager {
     return manifest.map;
   }
 
-  bool isProcessed(Video video, PreprocessType type) {
+  bool isProcessed(Video video, PreprocessType type, FrameCount frameCount) {
     List<String> pwd = video.pwd.split('/');
-    pwd.add(type.name);
+    pwd.add("${type.name}-${frameCount.name}");
     return resolveNestedValue(loadManifest(), pwd) != null;
   }
 
@@ -124,13 +124,14 @@ class Manager {
       rows.add(data);
     }
 
-    return manifest.write(
-        csv.convert(rows).codeUnits, video.pwd, "${type.name}.csv");
+    return manifest.write(csv.convert(rows).codeUnits, video.pwd,
+        "${type.name}-${frameCount.name}.csv");
   }
 
-  Future<List<double>> getCachedNormalized(Video video, PreprocessType type) async {
+  Future<List<double>> getCachedNormalized(
+      Video video, PreprocessType type, FrameCount frameCount) async {
     return manifest
-        .read(video.pwd, "${type.name}.csv")
+        .read(video.pwd, "${type.name}-${frameCount.name}.csv")
         .then((XFile file) async {
       final String csv = await file.readAsString();
       final List<List<dynamic>> rows = const CsvToListConverter().convert(csv);

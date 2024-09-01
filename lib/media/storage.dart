@@ -8,11 +8,10 @@ import 'package:image_picker/image_picker.dart';
 export 'package:image_picker/image_picker.dart' show XFile;
 
 /// A class that provides a template to store data.
-/// 
+///
 /// Provide a shared template to interface with asynchronous file operations.
 ///
 abstract class Storage {
-
   String primaryKey;
   Storage(this.primaryKey);
 
@@ -20,11 +19,10 @@ abstract class Storage {
 }
 
 /// A class that provides a template to store data in the application directory.
-/// 
+///
 /// Provide a shared template to interface with asynchronous file operations in the application directory.
 /// Stored in OS-specific application directory.
 class ApplicationStorage extends Storage {
-
   ApplicationStorage(super.primaryKey);
 
   Future<String> get path async {
@@ -35,12 +33,13 @@ class ApplicationStorage extends Storage {
 
 class XFileStorage extends ApplicationStorage {
   String parentDir; // parent directory
-  String name;      // name of the file
-  late XFile xfile;      // the file content to store
+  String name; // name of the file
+  late XFile xfile; // the file content to store
 
   XFileStorage(this.parentDir, this.name, this.xfile) : super(parentDir);
 
-  XFileStorage.fromBytes(this.parentDir, this.name, List<int> bytes) : super(parentDir) {
+  XFileStorage.fromBytes(this.parentDir, this.name, List<int> bytes)
+      : super(parentDir) {
     xfile = XFile.fromData(Uint8List.fromList(bytes), name: name);
   }
 

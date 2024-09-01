@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:fhe_similarity_score/probability.dart';
-import 'package:flutter_fhe_video_similarity/media/video.dart';
+import 'package:fhe_similarity_score/kld.dart' as kld;
+import 'package:fhe_similarity_score/bhattacharyya.dart' as bhattacharyya;
+import 'package:fhe_similarity_score/cramer.dart' as cramer;
 
-enum SimilarityType { kld }
+enum SimilarityType { kld, bhattacharyya, cramer }
 
 class Similarity {
   final SimilarityType type;
@@ -17,19 +17,23 @@ class Similarity {
 
     switch (type) {
       case SimilarityType.kld:
-        return kld(v1, v2);
+        return kld.divergence(v1, v2);
+      case SimilarityType.bhattacharyya:
+        return bhattacharyya.coefficient(v1, v2);
+      case SimilarityType.cramer:
+        return cramer.distance(v1, v2);
       default:
         return 0.0;
     }
   }
 
-  int percentile(List<double> v1, List<double> v2) {
+  double percentile(List<double> v1, List<double> v2) {
     double score = this.score(v1, v2).abs();
-    switch (type) {
-      case SimilarityType.kld:
-        return 100 - (score * 100).toInt();
-      default:
-        return 0;
-    }
+    return switch (type) {
+          SimilarityType.kld => 1 - (score / (1 + score)), // normalize to 0..1 (identical)
+          SimilarityType.cramer => 1 - score,
+          _ => score
+        } *
+        100;
   }
 }

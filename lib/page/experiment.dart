@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fhe_video_similarity/media/video.dart' show Thumbnail, FrameCount;
+import 'package:flutter_fhe_video_similarity/media/video.dart'
+    show Thumbnail, FrameCount;
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
 
+class Config {
+  PreprocessType type;
+  FrameCount frameCount;
+
+  Config(this.type, this.frameCount);
+}
+
 enum PreprocessState { idle, readCache, writeCache }
 
+// ignore: must_be_immutable
 class PreprocessForm extends StatefulWidget {
   final Thumbnail thumbnail;
+  final Function(Config) onFormSubmit;
+  Config config;
 
-  const PreprocessForm({
+  PreprocessForm({
     super.key,
     required this.thumbnail,
+    required this.onFormSubmit,
+    required this.config,
   });
 
   @override
@@ -19,9 +32,6 @@ class PreprocessForm extends StatefulWidget {
 }
 
 class _PreprocessFormState extends State<PreprocessForm> {
-  PreprocessType _type = PreprocessType.sso;
-  FrameCount _frameCount = FrameCount.firstLast;
-  PreprocessState _state = PreprocessState.readCache;
   final Manager _manager = Manager();
   bool _isCached = false;
 
@@ -33,11 +43,11 @@ class _PreprocessFormState extends State<PreprocessForm> {
 
   Widget preprocessTypeDropdown() {
     return DropdownButton<PreprocessType>(
-      value: _type,
+      value: widget.config.type,
       onChanged: (PreprocessType? value) {
         setState(() {
-          _type = value!;
-          _state = PreprocessState.readCache;
+          widget.config.type = value!;
+          widget.onFormSubmit(widget.config);
           _reloadCache();
         });
       },
@@ -52,11 +62,11 @@ class _PreprocessFormState extends State<PreprocessForm> {
 
   Widget frameCountDropdown() {
     return DropdownButton<FrameCount>(
-      value: _frameCount,
+      value: widget.config.frameCount,
       onChanged: (FrameCount? value) {
         setState(() {
-          _frameCount = value!;
-          _state = PreprocessState.readCache;
+          widget.config.frameCount = value!;
+          widget.onFormSubmit(widget.config);
           _reloadCache();
         });
       },
@@ -71,20 +81,18 @@ class _PreprocessFormState extends State<PreprocessForm> {
 
   void _reloadCache() {
     setState(() {
-      _state = PreprocessState.idle;
-      _isCached = _manager.isProcessed(widget.thumbnail.video, _type);
+      _isCached =
+          _manager.isProcessed(widget.thumbnail.video, widget.config.type, widget.config.frameCount);
       print("Is cached? $_isCached");
     });
   }
 
   Future<void> _preprocess() async {
-    setState(() {
-      _state = PreprocessState.writeCache;
-    });
     try {
-      await _manager.storeProcessedVideoCSV(widget.thumbnail.video, _type, _frameCount);
+      await _manager.storeProcessedVideoCSV(
+          widget.thumbnail.video, widget.config.type, widget.config.frameCount);
     } on UnsupportedError catch (_) {
-      print("Unsupported PreprocessType: ${_type.name}");
+      print("Unsupported PreprocessType: ${widget.config.type.name}");
       // TODO: Show error message
     }
     setState(() {
@@ -93,15 +101,9 @@ class _PreprocessFormState extends State<PreprocessForm> {
   }
 
   Widget submit() {
-    return Row(
-      children: [
-        (PreprocessState.idle == _state)
-            ? ElevatedButton(
-                onPressed: _preprocess,
-                child: const Text("Preprocess"),
-              )
-            : const CircularProgressIndicator(),
-      ],
+    return ElevatedButton(
+      onPressed: _preprocess,
+      child: const Text("Preprocess"),
     );
   }
 
@@ -109,8 +111,8 @@ class _PreprocessFormState extends State<PreprocessForm> {
     return Row(
       children: [
         _isCached
-          ? const Icon(Icons.check, color: Colors.green) // Green checkmark
-          : const Icon(Icons.close, color: Colors.red) // Red X
+            ? const Icon(Icons.check, color: Colors.green) // Green checkmark
+            : const Icon(Icons.close, color: Colors.red) // Red X
       ],
     );
   }
@@ -122,11 +124,7 @@ class _PreprocessFormState extends State<PreprocessForm> {
         children: [
           preprocessTypeDropdown(),
           frameCountDropdown(),
-          Row(children: [
-            submit(),
-            const SizedBox(width: 5),
-            status(),
-          ])
+          Row(children: [submit(), const SizedBox(width: 5), status()])
         ],
       ),
     );
@@ -135,10 +133,14 @@ class _PreprocessFormState extends State<PreprocessForm> {
 
 class Configure extends StatefulWidget {
   final Thumbnail thumbnail;
+  final void Function(Config) onConfigChange;
+  final Config defaultConfig;
 
   const Configure({
     super.key,
     required this.thumbnail,
+    required this.onConfigChange,
+    required this.defaultConfig,
   });
 
   @override
@@ -156,7 +158,10 @@ class _ConfigureState extends State<Configure> {
         children: [
           Text("${widget.thumbnail.video.stats.toJson()}"),
           // Video player?
-          PreprocessForm(thumbnail: widget.thumbnail),
+          PreprocessForm(
+              thumbnail: widget.thumbnail,
+              onFormSubmit: widget.onConfigChange,
+              config: widget.defaultConfig),
         ],
       ),
     );
@@ -180,23 +185,19 @@ class Experiment extends StatefulWidget {
 class _ExperimentState extends State<Experiment> {
   Widget? _comparison;
   final Manager _manager = Manager();
-  SimilarityType _similarityType = SimilarityType.kld;
+  Config _baselineConfig = Config(PreprocessType.sso, FrameCount.firstLast);
+  Config _comparisonConfig = Config(PreprocessType.sso, FrameCount.firstLast);
 
-  Widget similarityTypeDropdown() {
-    return DropdownButton<SimilarityType>(
-      value: _similarityType,
-      onChanged: (SimilarityType? value) {
-        setState(() {
-          _similarityType = value!;
-        });
-      },
-      items: SimilarityType.values
-          .map((type) => DropdownMenuItem(
-                value: type,
-                child: Text(type.toString()),
-              ))
-          .toList(),
-    );
+  void baselineConfig(Config config) {
+    setState(() {
+      _baselineConfig = config;
+    });
+  }
+
+  void comparisonConfig(Config config) {
+    setState(() {
+      _comparisonConfig = config;
+    });
   }
 
   @override
@@ -211,49 +212,72 @@ class _ExperimentState extends State<Experiment> {
             child: Row(
               children: [
                 Expanded(
-                  child: Configure(thumbnail: widget.baseline),
+                  child: Configure(
+                      thumbnail: widget.baseline,
+                      onConfigChange: baselineConfig,
+                      defaultConfig: _baselineConfig),
                 ),
                 Expanded(
-                  child: Configure(thumbnail: widget.comparison),
+                  child: Configure(
+                      thumbnail: widget.comparison,
+                      onConfigChange: comparisonConfig,
+                      defaultConfig: _comparisonConfig),
                 ),
               ],
             ),
           ),
           // Comparison controls, centered
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("Similarity Type: ", style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic)),
-              const SizedBox(width: 10),
-              similarityTypeDropdown(),
-            ]
-          )
         ],
       ),
       bottomNavigationBar: SizedBox(
-        height: 100,
+        height: 150,
         child: ListView(
           shrinkWrap: true,
           children: [
             ElevatedButton(
               onPressed: () async {
-                final similarity = Similarity(SimilarityType.kld);
-                int percentage = similarity.percentile(
-                  await _manager.getCachedNormalized(
-                      widget.baseline.video, PreprocessType.sso),
-                  await _manager.getCachedNormalized(
-                      widget.comparison.video, PreprocessType.sso),
-                );
+                // Fetch normalized data in parallel
+                final baselineData = await _manager.getCachedNormalized(
+                    widget.baseline.video,
+                    _baselineConfig.type,
+                    _baselineConfig.frameCount);
+                final comparisonData = await _manager.getCachedNormalized(
+                    widget.comparison.video,
+                    _comparisonConfig.type,
+                    _comparisonConfig.frameCount);
+
+                // Calculate similarity scores in parallel
+                final kldPercentage = Similarity(SimilarityType.kld)
+                    .percentile(baselineData, comparisonData)
+                    .toStringAsFixed(2);
+                final bhattacharyyaPercentage =
+                    Similarity(SimilarityType.bhattacharyya)
+                        .percentile(baselineData, comparisonData)
+                        .toStringAsFixed(2);
+                final cramerPercentage = Similarity(SimilarityType.cramer)
+                    .percentile(baselineData, comparisonData)
+                    .toStringAsFixed(2);
+
+                // Update UI with results
                 setState(() {
-                  _comparison = Text("${_similarityType.name.toUpperCase()}: $percentage% similar", style: const TextStyle(fontSize: 16));
+                  _comparison = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("KLD: $kldPercentage% similar",
+                          style: const TextStyle(fontSize: 16)),
+                      Text("Bhattacharyya: $bhattacharyyaPercentage% similar",
+                          style: const TextStyle(fontSize: 16)),
+                      Text("Cramér's: $cramerPercentage% similar",
+                          style: const TextStyle(fontSize: 16)),
+                    ],
+                  );
                 });
               },
-              child: const Text("Compare"),
+              child: const Text("Compute Similarity Scores"),
             ),
             const SizedBox(height: 10),
-              // Log messages
-              _comparison ?? const Text("No comparison yet"),
+            // Log messages
+            _comparison ?? const Text("No comparison yet"),
           ],
         ),
       ),

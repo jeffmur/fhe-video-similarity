@@ -12,7 +12,6 @@ String get opencvInfo => cv.getBuildInformation();
 /// Metadata for [UploadedMedia] to be used in the cache
 ///
 class Meta {
-
   final String name;
   final String extension;
   final DateTime created;
@@ -22,27 +21,22 @@ class Meta {
   Meta(this.name, this.extension, this.created, this.modified, this.path);
 
   Map toJson() => {
-    'name': name,
-    'extension': extension,
-    'created': created.toIso8601String(),
-    'modified': modified.toIso8601String(),
-    'path': path
-  };
+        'name': name,
+        'extension': extension,
+        'created': created.toIso8601String(),
+        'modified': modified.toIso8601String(),
+        'path': path
+      };
 
-  Meta.fromJSON(Map<String, dynamic> json) : this(
-    json['name'],
-    json['extension'],
-    DateTime.parse(json['created']),
-    DateTime.parse(json['modified']),
-    json['path']
-  );
+  Meta.fromJSON(Map<String, dynamic> json)
+      : this(json['name'], json['extension'], DateTime.parse(json['created']),
+            DateTime.parse(json['modified']), json['path']);
 
   void cache(String pwd) {
     // Store the metadata as UTF-8 encoded JSON
     final List<int> bytes = utf8.encode(jsonEncode(toJson())).toList();
     manifest.write(bytes, pwd, "meta.json");
   }
-
 }
 
 /// Media uploaded by the user
@@ -54,7 +48,8 @@ class UploadedMedia {
 
   UploadedMedia(this.xfile, this.created);
 
-  UploadedMedia.fromBytes(Uint8List bytes, this.created, String pwd, String name) {
+  UploadedMedia.fromBytes(
+      Uint8List bytes, this.created, String pwd, String name) {
     xfile = XFileStorage.fromBytes(pwd, name, bytes).xfile;
   }
 
@@ -62,13 +57,8 @@ class UploadedMedia {
 
   String get path => xfile.path;
 
-  Meta get meta => Meta(
-    xfile.name,
-    xfile.path.split('.').last,
-    created,
-    lastModified,
-    xfile.path);
-
+  Meta get meta => Meta(xfile.name, xfile.path.split('.').last, created,
+      lastModified, xfile.path);
 }
 
 dynamic resolveNestedValue(Map<String, dynamic> json, List<String> keyPath) {

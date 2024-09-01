@@ -73,7 +73,8 @@ List<double> normalizeSumOfElements(List<int> values) {
 
 /// Count the number of bytes within each video segment
 ///
-List<List<int>> countBytesInVideoSegment(Video video, Duration segment, FrameCount frameCount) {
+List<List<int>> countBytesInVideoSegment(
+    Video video, Duration segment, FrameCount frameCount) {
   List<List<int>> byteLengths = [];
   final frameRanges = video.frameIndexFromSegment(segment, frameCount);
 
