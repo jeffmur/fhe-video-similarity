@@ -104,7 +104,7 @@ class Manager {
     final content = NormalizedByteArray(type).preprocess(video, frameCount);
 
     final List<List<int>> bytes = content['bytes'];
-    final List<List<double>> normalized = content['normalized'];
+    final List<double> normalized = content['normalized'];
     final List<DateTime> timestamps = content['timestamps'];
 
     // Translate to CSV rows

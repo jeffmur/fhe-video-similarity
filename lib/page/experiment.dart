@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fhe_video_similarity/media/video.dart'
-    show Thumbnail, FrameCount;
+import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
@@ -16,14 +15,16 @@ enum PreprocessState { idle, readCache, writeCache }
 
 // ignore: must_be_immutable
 class PreprocessForm extends StatefulWidget {
-  final Thumbnail thumbnail;
-  final Function(Config) onFormSubmit;
+  Thumbnail thumbnail;
   Config config;
+  final Function(Config) onFormSubmit;
+  final Function() onConfigUpdate;
 
   PreprocessForm({
     super.key,
     required this.thumbnail,
     required this.onFormSubmit,
+    required this.onConfigUpdate,
     required this.config,
   });
 
@@ -34,11 +35,16 @@ class PreprocessForm extends StatefulWidget {
 class _PreprocessFormState extends State<PreprocessForm> {
   final Manager _manager = Manager();
   bool _isCached = false;
+  late RangeValues frameRange;
 
   @override
   void initState() {
     super.initState();
     _reloadCache();
+    frameRange = RangeValues(
+      widget.thumbnail.video.startFrame.toDouble(),
+      widget.thumbnail.video.endFrame.toDouble(),
+    );
   }
 
   Widget preprocessTypeDropdown() {
@@ -57,6 +63,41 @@ class _PreprocessFormState extends State<PreprocessForm> {
                 child: Text(type.toString()),
               ))
           .toList(),
+    );
+  }
+
+  Widget frameSlider() {
+    // Using final to avoid reassigning the values
+    final upperLimit = widget.thumbnail.video.endFrame.toDouble();
+    final lowerLimit = widget.thumbnail.video.startFrame.toDouble();
+    return RangeSlider(
+      values: frameRange,
+      min: lowerLimit,
+      max: upperLimit,
+      divisions: (upperLimit - lowerLimit).toInt(),
+      labels: RangeLabels(
+        frameRange.start.round().toString(),
+        frameRange.end.round().toString(),
+      ),
+      onChanged: (RangeValues values) {
+        setState(() {
+          frameRange = values;
+        });
+      },
+      onChangeEnd: (RangeValues values) {
+        setState(() {
+          widget.thumbnail.video.startFrame = values.start.toInt();
+          widget.thumbnail.video.endFrame = values.end.toInt();
+          widget.onConfigUpdate();
+        });
+      },
+      onChangeStart: (RangeValues values) {
+        setState(() {
+          widget.thumbnail.video.startFrame = values.start.toInt();
+          widget.thumbnail.video.endFrame = values.end.toInt();
+          widget.onConfigUpdate();
+        });
+      },
     );
   }
 
@@ -81,8 +122,8 @@ class _PreprocessFormState extends State<PreprocessForm> {
 
   void _reloadCache() {
     setState(() {
-      _isCached =
-          _manager.isProcessed(widget.thumbnail.video, widget.config.type, widget.config.frameCount);
+      _isCached = _manager.isProcessed(
+          widget.thumbnail.video, widget.config.type, widget.config.frameCount);
       print("Is cached? $_isCached");
     });
   }
@@ -122,6 +163,7 @@ class _PreprocessFormState extends State<PreprocessForm> {
     return Form(
       child: Wrap(
         children: [
+          frameSlider(),
           preprocessTypeDropdown(),
           frameCountDropdown(),
           Row(children: [submit(), const SizedBox(width: 5), status()])
@@ -148,6 +190,10 @@ class Configure extends StatefulWidget {
 }
 
 class _ConfigureState extends State<Configure> {
+  void refreshConfig() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,12 +202,22 @@ class _ConfigureState extends State<Configure> {
       ),
       body: ListView(
         children: [
-          Text("${widget.thumbnail.video.stats.toJson()}"),
+          Text("sha256: ${widget.thumbnail.video.hash}"),
+          Text("Created: ${widget.thumbnail.video.created}"),
+          Text("Duration: ${widget.thumbnail.video.duration} seconds"),
+          Text("Frame Range: "
+              "${widget.thumbnail.video.startFrame} - "
+              "${widget.thumbnail.video.endFrame} of "
+              "${widget.thumbnail.video.totalFrames}"),
+
+          Text("Encoding: ${widget.thumbnail.video.stats.codec}"),
+
           // Video player?
           PreprocessForm(
               thumbnail: widget.thumbnail,
               onFormSubmit: widget.onConfigChange,
-              config: widget.defaultConfig),
+              config: widget.defaultConfig,
+              onConfigUpdate: refreshConfig),
         ],
       ),
     );
@@ -180,6 +236,26 @@ class Experiment extends StatefulWidget {
 
   @override
   State<Experiment> createState() => _ExperimentState();
+}
+
+// Returns true if the two videos overlap in timeline
+//
+bool areVideosInSameTimeline(Video video, Video other) {
+  Duration diff = video.created.difference(other.created);
+  return diff.inSeconds.abs() < video.duration.inSeconds;
+}
+
+// Returns true if the two videos share the same frame range
+// Assumes videos [areVideosInSameTimeline]
+//
+bool areVideosInSameFrameRange(Video video, Video other) {
+  return video.startFrame == other.startFrame && video.endFrame == other.endFrame;
+}
+
+// Returns true if the two videos overlap in timeline and share the same frame range
+//
+bool areVideosOverlapping(Video video, Video other) {
+  return areVideosInSameTimeline(video, other) && areVideosInSameFrameRange(video, other);
 }
 
 class _ExperimentState extends State<Experiment> {
@@ -234,6 +310,13 @@ class _ExperimentState extends State<Experiment> {
         child: ListView(
           shrinkWrap: true,
           children: [
+            areVideosOverlapping(widget.baseline.video, widget.comparison.video)
+                ? const Text("Videos overlap",
+                    style: TextStyle(color: Colors.green),
+                    textAlign: TextAlign.center)
+                : const Text("Warning: Videos do not overlap",
+                    style: TextStyle(color: Colors.deepOrange),
+                    textAlign: TextAlign.center),
             ElevatedButton(
               onPressed: () async {
                 // Fetch normalized data in parallel
@@ -247,13 +330,25 @@ class _ExperimentState extends State<Experiment> {
                     _comparisonConfig.frameCount);
 
                 // Calculate similarity scores in parallel
+                final kldScore = Similarity(SimilarityType.kld)
+                    .score(baselineData, comparisonData)
+                    .toStringAsFixed(2);
                 final kldPercentage = Similarity(SimilarityType.kld)
                     .percentile(baselineData, comparisonData)
                     .toStringAsFixed(2);
+
+                final bhattacharyyaScore =
+                    Similarity(SimilarityType.bhattacharyya)
+                        .score(baselineData, comparisonData)
+                        .toStringAsFixed(2);
                 final bhattacharyyaPercentage =
                     Similarity(SimilarityType.bhattacharyya)
                         .percentile(baselineData, comparisonData)
                         .toStringAsFixed(2);
+
+                final cramerScore = Similarity(SimilarityType.cramer)
+                    .score(baselineData, comparisonData)
+                    .toStringAsFixed(2);
                 final cramerPercentage = Similarity(SimilarityType.cramer)
                     .percentile(baselineData, comparisonData)
                     .toStringAsFixed(2);
@@ -263,11 +358,14 @@ class _ExperimentState extends State<Experiment> {
                   _comparison = Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("KLD: $kldPercentage% similar",
+                      Text(
+                          "Kullback-Leibler Divergence: $kldScore vs. $kldPercentage% similarily",
                           style: const TextStyle(fontSize: 16)),
-                      Text("Bhattacharyya: $bhattacharyyaPercentage% similar",
+                      Text(
+                          "Bhattacharyya Coefficent: $bhattacharyyaScore vs. $bhattacharyyaPercentage% similarity",
                           style: const TextStyle(fontSize: 16)),
-                      Text("Cramér's: $cramerPercentage% similar",
+                      Text(
+                          "Cramer Distance: $cramerScore vs. $cramerPercentage% similarity",
                           style: const TextStyle(fontSize: 16)),
                     ],
                   );

@@ -39,13 +39,14 @@ class _SelectableGridState extends State<SelectableGrid> {
             Row(
               children: [
                 const Text('Load'),
-                ButtonBar(
+                OverflowBar(
                   children: [
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
                         // Removal of all thumbnails
                         render.clear();
+                        refreshState();
 
                         List<String> thumbnailPaths = manifest.paths
                             .where((path) => path.contains('thumbnail'))
@@ -54,8 +55,8 @@ class _SelectableGridState extends State<SelectableGrid> {
                         thumbnailPaths.forEach((path) async {
                           final thumbnail = await m.loadThumbnail(path);
                           render.add(thumbnail);
-                          refreshState();
                           _selected = List.filled(render.length, false);
+                          refreshState();
                         });
                       },
                     ),
@@ -98,7 +99,7 @@ class _SelectableGridState extends State<SelectableGrid> {
         ),
         floatingActionButton: Column(
             mainAxisAlignment: MainAxisAlignment.end,
-            children: _selected.contains(true)
+            children: _selected.where((isTrue) => isTrue).length >= 2
                 ? [
                     _selectImages(_selected, render, context, m),
                     const SizedBox(height: 10),
@@ -118,16 +119,15 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> render,
     final video = Video(xfile, timestamp,
         start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
 
-    video.cache();
-
-    // Store the thumbnail
-    // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
-    final frame0 = Thumbnail(video, 0);
-    frame0.cache();
-
-    // Add the thumbnail to the render list
-    render.add(frame0);
-    setParentState();
+    video.cache().then((value) {
+      // Store the thumbnail
+      // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
+      final frame0 = Thumbnail(video, video.startFrame);
+      frame0.cache().then((value) {
+        render.add(frame0);
+        setParentState();
+      });
+    });
   });
 }
 

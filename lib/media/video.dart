@@ -140,7 +140,7 @@ class Video extends UploadedMedia {
   String get pwd =>
       '$hash/$startFrame-$endFrame-${created.millisecondsSinceEpoch}';
 
-  void cache() async {
+  Future<void> cache() async {
     final bytes = await asBytes; // TODO: trim?
     manifest.write(bytes.toList(), pwd, "video.mp4");
 
@@ -355,7 +355,7 @@ class Thumbnail {
     return await xfile.readAsBytes();
   }
 
-  void cache() async {
+  Future<void> cache() async {
     final bytes = await image.asBytes;
     manifest.write(bytes.toList(), video.pwd, filename);
     isCached = true;

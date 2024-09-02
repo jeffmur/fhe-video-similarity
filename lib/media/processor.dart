@@ -22,19 +22,18 @@ class NormalizedByteArray {
     switch (type) {
       case PreprocessType.sso:
         const segment = Duration(seconds: 1);
-        final bytes = countBytesInVideoSegment(video, segment, frameCount);
+        List<List<int>> bytes =
+            countBytesInVideoSegment(video, segment, frameCount);
+
+        // For this algorithm, first calculate the sum of each segment
+        List<int> sumOfFrameSegments =
+            bytes.map((segment) => segment.reduce((a, b) => a + b)).toList();
+
+        print('[DEBUG] Length: ${sumOfFrameSegments.length}');
 
         // Normalize each segment with the sum of ALL elements
-        final flatNormalized = normalizeSumOfElements(flatten(bytes).toList());
-        List<List<double>> normalized = [];
+        final normalized = normalizeSumOfElements(sumOfFrameSegments);
 
-        // Divide the normalized array into segments
-        for (var i = 0; i < bytes.length; i++) {
-          var segmentSize = bytes[i].length;
-          final start = i * segmentSize;
-          final end = (i + 1) * segmentSize;
-          normalized.add(flatNormalized.sublist(start, end));
-        }
         print('[DEBUG] Normalized: $normalized');
 
         final timestamps = video.timestampsFromSegment(video, segment);
@@ -67,7 +66,7 @@ Iterable<T> flatten<T>(Iterable<Iterable<T>> items) sync* {
 List<double> normalizeSumOfElements(List<int> values) {
   // Find the sum of the values
   final sum = values.reduce((value, element) => value + element);
-  // Normalize the values
+  // Normalize the values between 0 and 1
   return values.map((e) => e / sum).toList();
 }
 
@@ -76,17 +75,16 @@ List<double> normalizeSumOfElements(List<int> values) {
 List<List<int>> countBytesInVideoSegment(
     Video video, Duration segment, FrameCount frameCount) {
   List<List<int>> byteLengths = [];
-  final frameRanges = video.frameIndexFromSegment(segment, frameCount);
+  var frameRangesFromSegment = video.frameIndexFromSegment(segment, frameCount);
 
-  for (var range in frameRanges) {
-    print('[DEBUG] Range: $range');
+  for (var range in frameRangesFromSegment) {
+    print('[DEBUG] Frame Range: $range');
     final frames = video.frames(frameIds: range);
 
     List<int> frameByteLengths = [];
     for (var frame in frames) {
       frameByteLengths.add(frame.length);
     }
-
     byteLengths.add(frameByteLengths);
   }
   return byteLengths;
