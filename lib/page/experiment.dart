@@ -246,16 +246,29 @@ bool areVideosInSameTimeline(Video video, Video other) {
 }
 
 // Returns true if the two videos share the same frame range
-// Assumes videos [areVideosInSameTimeline]
 //
 bool areVideosInSameFrameRange(Video video, Video other) {
   return video.startFrame == other.startFrame && video.endFrame == other.endFrame;
 }
 
-// Returns true if the two videos overlap in timeline and share the same frame range
+// Returns true if the two videos share the same frame count
 //
-bool areVideosOverlapping(Video video, Video other) {
-  return areVideosInSameTimeline(video, other) && areVideosInSameFrameRange(video, other);
+bool areVideosInSameFrameCount(Video video, Video other) {
+  return video.totalFrames == other.totalFrames;
+}
+
+// Returns true if the two videos share the same encoding
+//
+bool areVideosInSameEncoding(Video video, Video other) {
+  return video.stats.codec == other.stats.codec;
+}
+
+Text successText(String text, {TextStyle style = const TextStyle(color: Colors.green)}) {
+  return Text("✅ $text", style: style, textAlign: TextAlign.center);
+}
+
+Text failureText(String text, {TextStyle style = const TextStyle(color: Colors.red)}) {
+  return Text("❌ $text", style: style, textAlign: TextAlign.center);
 }
 
 class _ExperimentState extends State<Experiment> {
@@ -305,79 +318,81 @@ class _ExperimentState extends State<Experiment> {
           // Comparison controls, centered
         ],
       ),
-      bottomNavigationBar: SizedBox(
-        height: 150,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            areVideosOverlapping(widget.baseline.video, widget.comparison.video)
-                ? const Text("Videos overlap",
-                    style: TextStyle(color: Colors.green),
-                    textAlign: TextAlign.center)
-                : const Text("Warning: Videos do not overlap",
-                    style: TextStyle(color: Colors.deepOrange),
-                    textAlign: TextAlign.center),
-            ElevatedButton(
-              onPressed: () async {
-                // Fetch normalized data in parallel
-                final baselineData = await _manager.getCachedNormalized(
-                    widget.baseline.video,
-                    _baselineConfig.type,
-                    _baselineConfig.frameCount);
-                final comparisonData = await _manager.getCachedNormalized(
-                    widget.comparison.video,
-                    _comparisonConfig.type,
-                    _comparisonConfig.frameCount);
+      bottomNavigationBar: ListView(
+        shrinkWrap: true,
+        children: [
+          areVideosInSameTimeline(widget.baseline.video, widget.comparison.video)
+              ? successText("Videos are in the same timeline")
+              : failureText("Videos are not in the same timeline"),
+          areVideosInSameFrameRange(widget.baseline.video, widget.comparison.video)
+              ? successText("Videos share the same frame range")
+              : failureText("Videos do not share the same frame range"),
+          areVideosInSameFrameCount(widget.baseline.video, widget.comparison.video)
+              ? successText("Videos share the same frame count")
+              : failureText("Videos do not share the same frame count"),
+          areVideosInSameEncoding(widget.baseline.video, widget.comparison.video)
+              ? successText("Videos share the same encoding")
+              : failureText("Videos do not share the same encoding"),
+          ElevatedButton(
+            onPressed: () async {
+              // Fetch normalized data in parallel
+              final baselineData = await _manager.getCachedNormalized(
+                  widget.baseline.video,
+                  _baselineConfig.type,
+                  _baselineConfig.frameCount);
+              final comparisonData = await _manager.getCachedNormalized(
+                  widget.comparison.video,
+                  _comparisonConfig.type,
+                  _comparisonConfig.frameCount);
 
-                // Calculate similarity scores in parallel
-                final kldScore = Similarity(SimilarityType.kld)
-                    .score(baselineData, comparisonData)
-                    .toStringAsFixed(2);
-                final kldPercentage = Similarity(SimilarityType.kld)
-                    .percentile(baselineData, comparisonData)
-                    .toStringAsFixed(2);
+              // Calculate similarity scores in parallel
+              final kldScore = Similarity(SimilarityType.kld)
+                  .score(baselineData, comparisonData)
+                  .toStringAsFixed(2);
+              final kldPercentage = Similarity(SimilarityType.kld)
+                  .percentile(baselineData, comparisonData)
+                  .toStringAsFixed(2);
 
-                final bhattacharyyaScore =
-                    Similarity(SimilarityType.bhattacharyya)
-                        .score(baselineData, comparisonData)
-                        .toStringAsFixed(2);
-                final bhattacharyyaPercentage =
-                    Similarity(SimilarityType.bhattacharyya)
-                        .percentile(baselineData, comparisonData)
-                        .toStringAsFixed(2);
+              final bhattacharyyaScore =
+                  Similarity(SimilarityType.bhattacharyya)
+                      .score(baselineData, comparisonData)
+                      .toStringAsFixed(2);
+              final bhattacharyyaPercentage =
+                  Similarity(SimilarityType.bhattacharyya)
+                      .percentile(baselineData, comparisonData)
+                      .toStringAsFixed(2);
 
-                final cramerScore = Similarity(SimilarityType.cramer)
-                    .score(baselineData, comparisonData)
-                    .toStringAsFixed(2);
-                final cramerPercentage = Similarity(SimilarityType.cramer)
-                    .percentile(baselineData, comparisonData)
-                    .toStringAsFixed(2);
+              final cramerScore = Similarity(SimilarityType.cramer)
+                  .score(baselineData, comparisonData)
+                  .toStringAsFixed(2);
+              final cramerPercentage = Similarity(SimilarityType.cramer)
+                  .percentile(baselineData, comparisonData)
+                  .toStringAsFixed(2);
 
-                // Update UI with results
-                setState(() {
-                  _comparison = Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                          "Kullback-Leibler Divergence: $kldScore vs. $kldPercentage% similarily",
-                          style: const TextStyle(fontSize: 16)),
-                      Text(
-                          "Bhattacharyya Coefficent: $bhattacharyyaScore vs. $bhattacharyyaPercentage% similarity",
-                          style: const TextStyle(fontSize: 16)),
-                      Text(
-                          "Cramer Distance: $cramerScore vs. $cramerPercentage% similarity",
-                          style: const TextStyle(fontSize: 16)),
-                    ],
-                  );
-                });
-              },
-              child: const Text("Compute Similarity Scores"),
-            ),
-            const SizedBox(height: 10),
-            // Log messages
-            _comparison ?? const Text("No comparison yet"),
-          ],
-        ),
+              // Update UI with results
+              setState(() {
+                _comparison = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        "Kullback-Leibler Divergence: $kldScore vs. $kldPercentage% similarily",
+                        style: const TextStyle(fontSize: 16)),
+                    Text(
+                        "Bhattacharyya Coefficent: $bhattacharyyaScore vs. $bhattacharyyaPercentage% similarity",
+                        style: const TextStyle(fontSize: 16)),
+                    Text(
+                        "Cramer Distance: $cramerScore vs. $cramerPercentage% similarity",
+                        style: const TextStyle(fontSize: 16)),
+                  ],
+                );
+              });
+            },
+            child: const Text("Compute Similarity Scores"),
+          ),
+          const SizedBox(height: 10),
+          // Log messages
+          _comparison ?? const Text("No comparison yet"),
+        ],
       ),
     );
   }
