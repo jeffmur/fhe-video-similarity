@@ -357,7 +357,7 @@ class Thumbnail {
 
   Future<void> cache() async {
     final bytes = await image.asBytes;
-    manifest.write(bytes.toList(), video.pwd, filename);
+    await manifest.write(bytes.toList(), video.pwd, filename);
     isCached = true;
   }
 

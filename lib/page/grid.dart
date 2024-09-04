@@ -14,18 +14,28 @@ class SelectableGrid extends StatefulWidget {
 }
 
 class _SelectableGridState extends State<SelectableGrid> {
-  List<bool> _selected = [];
-  List<Thumbnail> render = [];
+  List<bool> _selected = List.empty(growable: true);
+  List<Thumbnail> render = List.empty(growable: true);
 
-  @override
-  void initState() {
-    super.initState();
-    _selected = List.filled(render.length, false);
+  void clearRender() {
+    setState(() {
+      render.clear();
+    });
   }
 
-  void refreshState() {
-    print("Refreshing state");
-    setState(() {});
+  void addThumbnailToRender(Thumbnail thumbnail) {
+    setState(() {
+      render.add(thumbnail);
+      _selected.add(false); // grow the selected list
+    });
+  }
+
+  void deselectAll() {
+    setState(() {
+      render.forEach((element) {
+        _selected[render.indexOf(element)] = false;
+      });
+    });
   }
 
   @override
@@ -44,9 +54,7 @@ class _SelectableGridState extends State<SelectableGrid> {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () {
-                        // Removal of all thumbnails
-                        render.clear();
-                        refreshState();
+                        clearRender();
 
                         List<String> thumbnailPaths = manifest.paths
                             .where((path) => path.contains('thumbnail'))
@@ -54,10 +62,9 @@ class _SelectableGridState extends State<SelectableGrid> {
 
                         thumbnailPaths.forEach((path) async {
                           final thumbnail = await m.loadThumbnail(path);
-                          render.add(thumbnail);
-                          _selected = List.filled(render.length, false);
-                          refreshState();
+                          addThumbnailToRender(thumbnail);
                         });
+                        deselectAll(); // using new thumbnails
                       },
                     ),
                   ],
@@ -103,14 +110,13 @@ class _SelectableGridState extends State<SelectableGrid> {
                 ? [
                     _selectImages(_selected, render, context, m),
                     const SizedBox(height: 10),
-                    _upload(m, context, render, refreshState),
+                    _upload(m, context, addThumbnailToRender),
                   ]
-                : [_upload(m, context, render, refreshState)]));
+                : [_upload(m, context, addThumbnailToRender)]));
   }
 }
 
-Widget _upload(Manager m, BuildContext context, List<Thumbnail> render,
-    Function setParentState) {
+Widget _upload(Manager m, BuildContext context, Function(Thumbnail) renderAdd) {
   return m.floatingSelectMediaFromGallery(MediaType.video, context,
       (xfile, timestamp, trimStart, trimEnd) async {
     // Cache the video + metadata
@@ -124,8 +130,7 @@ Widget _upload(Manager m, BuildContext context, List<Thumbnail> render,
       // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
       final frame0 = Thumbnail(video, video.startFrame);
       frame0.cache().then((value) {
-        render.add(frame0);
-        setParentState();
+        renderAdd(frame0);
       });
     });
   });
