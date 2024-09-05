@@ -3,6 +3,7 @@ import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
+import 'package:flutter_fhe_video_similarity/page/load_button.dart';
 
 class Config {
   PreprocessType type;
@@ -131,7 +132,10 @@ class _PreprocessFormState extends State<PreprocessForm> {
   Future<void> _preprocess() async {
     try {
       await _manager.storeProcessedVideoCSV(
-          widget.thumbnail.video, widget.config.type, widget.config.frameCount);
+        widget.thumbnail.video,
+        widget.config.type,
+        widget.config.frameCount,
+      );
     } on UnsupportedError catch (_) {
       print("Unsupported PreprocessType: ${widget.config.type.name}");
       // TODO: Show error message
@@ -142,9 +146,9 @@ class _PreprocessFormState extends State<PreprocessForm> {
   }
 
   Widget submit() {
-    return ElevatedButton(
+    return LoadButton(
       onPressed: _preprocess,
-      child: const Text("Preprocess"),
+      text: "Preprocess",
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
 import 'uploader.dart';
+import 'dart:isolate';
 import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
@@ -100,8 +101,8 @@ class Manager {
   /// Store the processed video as a CSV file
   ///
   Future<XFileStorage> storeProcessedVideoCSV(
-      Video video, PreprocessType type, FrameCount frameCount) {
-    final content = NormalizedByteArray(type).preprocess(video, frameCount);
+      Video video, PreprocessType type, FrameCount frameCount) async {
+    final content = await NormalizedByteArray(type).preprocess(video, frameCount);
 
     final List<List<int>> bytes = content['bytes'];
     final List<double> normalized = content['normalized'];

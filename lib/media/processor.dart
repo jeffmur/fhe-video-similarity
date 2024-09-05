@@ -18,12 +18,12 @@ class NormalizedByteArray {
   ///
   /// Returns a map of startFrame to normalized byte arrays
   ///
-  Map preprocess(Video video, FrameCount frameCount) {
+  Future<Map> preprocess(Video video, FrameCount frameCount) async {
     switch (type) {
       case PreprocessType.sso:
         const segment = Duration(seconds: 1);
         List<List<int>> bytes =
-            countBytesInVideoSegment(video, segment, frameCount);
+            await countBytesInVideoSegment(video, segment, frameCount);
 
         // For this algorithm, first calculate the sum of each segment
         List<int> sumOfFrameSegments =
@@ -72,14 +72,14 @@ List<double> normalizeSumOfElements(List<int> values) {
 
 /// Count the number of bytes within each video segment
 ///
-List<List<int>> countBytesInVideoSegment(
-    Video video, Duration segment, FrameCount frameCount) {
+Future<List<List<int>>> countBytesInVideoSegment(
+    Video video, Duration segment, FrameCount frameCount) async {
   List<List<int>> byteLengths = [];
   var frameRangesFromSegment = video.frameIndexFromSegment(segment, frameCount);
 
   for (var range in frameRangesFromSegment) {
     print('[DEBUG] Frame Range: $range');
-    final frames = video.frames(frameIds: range);
+    final frames = await video.frames(frameIds: range);
 
     List<int> frameByteLengths = [];
     for (var frame in frames) {
