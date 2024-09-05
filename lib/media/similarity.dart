@@ -23,7 +23,7 @@ class Similarity {
   double percentile(List<double> v1, List<double> v2) {
     double score = this.score(v1, v2).abs();
     return switch (type) {
-      SimilarityType.kld => 1 - (score / (1 + score)), // 0..infinity (differ) -> 0..1 (identical)
+      SimilarityType.kld => 1 / (1 + score),
       SimilarityType.cramer => 1 - score,
       _ => score
     } * 100;

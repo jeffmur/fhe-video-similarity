@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
-import 'package:flutter_fhe_video_similarity/page/experiment.dart'
-    show Experiment;
-import 'package:flutter_fhe_video_similarity/page/thumbnail.dart'
-    show ThumbnailWidget, OverlayWidget;
+import 'package:flutter_fhe_video_similarity/page/experiment.dart';
+import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
 
 class SelectableGrid extends StatefulWidget {
-  SelectableGrid({Key? key}) : super(key: key);
+  const SelectableGrid({super.key});
 
   @override
   State<SelectableGrid> createState() => _SelectableGridState();
@@ -32,9 +30,9 @@ class _SelectableGridState extends State<SelectableGrid> {
 
   void deselectAll() {
     setState(() {
-      render.forEach((element) {
+      for (var element in render) {
         _selected[render.indexOf(element)] = false;
-      });
+      }
     });
   }
 
@@ -53,17 +51,17 @@ class _SelectableGridState extends State<SelectableGrid> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.refresh),
-                      onPressed: () {
+                      onPressed: () async {
                         clearRender();
 
                         List<String> thumbnailPaths = manifest.paths
                             .where((path) => path.contains('thumbnail'))
                             .toList();
 
-                        thumbnailPaths.forEach((path) async {
+                        for (var path in thumbnailPaths) {
                           final thumbnail = await m.loadThumbnail(path);
                           addThumbnailToRender(thumbnail);
-                        });
+                        }
                         deselectAll(); // using new thumbnails
                       },
                     ),

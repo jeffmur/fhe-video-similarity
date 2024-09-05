@@ -207,6 +207,7 @@ class Video extends UploadedMedia {
   ///
   void trim(Duration start, Duration end) {
     final fps = video.get(cv.CAP_PROP_FPS);
+    print("Start: $start, End: $end");
     int trimStart = (start.inSeconds * fps).toInt();
     int trimLast = (end.inSeconds * fps).toInt();
 
@@ -221,7 +222,7 @@ class Video extends UploadedMedia {
     // Check if the target frame is within the video frame range
     if (trimStart >= 0) {
       print("[trim] Seeking $trimStart frames from the start");
-      startFrame = trimStart;
+      startFrame = startFrame + trimStart;
     }
 
     if (trimLast > 0 && trimLast < endFrame) {
