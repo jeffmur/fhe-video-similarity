@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
-import 'package:flutter_fhe_video_similarity/page/experiment.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/page.dart';
 import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
 
 class SelectableGrid extends StatefulWidget {

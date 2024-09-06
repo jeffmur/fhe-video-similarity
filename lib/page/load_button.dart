@@ -44,7 +44,8 @@ class LoadButtonState extends State<LoadButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ElevatedButton(
           onPressed: isLoading ? null : _handleButtonPress,
@@ -59,10 +60,13 @@ class LoadButtonState extends State<LoadButton> {
                   ),
                 ),
         ),
-        !widget.timer || _elapsedTime.inMilliseconds < 0
+        !widget.timer || _elapsedTime == Duration.zero
             ? const SizedBox.shrink()
-            : Text(
-                '${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
+            : Row(children: [
+                const Text('Elapsed Time: '),
+                Text('${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
+              ]
+            )
       ],
     );
   }
