@@ -29,6 +29,21 @@ class SimilarityResults extends StatefulWidget {
   State<SimilarityResults> createState() => SimilarityResultsState();
 }
 
+class PlaintextSimilarityScores {
+  final List<double> baseline;
+  final List<double> comparison;
+
+  PlaintextSimilarityScores(this.baseline, this.comparison);
+
+  String score(SimilarityType type) {
+    return Similarity(type).score(baseline, comparison).toStringAsExponential();
+  }
+
+  String percentile(SimilarityType type) {
+    return Similarity(type).percentile(baseline, comparison).toStringAsFixed(2);
+  }
+}
+
 class SimilarityResultsState extends State<SimilarityResults> {
   final Manager _manager = Manager();
   Widget? _comparison;
@@ -61,26 +76,10 @@ class SimilarityResultsState extends State<SimilarityResults> {
                 widget.comparisonConfig.type,
                 widget.comparisonConfig.frameCount);
 
-            final kldScore = Similarity(SimilarityType.kld)
-                .score(baselineData, comparisonData)
-                .toStringAsExponential();
-            final kldPercentage = Similarity(SimilarityType.kld)
-                .percentile(baselineData, comparisonData)
-                .toStringAsFixed(2);
-
-            final bhattacharyyaScore = Similarity(SimilarityType.bhattacharyya)
-                .score(baselineData, comparisonData)
-                .toStringAsExponential();
-            final bhattacharyyaPercentage = Similarity(SimilarityType.bhattacharyya)
-                .percentile(baselineData, comparisonData)
-                .toStringAsFixed(2);
-
-            final cramerScore = Similarity(SimilarityType.cramer)
-                .score(baselineData, comparisonData)
-                .toStringAsExponential();
-            final cramerPercentage = Similarity(SimilarityType.cramer)
-                .percentile(baselineData, comparisonData)
-                .toStringAsFixed(2);
+            final plaintext = PlaintextSimilarityScores(
+              baselineData,
+              comparisonData,
+            );
 
             // Update UI with results
             setState(() {
@@ -88,13 +87,16 @@ class SimilarityResultsState extends State<SimilarityResults> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                      "Kullback-Leibler Divergence: $kldScore vs. $kldPercentage% similarily",
+                      "Kullback-Leibler Divergence: ${plaintext.score(SimilarityType.kld)} vs. "
+                      "${plaintext.percentile(SimilarityType.kld)}% similarily",
                       style: const TextStyle(fontSize: 16)),
                   Text(
-                      "Bhattacharyya Coefficent: $bhattacharyyaScore vs. $bhattacharyyaPercentage% similarity",
+                      "Bhattacharyya Coefficent: ${plaintext.score(SimilarityType.bhattacharyya)} vs. "
+                      "${plaintext.percentile(SimilarityType.bhattacharyya)}% similarity",
                       style: const TextStyle(fontSize: 16)),
                   Text(
-                      "Cramer Distance: $cramerScore vs. $cramerPercentage% similarity",
+                      "Cramer Distance: ${plaintext.score(SimilarityType.cramer)} vs. "
+                      "${plaintext.percentile(SimilarityType.cramer)}% similarity",
                       style: const TextStyle(fontSize: 16)),
                 ],
               );

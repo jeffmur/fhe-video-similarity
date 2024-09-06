@@ -163,7 +163,7 @@ class PreprocessFormState extends State<PreprocessForm> {
     );
   }
 
-  Future<void> _preprocess() async {
+  Future<void> preprocess() async {
     try {
       await _manager.storeProcessedVideoCSV(
         widget.thumbnail.video,
@@ -181,7 +181,7 @@ class PreprocessFormState extends State<PreprocessForm> {
 
   Widget submit() {
     return LoadButton(
-      onPressed: _preprocess,
+      onPressed: preprocess,
       text: "Preprocess",
     );
   }

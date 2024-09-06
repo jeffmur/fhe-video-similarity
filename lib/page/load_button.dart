@@ -63,7 +63,7 @@ class LoadButtonState extends State<LoadButton> {
         !widget.timer || _elapsedTime == Duration.zero
             ? const SizedBox.shrink()
             : Row(children: [
-                const Text('Elapsed Time: '),
+                const SizedBox(width: 5),
                 Text('${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
               ]
             )
