@@ -5,10 +5,11 @@ import 'dart:convert';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 
 /// Recursively add media to the manifest
-/// 
+///
 /// Add the media to the manifest by recursively adding the media to the leaf node of the manifest.
 ///
-Map<String, dynamic> newLeaf(Map<String, dynamic> node, List<String> paths, String key, String val) {
+Map<String, dynamic> newLeaf(
+    Map<String, dynamic> node, List<String> paths, String key, String val) {
   // Add the leaf node
   if (paths.isEmpty) {
     node[key] = val;
@@ -19,17 +20,11 @@ Map<String, dynamic> newLeaf(Map<String, dynamic> node, List<String> paths, Stri
 
   // Recurse into the nested map
   if (node[path] is Map) {
-      return {
-      ...node,
-      path: newLeaf(node[path], paths, key, val)
-    };
+    return {...node, path: newLeaf(node[path], paths, key, val)};
   }
 
   // Default case: Add empty branch
-  return {
-    ...node,
-    path: newLeaf({}, paths, key, val)
-  };
+  return {...node, path: newLeaf({}, paths, key, val)};
 }
 
 class Manifest {
@@ -59,6 +54,7 @@ class Manifest {
         }
       });
     }
+
     traverse(_media, '');
     return paths;
   }
@@ -70,21 +66,18 @@ class Manifest {
       XFile manifest = await read('', 'manifest.json');
       final ctx = await manifest.readAsString();
       _media = jsonDecode(ctx);
-    }
-    catch (e) {
+    } catch (e) {
       print('Manifest not found');
       return;
     }
   }
 
   void init() {
-    initAsync().then(
-      (_) => print('Manifest initialized: $_media')
-    );
+    initAsync().then((_) => print('Manifest initialized: $_media'));
   }
 
   /// Add a media file to the manifest
-  /// 
+  ///
   void add(String pwd, String filename) {
     // Path to working directory (pwd) may contain nested paths
     final paths = pwd.split('/');
@@ -92,17 +85,16 @@ class Manifest {
     // Extract the file extension
     final file = filename.split('.').first;
     final ext = filename.split('.').last;
-    
+
     // Insert filename:ext as a leaf node into the manifest
     Map<String, dynamic> tmp = _media;
     _media = newLeaf(tmp, paths, file, ext);
 
     print('Added to manifest: $_media');
-    
   }
 
   /// Read the [XFile] from the cache
-  /// 
+  ///
   Future<XFile> read(String pwd, String filename) async {
     final cache = ApplicationStorage(pwd);
     final path = await cache.path;
@@ -112,7 +104,8 @@ class Manifest {
   /// Write the media [bytes] to the cache
   ///
   /// [filename] must include appropriate extension
-  Future<XFileStorage> write(List<int> bytes, String pwd, String filename) async {
+  Future<XFileStorage> write(
+      List<int> bytes, String pwd, String filename) async {
     // Store the media in the cache
     XFileStorage storage = XFileStorage.fromBytes(pwd, filename, bytes);
     await storage.write();
@@ -121,13 +114,13 @@ class Manifest {
     add(pwd, filename);
 
     // save the manifest
-    
-    XFileStorage manifest = XFileStorage.fromBytes('', 'manifest.json', utf8.encode(jsonEncode(_media)));
+
+    XFileStorage manifest = XFileStorage.fromBytes(
+        '', 'manifest.json', utf8.encode(jsonEncode(_media)));
     await manifest.write();
 
     return storage;
   }
-
 }
 
 // Manifest instance

@@ -38,13 +38,12 @@ class TestSelection extends StatelessWidget {
       child: ListView(
         children: [
           const DrawerHeader(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-               Text('GhostPeerShare', style: TextStyle(fontSize: 20)),
-              ],
-            )
-          ),
+              child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('GhostPeerShare', style: TextStyle(fontSize: 20)),
+            ],
+          )),
           ListTile(
             title: const Text('KLD'),
             onTap: () {
@@ -78,10 +77,11 @@ class HexidecimalOpPage extends State<Hexadecimal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Hexadecimal')),
-      drawer: const TestSelection(),
-      body: hexOp(context, xP, yP, xEncrypted, yEncrypted));
+        appBar: AppBar(title: const Text('Hexadecimal')),
+        drawer: const TestSelection(),
+        body: hexOp(context, xP, yP, xEncrypted, yEncrypted));
   }
+
   @override
   void dispose() {
     // Clean up the controller when the widget is disposed.

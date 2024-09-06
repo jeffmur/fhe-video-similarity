@@ -18,23 +18,22 @@ class NormalizedByteArray {
   ///
   /// Returns a map of startFrame to normalized byte arrays
   ///
-  Map preprocess(Video video) {
+  Future<Map> preprocess(Video video, FrameCount frameCount) async {
     switch (type) {
       case PreprocessType.sso:
         const segment = Duration(seconds: 1);
-        final bytes = countBytesInVideoSegment(video, segment);
+        List<List<int>> bytes =
+            await countBytesInVideoSegment(video, segment, frameCount);
+
+        // For this algorithm, first calculate the sum of each segment
+        List<int> sumOfFrameSegments =
+            bytes.map((segment) => segment.reduce((a, b) => a + b)).toList();
+
+        print('[DEBUG] Length: ${sumOfFrameSegments.length}');
 
         // Normalize each segment with the sum of ALL elements
-        final flatNormalized = normalizeSumOfElements(flatten(bytes).toList());
-        List<List<double>> normalized = [];
+        final normalized = normalizeSumOfElements(sumOfFrameSegments);
 
-        // Divide the normalized array into segments
-        for (var i = 0; i < bytes.length; i++) {
-          var segmentSize = bytes[i].length;
-          final start = i * segmentSize;
-          final end = (i + 1) * segmentSize;
-          normalized.add(flatNormalized.sublist(start, end));
-        }
         print('[DEBUG] Normalized: $normalized');
 
         final timestamps = video.timestampsFromSegment(video, segment);
@@ -47,7 +46,7 @@ class NormalizedByteArray {
         };
       case PreprocessType.motion:
         // preprocessMotion(video);
-        throw UnimplementedError('Motion preprocessing not implemented');
+        throw UnsupportedError('Motion preprocessing not implemented');
     }
   }
 }
@@ -61,32 +60,32 @@ Iterable<T> flatten<T>(Iterable<Iterable<T>> items) sync* {
 }
 
 /// Normalize the array by the sum of the elements by element
-/// 
+///
 /// Returns a list of normalized values, whose sum equals 1
 ///
 List<double> normalizeSumOfElements(List<int> values) {
   // Find the sum of the values
   final sum = values.reduce((value, element) => value + element);
-  // Normalize the values
+  // Normalize the values between 0 and 1
   return values.map((e) => e / sum).toList();
 }
 
 /// Count the number of bytes within each video segment
 ///
-List<List<int>> countBytesInVideoSegment(Video video, Duration segment) {
+Future<List<List<int>>> countBytesInVideoSegment(
+    Video video, Duration segment, FrameCount frameCount) async {
   List<List<int>> byteLengths = [];
-  final frameRanges = video.frameIndexFromSegment(segment);
+  var frameRangesFromSegment = video.frameIndexFromSegment(segment, frameCount);
 
-  for (var range in frameRanges) {
-    print('[DEBUG] Range: $range');
-    final frames = video.frames(frameIds: range);
-  
+  for (var range in frameRangesFromSegment) {
+    print('[DEBUG] Frame Range: $range');
+    final frames = await video.frames(frameIds: range);
+
     List<int> frameByteLengths = [];
     for (var frame in frames) {
       frameByteLengths.add(frame.length);
     }
-
     byteLengths.add(frameByteLengths);
-  }  
+  }
   return byteLengths;
 }
