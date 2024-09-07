@@ -39,6 +39,7 @@ class SessionChanges extends ChangeNotifier {
   List<String> get logs => _log;
 
   Session _session = Session();
+  Session get session => _session;
   String get scheme => _session.scheme;
   Map get context => _session.context.toMap();
   String get status => _session.context.status;

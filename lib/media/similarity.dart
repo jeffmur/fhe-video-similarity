@@ -36,17 +36,24 @@ class Similarity {
   }
 }
 
+// Ciphertext Similarity Scores
+// ----------------------------
+// ciphertextHandler: Session that encrypts and decrypts Ciphertexts (untrusted 3rd party)
+// plaintextEncoder: Session that encodes and decodes plaintexts (current user)
+
 class CiphertextKLD {
-  final Session session = Session();
+  final Session ciphertextHandler;
+  final Session plaintextEncoder;
+  CiphertextKLD(this.ciphertextHandler, this.plaintextEncoder);
 
   List<double> log(List<double> v) {
     return v.map((e) => math.log(e)).toList();
   }
 
   double score(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
-    return session
+    return ciphertextHandler
         .decryptedSumOfDoubles(
-            kld.divergenceOfCiphertextVecDouble(session.seal, x, logX, y))
+            kld.divergenceOfCiphertextVecDouble(plaintextEncoder.seal, x, logX, y))
         .abs();
   }
 
@@ -56,16 +63,18 @@ class CiphertextKLD {
 }
 
 class CiphertextBhattacharyya {
-  final Session session = Session();
+  final Session ciphertextHandler;
+  final Session plaintextEncoder;
+  CiphertextBhattacharyya(this.ciphertextHandler, this.plaintextEncoder);
 
   List<double> sqrt(List<double> v) {
     return v.map((e) => math.sqrt(e)).toList();
   }
 
   double score(List<Ciphertext> sqrtX, List<double> sqrtY) {
-    return session
+    return ciphertextHandler
         .decryptedSumOfDoubles(bhattacharyya.coefficientOfCiphertextVecDouble(
-            session.seal, sqrtX, sqrtY))
+            plaintextEncoder.seal, sqrtX, sqrtY))
         .abs();
   }
 
@@ -76,12 +85,14 @@ class CiphertextBhattacharyya {
 }
 
 class CiphertextCramer {
-  final Session session = Session();
+  final Session ciphertextHandler;
+  final Session plaintextEncoder;
+  CiphertextCramer(this.ciphertextHandler, this.plaintextEncoder);
 
   double score(List<Ciphertext> x, List<double> y) {
-    return math.sqrt(session
+    return math.sqrt(ciphertextHandler
         .decryptedSumOfDoubles(
-            cramer.distanceOfCiphertextVecDouble(session.seal, x, y))
+            cramer.distanceOfCiphertextVecDouble(plaintextEncoder.seal, x, y))
         .abs());
   }
 

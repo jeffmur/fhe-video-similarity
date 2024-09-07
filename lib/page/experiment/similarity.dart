@@ -5,7 +5,6 @@ import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
-import 'package:flutter_fhe_video_similarity/page/load_button.dart';
 
 class SimilarityResults extends StatefulWidget {
   final Video baseline;
@@ -47,29 +46,34 @@ class PlaintextSimilarityScores {
 }
 
 class CiphertextSimilarityScores {
-  final Session seal;
-  final List<double> toCiphertext;
-  final List<double> toPlaintext;
+  Session ciphertextHandler; // Untrusted 3rd party
+  List<double> toCiphertext;
+  Session plaintextEncoder; // Client
+  List<double> toPlaintext;
 
-  CiphertextSimilarityScores(this.seal, this.toCiphertext, this.toPlaintext);
+  CiphertextSimilarityScores(this.ciphertextHandler, this.toCiphertext,
+      this.plaintextEncoder, this.toPlaintext);
 
   double compute(SimilarityType type) {
-    List<Ciphertext> x = seal.encryptVecDouble(toCiphertext);
+    List<Ciphertext> x = ciphertextHandler.encryptVecDouble(toCiphertext);
 
     switch (type) {
       case SimilarityType.kld:
-        final kld = CiphertextKLD();
-        List<Ciphertext> logX = seal.encryptVecDouble(kld.log(toCiphertext));
+        CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
+        List<Ciphertext> logX =
+            ciphertextHandler.encryptVecDouble(kld.log(toCiphertext));
         return kld.score(x, logX, toPlaintext);
 
       case SimilarityType.bhattacharyya:
-        final bhattacharyya = CiphertextBhattacharyya();
-        List<Ciphertext> sqrtX =
-            seal.encryptVecDouble(bhattacharyya.sqrt(toCiphertext));
+        CiphertextBhattacharyya bhattacharyya =
+            CiphertextBhattacharyya(ciphertextHandler, plaintextEncoder);
+        List<Ciphertext> sqrtX = ciphertextHandler
+            .encryptVecDouble(bhattacharyya.sqrt(toCiphertext));
         return bhattacharyya.score(sqrtX, bhattacharyya.sqrt(toPlaintext));
 
       case SimilarityType.cramer:
-        final cramer = CiphertextCramer();
+        CiphertextCramer cramer =
+            CiphertextCramer(ciphertextHandler, plaintextEncoder);
         return cramer.score(x, toPlaintext);
 
       default:
@@ -110,20 +114,20 @@ class SimilarityResultsState extends State<SimilarityResults> {
         areVideosInSameFrameRangeStatus(widget.baseline, widget.comparison),
         areVideosInSameEncodingStatus(widget.baseline, widget.comparison),
         const SizedBox(height: 10),
-        LoadButton(
-          text: 'Compute Similarity Scores',
+        ElevatedButton(
+          child: const Text('Compute Plaintext Similarity Scores'),
           onPressed: () async {
             // Fetch normalized data in parallel
-            final baselineData = await _manager.getCachedNormalized(
+            var baselineData = await _manager.getCachedNormalized(
                 widget.baseline,
                 widget.baselineConfig.type,
                 widget.baselineConfig.frameCount);
-            final comparisonData = await _manager.getCachedNormalized(
+            var comparisonData = await _manager.getCachedNormalized(
                 widget.comparison,
                 widget.comparisonConfig.type,
                 widget.comparisonConfig.frameCount);
 
-            final plaintext = PlaintextSimilarityScores(
+            var plaintext = PlaintextSimilarityScores(
               baselineData,
               comparisonData,
             );
@@ -152,65 +156,66 @@ class SimilarityResultsState extends State<SimilarityResults> {
         ),
         const SizedBox(height: 10),
         _comparison ?? const Text("No comparison yet"),
-        LoadButton(
-          text: 'Compute Encrypted Similarity Scores',
-          onPressed: () async {
-            // Fetch encrypted data in parallel
-            final baselineData = await _manager.getCachedNormalized(
-                widget.baseline,
-                widget.baselineConfig.type,
-                widget.baselineConfig.frameCount);
+        ElevatedButton(
+            child: const Text('Compute Encrypted Similarity Scores'),
+            onPressed: () async {
+              // Fetch encrypted data in parallel
+              var baselineData = await _manager.getCachedNormalized(
+                  widget.baseline,
+                  widget.baselineConfig.type,
+                  widget.baselineConfig.frameCount);
 
-            final comparisonData = await _manager.getCachedNormalized(
-                widget.comparison,
-                widget.comparisonConfig.type,
-                widget.comparisonConfig.frameCount);
+              var comparisonData = await _manager.getCachedNormalized(
+                  widget.comparison,
+                  widget.comparisonConfig.type,
+                  widget.comparisonConfig.frameCount);
 
-            final isBaselineEncrypted = widget.baselineConfig.isEncrypted;
-            final isComparisonEncrypted = widget.comparisonConfig.isEncrypted;
+              var isBaselineEncrypted = widget.baselineConfig.isEncrypted;
+              var isComparisonEncrypted = widget.comparisonConfig.isEncrypted;
 
-            // Update UI with results
-            setState(() {
-              // Only one video must be encrypted, otherwise the comparison is not possible
-              if (isBaselineEncrypted == isComparisonEncrypted) {
-                _ciphertextComparison = const Text(
-                    "One video must be encrypted for comparison",
-                    style: TextStyle(color: Colors.red));
-              } else {
-                final seal = Session();
-                final toPlaintext =
-                    isBaselineEncrypted ? baselineData : comparisonData;
-                final toCiphertext =
-                    isBaselineEncrypted ? comparisonData : baselineData;
+              // Update UI with results
+              setState(() {
+                // Only one video must be encrypted, otherwise the comparison is not possible
+                if (isBaselineEncrypted == isComparisonEncrypted) {
+                  _ciphertextComparison = const Text(
+                      "One video must be encrypted for comparison",
+                      style: TextStyle(color: Colors.red));
+                } else {
+                  // Determine settings and data based on whether the baseline is encrypted
+                  var (ciphertextHandler, plaintextEncoder) = isBaselineEncrypted
+                      ? (widget.baselineConfig.encryptionSettings, widget.comparisonConfig.encryptionSettings)
+                      : (widget.comparisonConfig.encryptionSettings, widget.baselineConfig.encryptionSettings);
 
-                final ciphertext = CiphertextSimilarityScores(
-                  seal,
-                  toPlaintext,
-                  toCiphertext,
-                );
+                  var (toCiphertext, toPlaintext) = isBaselineEncrypted
+                      ? (baselineData, comparisonData)
+                      : (comparisonData, baselineData);
 
-                _ciphertextComparison = Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Kullback-Leibler Divergence: ${ciphertext.score(SimilarityType.kld)}"
-                      " vs. ${ciphertext.percentile(SimilarityType.kld)}% similarity",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    Text(
-                        "Bhattacharyya Coefficent: ${ciphertext.score(SimilarityType.bhattacharyya)}"
-                        " vs. ${ciphertext.percentile(SimilarityType.bhattacharyya)}% similarity",
-                        style: const TextStyle(fontSize: 16)),
-                    Text(
-                        "Cramer Distance: ${ciphertext.score(SimilarityType.cramer)}"
-                        " vs. ${ciphertext.percentile(SimilarityType.cramer)}% similarity",
-                        style: const TextStyle(fontSize: 16)),
-                  ],
-                );
-              }
-            });
-          }
-        ),
+                  // Pass them to CiphertextSimilarityScores
+                  var ciphertext = CiphertextSimilarityScores(
+                      ciphertextHandler.session, toCiphertext,
+                      plaintextEncoder.session, toPlaintext);
+
+                  _ciphertextComparison = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Kullback-Leibler Divergence: ${ciphertext.score(SimilarityType.kld)}"
+                        " vs. ${ciphertext.percentile(SimilarityType.kld)}% similarity",
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                          "Bhattacharyya Coefficent: ${ciphertext.score(SimilarityType.bhattacharyya)}"
+                          " vs. ${ciphertext.percentile(SimilarityType.bhattacharyya)}% similarity",
+                          style: const TextStyle(fontSize: 16)),
+                      Text(
+                          "Cramer Distance: ${ciphertext.score(SimilarityType.cramer)}"
+                          " vs. ${ciphertext.percentile(SimilarityType.cramer)}% similarity",
+                          style: const TextStyle(fontSize: 16)),
+                    ],
+                  );
+                }
+              });
+            }),
         const SizedBox(height: 10),
         _ciphertextComparison ?? const Text("No comparison yet"),
       ],
