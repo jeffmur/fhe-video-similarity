@@ -1,8 +1,19 @@
+import 'dart:math' as math;
 import 'package:fhe_similarity_score/kld.dart' as kld;
 import 'package:fhe_similarity_score/bhattacharyya.dart' as bhattacharyya;
 import 'package:fhe_similarity_score/cramer.dart' as cramer;
+import 'seal.dart';
 
 enum SimilarityType { kld, bhattacharyya, cramer }
+
+double normalizedPercentage(SimilarityType type, double score) {
+  return switch (type) {
+        SimilarityType.kld => 1 / (1 + score),
+        SimilarityType.cramer => 1 - score,
+        _ => score
+      } *
+      100;
+}
 
 class Similarity {
   final SimilarityType type;
@@ -21,11 +32,60 @@ class Similarity {
   }
 
   double percentile(List<double> v1, List<double> v2) {
-    double score = this.score(v1, v2).abs();
-    return switch (type) {
-      SimilarityType.kld => 1 / (1 + score),
-      SimilarityType.cramer => 1 - score,
-      _ => score
-    } * 100;
+    return normalizedPercentage(type, score(v1, v2).abs());
+  }
+}
+
+class CiphertextKLD {
+  final Session session = Session();
+
+  List<double> log(List<double> v) {
+    return v.map((e) => math.log(e)).toList();
+  }
+
+  double score(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
+    return session
+        .decryptedSumOfDoubles(
+            kld.divergenceOfCiphertextVecDouble(session.seal, x, logX, y))
+        .abs();
+  }
+
+  double percentile(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
+    return normalizedPercentage(SimilarityType.kld, score(x, logX, y));
+  }
+}
+
+class CiphertextBhattacharyya {
+  final Session session = Session();
+
+  List<double> sqrt(List<double> v) {
+    return v.map((e) => math.sqrt(e)).toList();
+  }
+
+  double score(List<Ciphertext> sqrtX, List<double> sqrtY) {
+    return session
+        .decryptedSumOfDoubles(bhattacharyya.coefficientOfCiphertextVecDouble(
+            session.seal, sqrtX, sqrtY))
+        .abs();
+  }
+
+  double percentile(List<Ciphertext> sqrtX, List<double> sqrtY) {
+    return normalizedPercentage(
+        SimilarityType.bhattacharyya, score(sqrtX, sqrtY));
+  }
+}
+
+class CiphertextCramer {
+  final Session session = Session();
+
+  double score(List<Ciphertext> x, List<double> y) {
+    return math.sqrt(session
+        .decryptedSumOfDoubles(
+            cramer.distanceOfCiphertextVecDouble(session.seal, x, y))
+        .abs());
+  }
+
+  double percentile(List<Ciphertext> x, List<double> y) {
+    return normalizedPercentage(SimilarityType.cramer, score(x, y));
   }
 }

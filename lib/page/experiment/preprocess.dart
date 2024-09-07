@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
 import 'package:flutter_fhe_video_similarity/page/load_button.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 
 class Config {
   PreprocessType type;
   FrameCount frameCount;
   int startFrame;
   int endFrame;
+  bool isEncrypted;
+  bool isEncryptionDisabled;
+  SessionChanges encryptionSettings;
 
-  Config(this.type, this.frameCount, this.startFrame, this.endFrame);
+  Config(this.type, this.frameCount, this.startFrame, this.endFrame,
+      {this.isEncrypted = false,
+       this.isEncryptionDisabled = false,
+       required this.encryptionSettings
+  });
 }
 
 void trimVideoByCreatedTimestamp(Video video, Video other) {
@@ -75,11 +84,8 @@ class PreprocessFormState extends State<PreprocessForm> {
   void _reloadCache() {
     setState(() {
       _isCached = _manager.isProcessed(
-          widget.thumbnail.video,
-          widget.config.type,
-          widget.config.frameCount
-        );
-      });
+          widget.thumbnail.video, widget.config.type, widget.config.frameCount);
+    });
   }
 
   void refreshSlider() {
@@ -196,16 +202,56 @@ class PreprocessFormState extends State<PreprocessForm> {
     );
   }
 
+  Widget encryptionPage(SessionChanges session) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Checkbox(
+          value: widget.config.isEncrypted,
+          onChanged: widget.config.isEncryptionDisabled
+              ? null
+              : (bool? value) {
+                  setState(() {
+                    widget.config.isEncrypted = value!;
+                    widget.onFormSubmit(widget.config);
+                  });
+                },
+        ),
+        Expanded(
+          child: ListTile(
+            leading: const Icon(Icons.lock),
+            title: Text('Encrypt? ${widget.config.isEncrypted}'),
+            subtitle: const Text('Tap to configure encryption settings'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => EncryptionSettings(session: session)),
+              );
+            },
+          ),
+        )
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Form(
-      child: Wrap(
-        children: [
-          frameSlider(),
-          preprocessTypeDropdown(),
-          frameCountDropdown(),
-          Row(children: [submit(), const SizedBox(width: 5), status()])
-        ],
+    return ChangeNotifierProvider(
+      create: (context) => SessionChanges(),
+      child: Form(
+        child: Column(
+          children: [
+            encryptionPage(widget.config.encryptionSettings),
+            frameSlider(),
+            preprocessTypeDropdown(),
+            frameCountDropdown(),
+            const SizedBox(height: 5),
+            Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [submit(), const SizedBox(width: 5), status()]),
+          ],
+        ),
       ),
     );
   }

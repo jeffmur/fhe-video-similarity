@@ -1,9 +1,6 @@
-// import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'cache.dart' show manifest;
-// import 'package:logging/logging.dart';
-
 import 'storage.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 

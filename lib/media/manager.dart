@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
 import 'uploader.dart';
-import 'dart:isolate';
 import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
+import 'seal.dart';
 import 'cache.dart' show manifest;
 import 'primatives.dart' show opencvInfo, resolveNestedValue;
 import 'video.dart' show Thumbnail, Video, VideoMeta, FrameCount;

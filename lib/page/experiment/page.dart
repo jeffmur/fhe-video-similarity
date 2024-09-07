@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/similarity.dart';
 
@@ -37,6 +38,7 @@ class ConfigureVideoState extends State<ConfigureVideo> {
         automaticallyImplyLeading: false,
       ),
       body: ListView(
+        padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
         children: [
           Text("sha256: ${widget.thumbnail.video.hash}"),
           Text("Created: ${widget.thumbnail.video.created}"),
@@ -54,7 +56,8 @@ class ConfigureVideoState extends State<ConfigureVideo> {
               config: widget.defaultConfig,
               onFormSubmit: widget.onUpdatedTestConfig,
               onVideoTrim: refresh,
-              key: widget.preprocessFormKey),
+              key: widget.preprocessFormKey,
+          )
         ],
       ),
     );
@@ -87,24 +90,35 @@ class _ExperimentState extends State<Experiment> {
       FrameCount.firstLast,
       widget.baseline.video.startFrame,
       widget.baseline.video.endFrame,
+      encryptionSettings: SessionChanges(),
     );
     _comparisonConfig = Config(
       PreprocessType.sso,
       FrameCount.firstLast,
       widget.comparison.video.startFrame,
       widget.comparison.video.endFrame,
+      encryptionSettings: SessionChanges(),
     );
+  }
+
+  void disableOtherEncryption() {
+    setState(() {
+      _baselineConfig.isEncryptionDisabled = _comparisonConfig.isEncrypted;
+      _comparisonConfig.isEncryptionDisabled = _baselineConfig.isEncrypted;
+    });
   }
 
   void baselineConfig(Config config) {
     setState(() {
       _baselineConfig = config;
+      disableOtherEncryption();
     });
   }
 
   void comparisonConfig(Config config) {
     setState(() {
       _comparisonConfig = config;
+      disableOtherEncryption();
     });
   }
 
@@ -137,21 +151,21 @@ class _ExperimentState extends State<Experiment> {
             child: Row(
               children: [
                 Expanded(
-                  child: ConfigureVideo(
-                    thumbnail: widget.baseline,
-                    defaultConfig: _baselineConfig,
-                    onUpdatedTestConfig: baselineConfig,
-                    onRefreshValidation: () =>
-                      similarityResultsKey.currentState?.setState(() {}),
-                    preprocessFormKey: baselineKey)),
+                    child: ConfigureVideo(
+                        thumbnail: widget.baseline,
+                        defaultConfig: _baselineConfig,
+                        onUpdatedTestConfig: baselineConfig,
+                        onRefreshValidation: () =>
+                            similarityResultsKey.currentState?.setState(() {}),
+                        preprocessFormKey: baselineKey)),
                 Expanded(
-                  child: ConfigureVideo(
-                    thumbnail: widget.comparison,
-                    defaultConfig: _comparisonConfig,
-                    onUpdatedTestConfig: comparisonConfig,
-                    onRefreshValidation: () =>
-                      similarityResultsKey.currentState?.setState(() {}),
-                    preprocessFormKey: comparisonKey)),
+                    child: ConfigureVideo(
+                        thumbnail: widget.comparison,
+                        defaultConfig: _comparisonConfig,
+                        onUpdatedTestConfig: comparisonConfig,
+                        onRefreshValidation: () =>
+                            similarityResultsKey.currentState?.setState(() {}),
+                        preprocessFormKey: comparisonKey)),
               ],
             ),
           ),
