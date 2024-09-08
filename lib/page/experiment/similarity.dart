@@ -31,10 +31,19 @@ class SimilarityResults extends StatefulWidget {
 }
 
 class PlaintextSimilarityScores {
-  final List<double> baseline;
-  final List<double> comparison;
+  List<double> baseline;
+  List<double> comparison;
+  final bool flip;
 
-  PlaintextSimilarityScores(this.baseline, this.comparison);
+  /// [flip] is used to evaluate symmetry of similarity scores
+  ///
+  PlaintextSimilarityScores(this.baseline, this.comparison, {this.flip = false}) {
+    if (flip) {
+      List<double> temp = baseline;
+      baseline = comparison;
+      comparison = temp;
+    }
+  }
 
   String score(SimilarityType type) {
     return Similarity(type).score(baseline, comparison).toStringAsExponential();
@@ -130,6 +139,7 @@ class SimilarityResultsState extends State<SimilarityResults> {
             var plaintext = PlaintextSimilarityScores(
               baselineData,
               comparisonData,
+              flip: widget.comparisonConfig.isEncrypted,
             );
 
             // Update UI with results
@@ -182,9 +192,16 @@ class SimilarityResultsState extends State<SimilarityResults> {
                       style: TextStyle(color: Colors.red));
                 } else {
                   // Determine settings and data based on whether the baseline is encrypted
-                  var (ciphertextHandler, plaintextEncoder) = isBaselineEncrypted
-                      ? (widget.baselineConfig.encryptionSettings, widget.comparisonConfig.encryptionSettings)
-                      : (widget.comparisonConfig.encryptionSettings, widget.baselineConfig.encryptionSettings);
+                  var (ciphertextHandler, plaintextEncoder) =
+                      isBaselineEncrypted
+                          ? (
+                              widget.baselineConfig.encryptionSettings,
+                              widget.comparisonConfig.encryptionSettings
+                            )
+                          : (
+                              widget.comparisonConfig.encryptionSettings,
+                              widget.baselineConfig.encryptionSettings
+                            );
 
                   var (toCiphertext, toPlaintext) = isBaselineEncrypted
                       ? (baselineData, comparisonData)
@@ -192,8 +209,10 @@ class SimilarityResultsState extends State<SimilarityResults> {
 
                   // Pass them to CiphertextSimilarityScores
                   var ciphertext = CiphertextSimilarityScores(
-                      ciphertextHandler.session, toCiphertext,
-                      plaintextEncoder.session, toPlaintext);
+                      ciphertextHandler.session,
+                      toCiphertext,
+                      plaintextEncoder.session,
+                      toPlaintext);
 
                   _ciphertextComparison = Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
