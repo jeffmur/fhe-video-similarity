@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
 import 'package:flutter_fhe_video_similarity/page/experiment/page.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/share.dart';
 import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
 
 class SelectableGrid extends StatefulWidget {
@@ -12,6 +13,7 @@ class SelectableGrid extends StatefulWidget {
 }
 
 class _SelectableGridState extends State<SelectableGrid> {
+  bool _allowMultiSelect = false;
   List<bool> _selected = List.empty(growable: true);
   List<Thumbnail> render = List.empty(growable: true);
 
@@ -67,12 +69,12 @@ class _SelectableGridState extends State<SelectableGrid> {
                     ),
                   ],
                 ),
-                // const SizedBox(width: 10),
-                // const Text('Select'),
-                // Checkbox(
-                //   value: _allowMultiSelect,
-                //   onChanged: (val) => setState(() => _allowMultiSelect = val!),
-                // )
+                const SizedBox(width: 10),
+                const Text('Select'),
+                Checkbox(
+                  value: _allowMultiSelect,
+                  onChanged: (val) => setState(() => _allowMultiSelect = val!),
+                )
               ],
             ),
           ],
@@ -82,9 +84,18 @@ class _SelectableGridState extends State<SelectableGrid> {
           children: List.generate(render.length, (idx) {
             return OverlayWidget(
                 onTap: () {
-                  setState(() {
-                    _selected[idx] = !_selected[idx];
-                  });
+                  if (_allowMultiSelect) {
+                    setState(() {
+                      _selected[idx] = !_selected[idx];
+                    });
+                  } else {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ShareVideo(
+                                  thumbnail: render[idx],
+                                )));
+                  }
                 },
                 overlay: Container(
                   color: Colors.black
