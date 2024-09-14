@@ -52,8 +52,8 @@ class CiphertextKLD {
 
   double score(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
     return ciphertextHandler
-        .decryptedSumOfDoubles(
-            kld.divergenceOfCiphertextVecDouble(plaintextEncoder.seal, x, logX, y))
+        .decryptedSumOfDoubles(kld.divergenceOfCiphertextVecDouble(
+            plaintextEncoder.seal, x, logX, y))
         .abs();
   }
 

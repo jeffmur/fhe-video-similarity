@@ -4,7 +4,6 @@ import 'uploader.dart';
 import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
-import 'seal.dart';
 import 'cache.dart' show manifest;
 import 'primatives.dart' show opencvInfo, resolveNestedValue;
 import 'video.dart' show Thumbnail, Video, VideoMeta, FrameCount;
@@ -102,7 +101,8 @@ class Manager {
   ///
   Future<XFileStorage> storeProcessedVideoCSV(
       Video video, PreprocessType type, FrameCount frameCount) async {
-    final content = await NormalizedByteArray(type).preprocess(video, frameCount);
+    final content =
+        await NormalizedByteArray(type).preprocess(video, frameCount);
 
     final List<List<int>> bytes = content['bytes'];
     final List<double> normalized = content['normalized'];

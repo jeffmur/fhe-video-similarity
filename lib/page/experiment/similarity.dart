@@ -37,7 +37,8 @@ class PlaintextSimilarityScores {
 
   /// [flip] is used to evaluate symmetry of similarity scores
   ///
-  PlaintextSimilarityScores(this.baseline, this.comparison, {this.flip = false}) {
+  PlaintextSimilarityScores(this.baseline, this.comparison,
+      {this.flip = false}) {
     if (flip) {
       List<double> temp = baseline;
       baseline = comparison;

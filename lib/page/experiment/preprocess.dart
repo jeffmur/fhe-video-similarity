@@ -18,9 +18,8 @@ class Config {
 
   Config(this.type, this.frameCount, this.startFrame, this.endFrame,
       {this.isEncrypted = false,
-       this.isEncryptionDisabled = false,
-       required this.encryptionSettings
-  });
+      this.isEncryptionDisabled = false,
+      required this.encryptionSettings});
 }
 
 void trimVideoByCreatedTimestamp(Video video, Video other) {

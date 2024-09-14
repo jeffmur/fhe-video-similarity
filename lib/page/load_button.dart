@@ -6,7 +6,11 @@ class LoadButton extends StatefulWidget {
   final String text;
   final bool timer;
 
-  const LoadButton({super.key, required this.onPressed, required this.text, this.timer = true});
+  const LoadButton(
+      {super.key,
+      required this.onPressed,
+      required this.text,
+      this.timer = true});
 
   @override
   LoadButtonState createState() => LoadButtonState();
@@ -64,9 +68,9 @@ class LoadButtonState extends State<LoadButton> {
             ? const SizedBox.shrink()
             : Row(children: [
                 const SizedBox(width: 5),
-                Text('${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
-              ]
-            )
+                Text(
+                    '${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
+              ])
       ],
     );
   }

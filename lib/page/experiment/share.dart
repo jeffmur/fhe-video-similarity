@@ -2,31 +2,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
-import 'package:flutter_fhe_video_similarity/media/processor.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
 import 'package:flutter_fhe_video_similarity/page/share_button.dart';
-import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
-import 'package:flutter_fhe_video_similarity/media/seal.dart';
 
-class ShareVideo extends StatefulWidget {
+class ShareArchive extends StatefulWidget {
   final Thumbnail thumbnail;
 
-  const ShareVideo({
+  const ShareArchive({
     super.key,
     required this.thumbnail,
   });
 
   @override
-  State<ShareVideo> createState() => ShareVideoState();
+  State<ShareArchive> createState() => ShareArchiveState();
 }
 
-class ShareVideoState extends State<ShareVideo> {
+class ShareArchiveState extends State<ShareArchive> {
   GlobalKey<PreprocessFormState> preprocessFormKey = GlobalKey();
   final Manager m = Manager();
 
   late Config _config;
-  late CiphertextVideo _videoEncryption;
+  late XFile videoArchive;
   bool _showShareButton = false;
 
   @override
@@ -48,14 +46,21 @@ class ShareVideoState extends State<ShareVideo> {
       config.frameCount,
     );
     print("got frames");
-    List<Ciphertext> ciphertext =
-        config.encryptionSettings.session.encryptVecDouble(frames);
+    final archivePath = widget.thumbnail.video.path.replaceAll('video.mp4', 'archive.zip');
+    print(archivePath);
+    await ShareCiphertextVideoArchive(
+      frames: frames,
+      ctVideo: CiphertextVideo(
+        video: widget.thumbnail.video,
+        startTime: widget.thumbnail.video.created,
+        endTime: widget.thumbnail.video.created.add(widget.thumbnail.video.duration),
+        hash: widget.thumbnail.video.hash,
+      ),
+      session: config.encryptionSettings.session,
+      archivePath: archivePath,
+    ).create({});
 
-    _videoEncryption = CiphertextVideo(
-        ciphertext,
-        widget.thumbnail.video.created,
-        widget.thumbnail.video.created.add(widget.thumbnail.video.duration),
-        widget.thumbnail.video.hash);
+    videoArchive = XFile(archivePath);
 
     setState(() {
       _showShareButton = true;
@@ -94,10 +99,10 @@ class ShareVideoState extends State<ShareVideo> {
             ),
             const Spacer(),
             if (_showShareButton)
-              ShareString(
-                text: _videoEncryption.base64String(),
-                subject: "Encrypted Video",
-              ),
+              ShareFile(
+                subject: "Archive",
+                file: videoArchive)
+              
           ],
         ),
       ),

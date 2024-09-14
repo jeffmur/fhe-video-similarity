@@ -52,11 +52,11 @@ class ConfigureVideoState extends State<ConfigureVideo> {
 
           // Video player?
           PreprocessForm(
-              thumbnail: widget.thumbnail,
-              config: widget.defaultConfig,
-              onFormSubmit: widget.onUpdatedTestConfig,
-              onVideoTrim: refresh,
-              key: widget.preprocessFormKey,
+            thumbnail: widget.thumbnail,
+            config: widget.defaultConfig,
+            onFormSubmit: widget.onUpdatedTestConfig,
+            onVideoTrim: refresh,
+            key: widget.preprocessFormKey,
           )
         ],
       ),

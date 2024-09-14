@@ -230,9 +230,10 @@ class ParameterForm extends State<ContextForm> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                           content: Text(widget.session.status),
-                          backgroundColor: widget.session.status != 'success: valid'
-                              ? const Color.fromARGB(255, 148, 0, 0)
-                              : const Color.fromARGB(255, 0, 84, 35)),
+                          backgroundColor:
+                              widget.session.status != 'success: valid'
+                                  ? const Color.fromARGB(255, 148, 0, 0)
+                                  : const Color.fromARGB(255, 0, 84, 35)),
                     );
                   }
                 },

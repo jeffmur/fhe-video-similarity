@@ -92,7 +92,7 @@ class _SelectableGridState extends State<SelectableGrid> {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => ShareVideo(
+                            builder: (context) => ShareArchive(
                                   thumbnail: render[idx],
                                 )));
                   }

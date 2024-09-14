@@ -1,22 +1,24 @@
+import 'dart:io'; // To check platform
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For clipboard
 import 'package:share_plus/share_plus.dart';
-import 'dart:io'; // To check platform
+export 'package:share_plus/share_plus.dart'; // For XFile
 
-class ShareString extends StatefulWidget {
+class ShareFile extends StatefulWidget {
   final String subject;
-  final String text;
-  const ShareString({super.key, required this.subject, required this.text});
+  final XFile file;
+
+  const ShareFile({super.key, required this.subject, required this.file});
 
   @override
-  ShareStringState createState() => ShareStringState();
+  ShareFileState createState() => ShareFileState();
 }
 
-class ShareStringState extends State<ShareString> {
-  void shareBase64String() {
-    if (Platform.isAndroid) {
-      // Use share_plus package to share on Android
-      Share.share(widget.text, subject: widget.subject);
+class ShareFileState extends State<ShareFile> {
+  void shareFile() {
+    if (Platform.isAndroid || Platform.isIOS) {
+      // Use share_plus package to share the file on Android/iOS
+      Share.shareXFiles([widget.file], subject: widget.subject);
     } else {
       showClipboardDialog();
     }
@@ -32,18 +34,18 @@ class ShareStringState extends State<ShareString> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Copy the following string:'),
+                const Text('Copy the file path to clipboard:'),
                 const SizedBox(height: 10),
-                SelectableText(widget.text, style: const TextStyle(fontSize: 12)),
+                SelectableText(widget.file.path, style: const TextStyle(fontSize: 12)),
               ],
             ),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: widget.text));
+                Clipboard.setData(ClipboardData(text: widget.file.path));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Copied to clipboard!')),
+                  const SnackBar(content: Text('File path copied to clipboard!')),
                 );
                 Navigator.of(context).pop();
               },
@@ -59,7 +61,7 @@ class ShareStringState extends State<ShareString> {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.share),
-      onPressed: shareBase64String,
+      onPressed: shareFile,
     );
   }
 }
