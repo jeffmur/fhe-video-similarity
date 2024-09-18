@@ -47,7 +47,7 @@ class ShareArchiveState extends State<ShareArchive> {
     );
     final videoDir = await m.getVideoWorkingDirectory(widget.thumbnail.video);
     final workingDir = '$videoDir/tmp';
-    final archiveFile = await ShareCiphertextVideoArchive(
+    final archiveFile = await ExportCiphertextVideoZip(
             frames: frames,
             ctVideo: CiphertextVideo(
               video: widget.thumbnail.video,
@@ -58,7 +58,7 @@ class ShareArchiveState extends State<ShareArchive> {
             ),
             session: config.encryptionSettings.session,
             tempDir: workingDir, // create a temp directory for video
-            basename: '$videoDir/archive.zip')
+            archivePath: '$videoDir/archive.zip')
         .create();
 
     videoArchive = XFile(archiveFile.path);

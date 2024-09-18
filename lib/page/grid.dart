@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cross_file/cross_file.dart' show XFile;
+import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
 import 'package:flutter_fhe_video_similarity/page/experiment/page.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/share.dart';
 import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 
 class SelectableGrid extends StatefulWidget {
   const SelectableGrid({super.key});
@@ -150,12 +153,19 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
 }
 
 Future<void> handleUploadedZip(
-    XFile xfile, void Function(Thumbnail) renderAdd) async {
+    XFile xfile, Manager m, void Function(Thumbnail) renderAdd) async {
   // Parse the zip file
   // Targets: {sha256}/{start}-{end}-{timestamp}/{algorithm}-{frameCount}.csv
   //          {sha256}/{start}-{end}-{timestamp}/meta.json
+  List<File> files = await ImportCiphertextVideoZip(
+          extractDir: await ApplicationStorage('tmp').path,
+          archivePath: xfile.path,
+          manifest: m.manifest)
+      .extractFiles();
 
-  print("Woohoo! We got a zip file!");
+  for (var file in files) {
+    print(file.path);
+  }
 }
 
 Widget uploadZip(
@@ -163,7 +173,7 @@ Widget uploadZip(
   return m.floatingSelectMediaFromGallery(
     MediaType.zip,
     context,
-    onXFileSelected: (xfile) => handleUploadedZip(xfile, renderAdd),
+    onXFileSelected: (xfile) => handleUploadedZip(xfile, m, renderAdd),
   );
 }
 

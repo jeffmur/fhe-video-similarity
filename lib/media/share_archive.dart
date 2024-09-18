@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 
-class ShareArchive {
+class ExportArchive {
   final String tempDir;
-  final String basename;
+  final String archivePath;
   List<File> files = [];
 
-  ShareArchive({
+  ExportArchive({
     this.tempDir = 'tmp',
-    this.basename = 'archive.zip',
+    this.archivePath = 'archive.zip',
   }) {
     Directory(tempDir).createSync();
   }
@@ -17,12 +17,37 @@ class ShareArchive {
 
   Future<File> create() async {
     final archive = ZipFileEncoder();
-    archive.create(basename);
+    archive.create(archivePath);
 
     for (var file in files) {
       archive.addFile(file);
     }
     await archive.close();
-    return File(basename);
+    return File(archivePath);
+  }
+}
+
+class ImportArchive {
+  final String extractDir;
+  final String archivePath;
+
+  ImportArchive({
+    required this.archivePath,
+    this.extractDir = 'tmp'
+  });
+
+  Future<void> extract() async {
+    final inputStream = InputFileStream(archivePath);
+    final archive = ZipDecoder().decodeBuffer(inputStream);
+    for (var file in archive.files) {
+      final outputStream = OutputFileStream('$extractDir/${file.name}');
+      file.writeContent(outputStream);
+      outputStream.close();
+    }
+  }
+
+  Future<List<File>> extractFiles() async {
+    extract();
+    return Directory(extractDir).list().map((e) => File(e.path)).toList();
   }
 }

@@ -46,7 +46,7 @@ class VideoMeta extends Meta {
         'endFrame': endFrame
       };
 
-  VideoMeta.fromJSON(Map<String, dynamic> json)
+  VideoMeta.fromJson(Map<String, dynamic> json)
       : this(
             codec: json['codec'],
             fps: json['fps'],

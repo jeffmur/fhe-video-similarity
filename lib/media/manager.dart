@@ -4,14 +4,13 @@ import 'uploader.dart';
 import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
-import 'cache.dart' show manifest;
+import 'cache.dart' as cache;
 import 'primatives.dart' show opencvInfo, resolveNestedValue;
 import 'video.dart' show Thumbnail, Video, VideoMeta, FrameCount;
 
 // Expose additional classes so caller doesn't have to import them separately
 export 'video.dart' show Video, Thumbnail;
 export 'processor.dart' show PreprocessType;
-export 'package:cross_file/cross_file.dart' show XFile;
 
 enum MediaType { video, zip }
 
@@ -28,6 +27,8 @@ class Manager {
   /// Initialize the manager
   Manager._internal();
 
+  cache.Manifest get manifest => cache.manifest;
+
   /// Backend library build information
   String get backendInfo => opencvInfo;
 
@@ -38,11 +39,9 @@ class Manager {
   /// Select media from the gallery
   ///
   FloatingActionButton floatingSelectMediaFromGallery(
-      MediaType mediaType,
-      BuildContext context,
+      MediaType mediaType, BuildContext context,
       {void Function(XFile)? onXFileSelected,
-       void Function(XFile, DateTime, int, int)? onMediaSelected}
-      ) {
+      void Function(XFile, DateTime, int, int)? onMediaSelected}) {
     switch (mediaType) {
       case MediaType.video:
         return selectVideoFromGallery(context, onMediaSelected!);
@@ -75,7 +74,7 @@ class Manager {
   Future<VideoMeta> loadMeta(String pwd,
       [String filename = "meta.json"]) async {
     XFile cached = await manifest.read(pwd, filename);
-    return VideoMeta.fromJSON(jsonDecode(await cached.readAsString()));
+    return VideoMeta.fromJson(jsonDecode(await cached.readAsString()));
   }
 
   Future<Thumbnail> loadThumbnail(String pwd,

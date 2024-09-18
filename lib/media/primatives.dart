@@ -25,7 +25,7 @@ class Meta {
         'path': path
       };
 
-  Meta.fromJSON(Map<String, dynamic> json)
+  Meta.fromJson(Map<String, dynamic> json)
       : this(json['name'], json['extension'], DateTime.parse(json['created']),
             DateTime.parse(json['modified']), json['path']);
 
