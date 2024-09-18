@@ -45,22 +45,23 @@ class ShareArchiveState extends State<ShareArchive> {
       config.type,
       config.frameCount,
     );
-    print("got frames");
-    final archivePath = widget.thumbnail.video.path.replaceAll('video.mp4', 'archive.zip');
-    print(archivePath);
-    await ShareCiphertextVideoArchive(
-      frames: frames,
-      ctVideo: CiphertextVideo(
-        video: widget.thumbnail.video,
-        startTime: widget.thumbnail.video.created,
-        endTime: widget.thumbnail.video.created.add(widget.thumbnail.video.duration),
-        hash: widget.thumbnail.video.hash,
-      ),
-      session: config.encryptionSettings.session,
-      archivePath: archivePath,
-    ).create({});
+    final videoDir = await m.getVideoWorkingDirectory(widget.thumbnail.video);
+    final workingDir = '$videoDir/tmp';
+    final archiveFile = await ShareCiphertextVideoArchive(
+            frames: frames,
+            ctVideo: CiphertextVideo(
+              video: widget.thumbnail.video,
+              startTime: widget.thumbnail.video.created,
+              endTime: widget.thumbnail.video.created
+                  .add(widget.thumbnail.video.duration),
+              hash: widget.thumbnail.video.hash,
+            ),
+            session: config.encryptionSettings.session,
+            tempDir: workingDir, // create a temp directory for video
+            basename: '$videoDir/archive.zip')
+        .create();
 
-    videoArchive = XFile(archivePath);
+    videoArchive = XFile(archiveFile.path);
 
     setState(() {
       _showShareButton = true;
@@ -99,10 +100,7 @@ class ShareArchiveState extends State<ShareArchive> {
             ),
             const Spacer(),
             if (_showShareButton)
-              ShareFile(
-                subject: "Archive",
-                file: videoArchive)
-              
+              ShareFile(subject: "Archive", file: videoArchive)
           ],
         ),
       ),

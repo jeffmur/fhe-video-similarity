@@ -129,6 +129,10 @@ class Manager {
         "${type.name}-${frameCount.name}.csv");
   }
 
+  Future<String> getVideoWorkingDirectory(Video video) async {
+    return await ApplicationStorage(video.pwd).path;
+  }
+
   Future<List<double>> getCachedNormalized(
       Video video, PreprocessType type, FrameCount frameCount) async {
     return manifest
