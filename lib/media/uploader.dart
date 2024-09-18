@@ -4,6 +4,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+
+export 'package:image_picker/image_picker.dart' show ImageSource;
+export 'package:file_picker/file_picker.dart' show FileType;
 
 /// Pop up a dialog to select an image from the [ImageSource].
 ///
@@ -19,6 +23,14 @@ Future<XFile> selectVideo(ImageSource source) async {
   final ImagePicker picker = ImagePicker();
   final XFile? video = await picker.pickVideo(source: source);
   return video!;
+}
+
+/// Pop up a dialog to select a file.
+///
+Future<XFile> selectFile() async {
+  final FilePickerResult? file = await FilePicker.platform.pickFiles();
+  final String? path = file?.files.single.path;
+  return XFile(path!);
 }
 
 /// A floating action button to select an image.
@@ -41,6 +53,18 @@ FloatingActionButton selectVideoFromGallery(
     },
     tooltip: 'Select video',
     child: const Icon(Icons.image),
+  );
+}
+
+/// A floating action button to select a zip file.
+///
+FloatingActionButton selectZipFromSystem(
+    BuildContext context, Function(XFile) onZipSelected) {
+  return FloatingActionButton(
+    heroTag: 'selectZipFromSystem',
+    onPressed: () async => onZipSelected(await selectFile()),
+    tooltip: 'Select zip',
+    child: const Icon(Icons.archive),
   );
 }
 

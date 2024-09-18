@@ -117,35 +117,67 @@ class _SelectableGridState extends State<SelectableGrid> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: _selected.where((isTrue) => isTrue).length >= 2
                 ? [
-                    _selectImages(_selected, render, context, m),
+                    highlightThumbnails(_selected, render, context, m),
                     const SizedBox(height: 10),
-                    _upload(m, context, addThumbnailToRender),
+                    uploadVideo(m, context, addThumbnailToRender),
+                    const SizedBox(height: 10),
+                    uploadZip(m, context, addThumbnailToRender)
                   ]
-                : [_upload(m, context, addThumbnailToRender)]));
+                : [
+                    uploadVideo(m, context, addThumbnailToRender),
+                    const SizedBox(height: 10),
+                    uploadZip(m, context, addThumbnailToRender)
+                  ]));
   }
 }
 
-Widget _upload(Manager m, BuildContext context, Function(Thumbnail) renderAdd) {
-  return m.floatingSelectMediaFromGallery(MediaType.video, context,
-      (xfile, timestamp, trimStart, trimEnd) async {
-    // Cache the video + metadata
-    // Targets: {sha256}/{start}-{end}-{timestamp}/raw.mp4
-    //          {sha256}/{start}-{end}-{timestamp}/meta.json
-    final video = Video(xfile, timestamp,
-        start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
+Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
+    int trimEnd, void Function(Thumbnail) renderAdd) async {
+  // Cache the video + metadata
+  // Targets: {sha256}/{start}-{end}-{timestamp}/raw.mp4
+  //          {sha256}/{start}-{end}-{timestamp}/meta.json
+  final video = Video(xfile, timestamp,
+      start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
 
-    video.cache().then((value) {
-      // Store the thumbnail
-      // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
-      final frame0 = Thumbnail(video, video.startFrame);
-      frame0.cache().then((value) {
-        renderAdd(frame0);
-      });
+  video.cache().then((value) {
+    // Store the thumbnail
+    // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
+    final frame0 = Thumbnail(video, video.startFrame);
+    frame0.cache().then((value) {
+      renderAdd(frame0);
     });
   });
 }
 
-Widget _selectImages(List<bool> selected, List<Thumbnail> thumbnails,
+Future<void> handleUploadedZip(
+    XFile xfile, void Function(Thumbnail) renderAdd) async {
+  // Parse the zip file
+  // Targets: {sha256}/{start}-{end}-{timestamp}/{algorithm}-{frameCount}.csv
+  //          {sha256}/{start}-{end}-{timestamp}/meta.json
+
+  print("Woohoo! We got a zip file!");
+}
+
+Widget uploadZip(
+    Manager m, BuildContext context, Function(Thumbnail) renderAdd) {
+  return m.floatingSelectMediaFromGallery(
+    MediaType.zip,
+    context,
+    onXFileSelected: (xfile) => handleUploadedZip(xfile, renderAdd),
+  );
+}
+
+Widget uploadVideo(
+    Manager m, BuildContext context, Function(Thumbnail) renderAdd) {
+  return m.floatingSelectMediaFromGallery(
+    MediaType.video,
+    context,
+    onMediaSelected: (xfile, timestamp, trimStart, trimEnd) =>
+        handleUploadedVideo(xfile, timestamp, trimStart, trimEnd, renderAdd),
+  );
+}
+
+Widget highlightThumbnails(List<bool> selected, List<Thumbnail> thumbnails,
     BuildContext context, Manager m) {
   return FloatingActionButton(
     heroTag: 'experiment',

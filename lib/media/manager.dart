@@ -7,13 +7,13 @@ import 'processor.dart';
 import 'cache.dart' show manifest;
 import 'primatives.dart' show opencvInfo, resolveNestedValue;
 import 'video.dart' show Thumbnail, Video, VideoMeta, FrameCount;
-import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
 export 'video.dart' show Video, Thumbnail;
 export 'processor.dart' show PreprocessType;
+export 'package:cross_file/cross_file.dart' show XFile;
 
-enum MediaType { video }
+enum MediaType { video, zip }
 
 /// Singleton class to manage all the media related operations
 ///
@@ -35,26 +35,19 @@ class Manager {
   Widget get backendInfoWidget =>
       Expanded(child: SingleChildScrollView(child: Text(backendInfo)));
 
-  /// Upload media from the gallery
-  ///
-  Future<XFile> xFileFromGallery(MediaType source) async {
-    switch (source) {
-      case MediaType.video:
-        return selectVideo(ImageSource.gallery);
-      default:
-        throw UnsupportedError('Unsupported media type');
-    }
-  }
-
   /// Select media from the gallery
   ///
   FloatingActionButton floatingSelectMediaFromGallery(
       MediaType mediaType,
       BuildContext context,
-      Function(XFile, DateTime, int, int) onMediaSelected) {
+      {void Function(XFile)? onXFileSelected,
+       void Function(XFile, DateTime, int, int)? onMediaSelected}
+      ) {
     switch (mediaType) {
       case MediaType.video:
-        return selectVideoFromGallery(context, onMediaSelected);
+        return selectVideoFromGallery(context, onMediaSelected!);
+      case MediaType.zip:
+        return selectZipFromSystem(context, onXFileSelected!);
       default:
         throw UnsupportedError('Unsupported media type');
     }
