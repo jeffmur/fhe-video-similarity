@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
+import 'package:flutter_fhe_video_similarity/page/share_button.dart';
 
 class SimilarityResults extends StatefulWidget {
   final Video baseline;
@@ -56,7 +58,7 @@ class PlaintextSimilarityScores {
 }
 
 class CiphertextSimilarityScores {
-  Session ciphertextHandler; // Untrusted 3rd party
+  Session ciphertextHandler; // Mock untrusted 3rd party
   List<double> toCiphertext;
   Session plaintextEncoder; // Client
   List<double> toPlaintext;
@@ -99,6 +101,42 @@ class CiphertextSimilarityScores {
     return Similarity(type)
         .percentile(toCiphertext, toPlaintext)
         .toStringAsFixed(2);
+  }
+}
+
+class ImportCiphertextSimilarityScores {
+  Session ciphertextHandler; // Untrusted 3rd party
+  List<Ciphertext> importCiphertext;
+  Session plaintextEncoder; // Client
+  List<double> toPlaintext;
+
+  ImportCiphertextSimilarityScores(this.ciphertextHandler,
+      this.importCiphertext, this.plaintextEncoder, this.toPlaintext);
+
+  List<Ciphertext> score(SimilarityType type) {
+    print('ImportCiphertextSimilarityScores: $type');
+    print(
+        'ImportCiphertextSimilarityScores: ctLength: ${importCiphertext.length}');
+    print('ImportCiphertextSimilarityScores: ptLength: ${toPlaintext.length}');
+    switch (type) {
+      case SimilarityType.kld:
+        throw UnsupportedError('KLD not supported for imported ciphertext');
+      // return kld.score(x, logX, toPlaintext);
+
+      case SimilarityType.bhattacharyya:
+        CiphertextBhattacharyya bhattacharyya =
+            CiphertextBhattacharyya(ciphertextHandler, plaintextEncoder);
+        return bhattacharyya.homomorphicScore(
+            importCiphertext, bhattacharyya.sqrt(toPlaintext));
+
+      case SimilarityType.cramer:
+        CiphertextCramer cramer =
+            CiphertextCramer(ciphertextHandler, plaintextEncoder);
+        return cramer.homomorphicScore(importCiphertext, toPlaintext);
+
+      default:
+        throw ArgumentError('Unsupported similarity type');
+    }
   }
 }
 
@@ -238,6 +276,59 @@ class SimilarityResultsState extends State<SimilarityResults> {
             }),
         const SizedBox(height: 10),
         _ciphertextComparison ?? const Text("No comparison yet"),
+        ElevatedButton(
+            child: const Text(
+                'Compute Homomorphic Similarity Scores (Imported Ciphertext)'),
+            onPressed: () async {
+              var isBaselineImportedCiphertext =
+                  widget.baseline is CiphertextVideo;
+
+              // Setup vars
+              var (ciphertextHandler, plaintextEncoder) =
+                  isBaselineImportedCiphertext
+                      ? (widget.baselineConfig, widget.comparisonConfig)
+                      : (widget.comparisonConfig, widget.baselineConfig);
+              var (importCiphertext as CiphertextVideo, plaintextComparator) =
+                  isBaselineImportedCiphertext
+                      ? (widget.baseline, widget.comparison)
+                      : (widget.comparison, widget.baseline);
+              final ctFrames = await importCiphertext.frames();
+              print("Import Button: ${ctFrames.length}");
+
+              List<Ciphertext> ciphertextData =
+                  ctFrames.map((e) => Ciphertext.fromBytes(
+                          ciphertextHandler.encryptionSettings.session.seal, e))
+                      .toList();
+
+              // Fetch data to compare
+              List<double> plaintextData = await _manager.getCachedNormalized(
+                  plaintextComparator,
+                  plaintextEncoder.type,
+                  plaintextEncoder.frameCount);
+
+              List<
+                  Ciphertext> homomorphicScore = ImportCiphertextSimilarityScores(
+                      ciphertextHandler.encryptionSettings.session,
+                      ciphertextData,
+                      plaintextEncoder.encryptionSettings.session,
+                      plaintextData)
+                  .score(SimilarityType
+                      .cramer); // TODO: Support multiple / select similarity types
+
+              // Apply plaintext to ciphertext data via homomorphic score
+              File out = await ExportModifiedCiphertextVideoZip(
+                tempDir: 'tmp',
+                archivePath: 'homomorphic.zip',
+                modifiedCiphertext: homomorphicScore,
+                // meta: ciphertextHandler.meta
+              ).create();
+
+              // Share Archive with originator
+              ShareFile(
+                file: XFile(out.path),
+                subject: 'Homomorphic Similarity Scores',
+              );
+            })
       ],
     );
   }

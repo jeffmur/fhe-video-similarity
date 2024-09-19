@@ -158,7 +158,7 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
 Future<void> handleUploadedZip(
     XFile xfile, Manager m, void Function(Thumbnail) renderAdd) async {
   // Parse the zip file
-  // Targets: {sha256}/{start}-{end}-{timestamp}/{algorithm}-{frameCount}.csv
+  // Targets: {sha256}/{start}-{end}-{timestamp}/{PreprocessType}-{frameCount}-{SimilarityType}
   //          {sha256}/{start}-{end}-{timestamp}/meta.json
   List<File> files = await ImportCiphertextVideoZip(
           extractDir: await ApplicationStorage('tmp').path,

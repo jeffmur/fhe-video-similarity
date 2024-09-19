@@ -40,6 +40,28 @@ Future<File> serializeVideoMeta(
   return outFile;
 }
 
+class ExportModifiedCiphertextVideoZip extends ExportArchive {
+  final List<Ciphertext> modifiedCiphertext;
+  // final VideoMeta meta;
+  final String videoFilename = 'video.enc';
+  final String metadataFilename = 'meta.json';
+
+  ExportModifiedCiphertextVideoZip({
+    required super.tempDir,
+    required super.archivePath,
+    required this.modifiedCiphertext,
+    // required this.meta,
+  });
+
+  @override
+  Future<File> create() async {
+    super.addFile(await serializeEncryptedFrames(
+        modifiedCiphertext, tempDir, videoFilename));
+    // super.addFile(await serializeVideoMeta(meta, tempDir, metadataFilename));
+    return super.create();
+  }
+}
+
 class ExportCiphertextVideoZip extends ExportArchive {
   final List<double> frames;
   final Video ctVideo;
@@ -99,6 +121,7 @@ class ImportCiphertextVideoZip extends ImportArchive {
     final List<File> bin = await extractCiphertextVideo();
 
     List<File> outBin = [];
+    print("Importing Ciphertext Video... ${bin.length}");
     for (var f in bin) {
       List<int> bytes = await f.readAsBytes();
       var out = await manifest.write(
@@ -155,6 +178,7 @@ class CiphertextVideo extends UploadedMedia implements Video {
             .toList(),
         super(XFile('${meta.path}/meta.json'), meta.created) {
     init();
+    print('CiphertextVideo.fromBinaryFiles: ${ctFrames.length}');
   }
 
   @override
@@ -189,6 +213,7 @@ class CiphertextVideo extends UploadedMedia implements Video {
   @override
   Future<List<Uint8List>> frames(
       {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
+    print('CiphertextVideo.frames: ${ctFrames.length}');
     return ctFrames.map((f) => f.toBytes()).toList();
   }
 

@@ -57,6 +57,10 @@ class CiphertextKLD {
         .abs();
   }
 
+  List<Ciphertext> homomorphicScore(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
+    return kld.divergenceOfCiphertextVecDouble(plaintextEncoder.seal, x, logX, y);
+  }
+
   double percentile(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
     return normalizedPercentage(SimilarityType.kld, score(x, logX, y));
   }
@@ -78,6 +82,11 @@ class CiphertextBhattacharyya {
         .abs();
   }
 
+  List<Ciphertext> homomorphicScore(List<Ciphertext> sqrtX, List<double> sqrtY) {
+    return bhattacharyya.coefficientOfCiphertextVecDouble(
+        plaintextEncoder.seal, sqrtX, sqrtY);
+  }
+
   double percentile(List<Ciphertext> sqrtX, List<double> sqrtY) {
     return normalizedPercentage(
         SimilarityType.bhattacharyya, score(sqrtX, sqrtY));
@@ -94,6 +103,10 @@ class CiphertextCramer {
         .decryptedSumOfDoubles(
             cramer.distanceOfCiphertextVecDouble(plaintextEncoder.seal, x, y))
         .abs());
+  }
+
+  List<Ciphertext> homomorphicScore(List<Ciphertext> x, List<double> y) {
+    return cramer.distanceOfCiphertextVecDouble(plaintextEncoder.seal, x, y);
   }
 
   double percentile(List<Ciphertext> x, List<double> y) {

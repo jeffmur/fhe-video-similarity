@@ -93,6 +93,7 @@ class Manager {
         throw Exception('No directories found');
       }
       List<File> files = await manifest.listFiles(dirs.first);
+      print("loadThumbnail: ${files.length}");
       if (files.isEmpty) {
         throw Exception('No files found');
       }
