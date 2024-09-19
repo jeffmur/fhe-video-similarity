@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
+import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'uploader.dart';
 import 'dart:convert';
 import 'storage.dart';
@@ -83,8 +87,20 @@ class Manager {
       pwd = pwd.substring(1, pwd.indexOf(filename) - 1);
     }
     VideoMeta meta = await loadMeta(pwd);
+    if (pwd.contains('enc')) {
+      List<String> dirs = await manifest.listDirectories(pwd);
+      if (dirs.isEmpty) {
+        throw Exception('No directories found');
+      }
+      List<File> files = await manifest.listFiles(dirs.first);
+      if (files.isEmpty) {
+        throw Exception('No files found');
+      }
+      return CiphertextThumbnail(
+          meta: meta,
+          video: CiphertextVideo.fromBinaryFiles(files, Session(), meta));
+    }
     Video video = await loadVideo(pwd, meta);
-
     XFile cached = await manifest.read(pwd, filename);
     return Thumbnail.fromBytes(await cached.readAsBytes(), video, 0);
   }

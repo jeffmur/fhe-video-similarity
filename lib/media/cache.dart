@@ -1,6 +1,7 @@
 // Retrieve stored artifacts from the cache
 
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 
@@ -74,6 +75,36 @@ class Manifest {
 
   void init() {
     initAsync().then((_) => print('Manifest initialized: $_media'));
+  }
+
+  Future<List<File>> listFiles(String pwd) async {
+    final cache = ApplicationStorage(pwd);
+    return await cache.path.then((path) {
+      return Directory(path).list().toList().then((List<FileSystemEntity> entities) {
+        List<File> files = [];
+        for (var entity in entities) {
+          if (entity is File) {
+            files.add(File(entity.path));
+          }
+        }
+        return files;
+      });
+    });
+  }
+
+  Future<List<String>> listDirectories(String pwd) async {
+    final cache = ApplicationStorage(pwd);
+    return await cache.path.then((path) {
+      return Directory(path).list().toList().then((List<FileSystemEntity> entities) {
+        List<String> directories = [];
+        for (var entity in entities) {
+          if (entity is Directory) {
+            directories.add('$pwd/${entity.path.split('/').last}');
+          }
+        }
+        return directories;
+      });
+    });
   }
 
   /// Add a media file to the manifest

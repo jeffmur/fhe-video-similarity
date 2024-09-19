@@ -67,6 +67,7 @@ class _SelectableGridState extends State<SelectableGrid> {
 
                         for (var path in thumbnailPaths) {
                           final thumbnail = await m.loadThumbnail(path);
+                          print("Got thumbnail: ${thumbnail.filename}");
                           addThumbnailToRender(thumbnail);
                         }
                         deselectAll(); // using new thumbnails
