@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
@@ -83,11 +81,13 @@ class Manager {
 
   Future<Thumbnail> loadThumbnail(String pwd,
       [String filename = "thumbnail.jpg"]) async {
+    print(pwd);
     if (pwd.contains(filename)) {
       pwd = pwd.substring(1, pwd.indexOf(filename) - 1);
     }
     VideoMeta meta = await loadMeta(pwd);
-    if (pwd.contains('enc')) {
+    print(meta.toJson());
+    if (pwd.contains('ciphertext') || pwd.contains('modified')) {
       List<String> dirs = await manifest.listDirectories(pwd);
       if (dirs.isEmpty) {
         throw Exception('No directories found');

@@ -19,6 +19,7 @@ class VideoMeta extends Meta {
   int startFrame;
   int endFrame;
   int totalFrames;
+  String encryptionStatus;
 
   VideoMeta(
      {required this.codec,
@@ -28,6 +29,7 @@ class VideoMeta extends Meta {
       required this.sha256,
       required this.startFrame,
       required this.endFrame,
+      required this.encryptionStatus,
       required String name,
       required String extension,
       required DateTime created,
@@ -44,7 +46,8 @@ class VideoMeta extends Meta {
         'sha256': sha256,
         'duration': duration.inSeconds,
         'startFrame': startFrame,
-        'endFrame': endFrame
+        'endFrame': endFrame,
+        'encryptionStatus': encryptionStatus,
       };
 
   VideoMeta.fromJson(Map<String, dynamic> json)
@@ -60,6 +63,7 @@ class VideoMeta extends Meta {
             extension: json['extension'],
             created: DateTime.parse(json['created']),
             modified: DateTime.parse(json['modified']),
+            encryptionStatus: json['encryptionStatus'],
             path: json['path']);
 
   VideoMeta.fromFile(File file)
@@ -224,6 +228,7 @@ class Video extends UploadedMedia {
       extension: xfile.path.split('.').last,
       created: created,
       modified: lastModified,
+      encryptionStatus: 'plain',
       path: xfile.path);
 
   // Future<String> sha256({chars=8}) async => await sha256ofFileAsString(xfile.path, chars);

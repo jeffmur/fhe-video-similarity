@@ -42,7 +42,7 @@ Future<File> serializeVideoMeta(
 
 class ExportModifiedCiphertextVideoZip extends ExportArchive {
   final List<Ciphertext> modifiedCiphertext;
-  // final VideoMeta meta;
+  final VideoMeta meta;
   final String videoFilename = 'video.enc';
   final String metadataFilename = 'meta.json';
 
@@ -50,14 +50,17 @@ class ExportModifiedCiphertextVideoZip extends ExportArchive {
     required super.tempDir,
     required super.archivePath,
     required this.modifiedCiphertext,
-    // required this.meta,
+    required this.meta,
   });
 
   @override
   Future<File> create() async {
     super.addFile(await serializeEncryptedFrames(
         modifiedCiphertext, tempDir, videoFilename));
-    // super.addFile(await serializeVideoMeta(meta, tempDir, metadataFilename));
+    VideoMeta metaModified = meta;
+    metaModified.encryptionStatus = 'modified';
+    super.addFile(
+        await serializeVideoMeta(metaModified, tempDir, metadataFilename));
     return super.create();
   }
 }
@@ -81,8 +84,8 @@ class ExportCiphertextVideoZip extends ExportArchive {
   Future<File> create() async {
     super.addFile(await serializeEncryptedFrames(
         encryptVideoFrames(session, frames), tempDir, videoFilename));
-    super.addFile(
-        await serializeVideoMeta(ctVideo.stats, tempDir, metadataFilename));
+    ctVideo.stats.encryptionStatus = 'encrypted';
+    super.addFile(await serializeVideoMeta(ctVideo.stats, tempDir, metadataFilename));
     return super.create();
   }
 }
@@ -94,31 +97,36 @@ class ImportCiphertextVideoZip extends ImportArchive {
     required Manifest manifest,
   });
 
-  Future<VideoMeta> parseMetaData() async {
-    final tmpMetaFile = File('$extractDir/meta.json');
-    return VideoMeta.fromJson(jsonDecode(await tmpMetaFile.readAsString()));
+  Future<VideoMeta> parseMetaData(File metaJson) async {
+    return VideoMeta.fromFile(metaJson);
   }
 
-  Future<List<File>> extractCiphertextVideo() async {
+  Future<List<File>> extractCiphertextVideo(File videoEnc) async {
     final vidArchive = ImportArchive(
-        archivePath: '$extractDir/video.enc', extractDir: '$extractDir/bin');
+        archivePath: videoEnc.path, extractDir: '$extractDir/bin');
     return vidArchive.extractFiles();
   }
 
   @override
   Future<List<File>> extractFiles() async {
-    super.extract();
-    VideoMeta meta = await parseMetaData();
+    List<File> files = await super.extractFiles();
+    print(files);
+    VideoMeta meta = await parseMetaData(files
+        .singleWhere((element) => element.path.split('/').last == 'meta.json'));
+    print("DEBUG: ImportCiphertextVideoZip");
+    print(meta.toJson());
 
     String cachePath =
-        '${meta.sha256}/${meta.startFrame}-${meta.endFrame}-${meta.created.millisecondsSinceEpoch}-enc';
+        '${meta.sha256}/${meta.startFrame}-${meta.endFrame}-${meta.created.millisecondsSinceEpoch}-${meta.encryptionStatus}';
     meta.path = cachePath;
+    print(meta.toJson());
     final List<int> metaBytes = utf8.encode(jsonEncode(meta.toJson())).toList();
     final metaCached = await manifest.write(metaBytes, cachePath, "meta.json");
 
-    final archiveName = archivePath.split('/').last.split('.').first;
+    final List<File> bin = await extractCiphertextVideo(files
+        .singleWhere((element) => element.path.split('/').last == 'video.enc'));
 
-    final List<File> bin = await extractCiphertextVideo();
+    final archiveName = archivePath.split('/').last.split('.').first;
 
     List<File> outBin = [];
     print("Importing Ciphertext Video... ${bin.length}");
@@ -175,7 +183,7 @@ class CiphertextVideo extends UploadedMedia implements Video {
       List<File> binFiles, Session session, this.meta)
       : ctFrames = binFiles
             .map((f) => Ciphertext.fromBytes(session.seal, f.readAsBytesSync()))
-            .toList(),
+            .toList(growable: false),
         super(XFile('${meta.path}/meta.json'), meta.created) {
     init();
     print('CiphertextVideo.fromBinaryFiles: ${ctFrames.length}');

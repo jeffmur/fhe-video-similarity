@@ -169,6 +169,9 @@ Future<void> handleUploadedZip(
   File metaFile = files.firstWhere((file) => file.path.contains('meta.json'));
   VideoMeta meta = VideoMeta.fromFile(metaFile);
 
+  // Remove meta.json from files
+  files.remove(metaFile);
+
   final video = CiphertextVideo.fromBinaryFiles(files, Session(), meta);
 
   final thumbnail = CiphertextThumbnail(video: video, meta: meta);

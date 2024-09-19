@@ -320,7 +320,7 @@ class SimilarityResultsState extends State<SimilarityResults> {
                 tempDir: 'tmp',
                 archivePath: 'homomorphic.zip',
                 modifiedCiphertext: homomorphicScore,
-                // meta: ciphertextHandler.meta
+                meta: importCiphertext.meta,
               ).create();
 
               // Share Archive with originator
