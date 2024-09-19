@@ -84,8 +84,12 @@ class ExportCiphertextVideoZip extends ExportArchive {
   Future<File> create() async {
     super.addFile(await serializeEncryptedFrames(
         encryptVideoFrames(session, frames), tempDir, videoFilename));
-    ctVideo.stats.encryptionStatus = 'encrypted';
-    super.addFile(await serializeVideoMeta(ctVideo.stats, tempDir, metadataFilename));
+    VideoMeta meta = ctVideo.stats;
+    meta.encryptionStatus = 'ciphertext';
+    print("DEBUG: ExportCiphertextVideoZip");
+    print(meta.toJson());
+    super.addFile(
+        await serializeVideoMeta(meta, tempDir, metadataFilename));
     return super.create();
   }
 }
