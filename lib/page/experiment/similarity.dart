@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
@@ -295,10 +296,10 @@ class SimilarityResultsState extends State<SimilarityResults> {
               final ctFrames = await importCiphertext.frames();
               print("Import Button: ${ctFrames.length}");
 
-              List<Ciphertext> ciphertextData =
-                  ctFrames.map((e) => Ciphertext.fromBytes(
-                          ciphertextHandler.encryptionSettings.session.seal, e))
-                      .toList();
+              List<Ciphertext> ciphertextData = ctFrames
+                  .map((e) => Ciphertext.fromBytes(
+                      ciphertextHandler.encryptionSettings.session.seal, e))
+                  .toList();
 
               // Fetch data to compare
               List<double> plaintextData = await _manager.getCachedNormalized(
@@ -317,8 +318,10 @@ class SimilarityResultsState extends State<SimilarityResults> {
 
               // Apply plaintext to ciphertext data via homomorphic score
               File out = await ExportModifiedCiphertextVideoZip(
-                tempDir: 'tmp',
-                archivePath: 'homomorphic.zip',
+                tempDir: await ApplicationStorage('tmp').path,
+                archivePath:
+                    await ApplicationStorage('${importCiphertext.meta.path}/score')
+                        .path,
                 modifiedCiphertext: homomorphicScore,
                 meta: importCiphertext.meta,
               ).create();

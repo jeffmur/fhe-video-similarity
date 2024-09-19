@@ -156,7 +156,7 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
 }
 
 Future<void> handleUploadedZip(
-    XFile xfile, Manager m, void Function(Thumbnail) renderAdd) async {
+    BuildContext context, XFile xfile, Manager m, void Function(Thumbnail) renderAdd) async {
   // Parse the zip file
   // Targets: {sha256}/{start}-{end}-{timestamp}/{PreprocessType}-{frameCount}-{SimilarityType}
   //          {sha256}/{start}-{end}-{timestamp}/meta.json
@@ -171,8 +171,14 @@ Future<void> handleUploadedZip(
 
   // Remove meta.json from files
   files.remove(metaFile);
+  final video = CiphertextVideo.fromBinaryFiles(files, m.session, meta);
 
-  final video = CiphertextVideo.fromBinaryFiles(files, Session(), meta);
+  // Check if ciphertext video has been modified, if so, decrypt and show score
+  if (video.pwd.contains('modified')) {
+    double score = m.session.decryptedSumOfDoubles(video.ctFrames);
+    print('Decrypted video score: $score');
+    return;
+  }
 
   final thumbnail = CiphertextThumbnail(video: video, meta: meta);
   thumbnail.cache().then((_) {
@@ -185,7 +191,7 @@ Widget uploadZip(
   return m.floatingSelectMediaFromGallery(
     MediaType.zip,
     context,
-    onXFileSelected: (xfile) => handleUploadedZip(xfile, m, renderAdd),
+    onXFileSelected: (xfile) => handleUploadedZip(context, xfile, m, renderAdd),
   );
 }
 

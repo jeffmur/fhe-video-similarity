@@ -20,6 +20,7 @@ enum MediaType { video, zip }
 ///
 class Manager {
   static final Manager _instance = Manager._internal();
+  Session session = Session();
 
   /// Get the only instance of the manager
   factory Manager() {
@@ -99,7 +100,7 @@ class Manager {
       }
       return CiphertextThumbnail(
           meta: meta,
-          video: CiphertextVideo.fromBinaryFiles(files, Session(), meta));
+          video: CiphertextVideo.fromBinaryFiles(files, session, meta));
     }
     Video video = await loadVideo(pwd, meta);
     XFile cached = await manifest.read(pwd, filename);

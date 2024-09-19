@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/media/manager.dart' as m;
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
 import 'dart:math';
@@ -38,7 +39,7 @@ class SessionChanges extends ChangeNotifier {
   List<String> _log = [];
   List<String> get logs => _log;
 
-  Session _session = Session();
+  Session _session = m.Manager().session; // default session
   Session get session => _session;
   String get scheme => _session.scheme;
   Map get context => _session.context.toMap();

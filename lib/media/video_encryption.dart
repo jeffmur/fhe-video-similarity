@@ -86,8 +86,6 @@ class ExportCiphertextVideoZip extends ExportArchive {
         encryptVideoFrames(session, frames), tempDir, videoFilename));
     VideoMeta meta = ctVideo.stats;
     meta.encryptionStatus = 'ciphertext';
-    print("DEBUG: ExportCiphertextVideoZip");
-    print(meta.toJson());
     super.addFile(
         await serializeVideoMeta(meta, tempDir, metadataFilename));
     return super.create();
@@ -114,16 +112,12 @@ class ImportCiphertextVideoZip extends ImportArchive {
   @override
   Future<List<File>> extractFiles() async {
     List<File> files = await super.extractFiles();
-    print(files);
     VideoMeta meta = await parseMetaData(files
         .singleWhere((element) => element.path.split('/').last == 'meta.json'));
-    print("DEBUG: ImportCiphertextVideoZip");
-    print(meta.toJson());
 
     String cachePath =
         '${meta.sha256}/${meta.startFrame}-${meta.endFrame}-${meta.created.millisecondsSinceEpoch}-${meta.encryptionStatus}';
     meta.path = cachePath;
-    print(meta.toJson());
     final List<int> metaBytes = utf8.encode(jsonEncode(meta.toJson())).toList();
     final metaCached = await manifest.write(metaBytes, cachePath, "meta.json");
 
@@ -133,7 +127,6 @@ class ImportCiphertextVideoZip extends ImportArchive {
     final archiveName = archivePath.split('/').last.split('.').first;
 
     List<File> outBin = [];
-    print("Importing Ciphertext Video... ${bin.length}");
     for (var f in bin) {
       List<int> bytes = await f.readAsBytes();
       var out = await manifest.write(
@@ -190,7 +183,6 @@ class CiphertextVideo extends UploadedMedia implements Video {
             .toList(growable: false),
         super(XFile('${meta.path}/meta.json'), meta.created) {
     init();
-    print('CiphertextVideo.fromBinaryFiles: ${ctFrames.length}');
   }
 
   @override
@@ -225,7 +217,6 @@ class CiphertextVideo extends UploadedMedia implements Video {
   @override
   Future<List<Uint8List>> frames(
       {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
-    print('CiphertextVideo.frames: ${ctFrames.length}');
     return ctFrames.map((f) => f.toBytes()).toList();
   }
 
