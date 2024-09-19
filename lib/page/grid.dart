@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cross_file/cross_file.dart' show XFile;
+import 'package:flutter_fhe_video_similarity/media/seal.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
+import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/page.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/share.dart';
 import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
@@ -146,7 +148,7 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
     // Store the thumbnail
     // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
     final frame0 = Thumbnail(video, video.startFrame);
-    frame0.cache().then((value) {
+    frame0.cache().then((_) {
       renderAdd(frame0);
     });
   });
@@ -163,9 +165,15 @@ Future<void> handleUploadedZip(
           manifest: m.manifest)
       .extractFiles();
 
-  for (var file in files) {
-    print(file.path);
-  }
+  File metaFile = files.firstWhere((file) => file.path.contains('meta.json'));
+  VideoMeta meta = VideoMeta.fromFile(metaFile);
+
+  final video = CiphertextVideo.fromBinaryFiles(files, Session(), meta);
+
+  final thumbnail = CiphertextThumbnail(video: video, meta: meta);
+  thumbnail.cache().then((_) {
+    renderAdd(thumbnail);
+  });
 }
 
 Widget uploadZip(

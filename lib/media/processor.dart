@@ -36,7 +36,7 @@ class NormalizedByteArray {
 
         print('[DEBUG] Normalized: $normalized');
 
-        final timestamps = video.timestampsFromSegment(video, segment);
+        final timestamps = timestampsFromSegment(video.stats, segment);
         print('[DEBUG] Timestamps: $timestamps');
 
         return {
@@ -75,7 +75,7 @@ List<double> normalizeSumOfElements(List<int> values) {
 Future<List<List<int>>> countBytesInVideoSegment(
     Video video, Duration segment, FrameCount frameCount) async {
   List<List<int>> byteLengths = [];
-  var frameRangesFromSegment = video.frameIndexFromSegment(segment, frameCount);
+  var frameRangesFromSegment = frameIndexFromSegment(video.stats, segment, frameCount);
 
   for (var range in frameRangesFromSegment) {
     print('[DEBUG] Frame Range: $range');

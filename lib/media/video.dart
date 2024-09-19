@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart' as mat;
@@ -11,16 +12,16 @@ import 'primatives.dart';
 import 'image.dart';
 
 class VideoMeta extends Meta {
-  final String codec;
-  final int fps;
-  final Duration duration;
-  final String sha256;
-  final int startFrame;
-  final int endFrame;
-  final int totalFrames;
+  String codec;
+  int fps;
+  Duration duration;
+  String sha256;
+  int startFrame;
+  int endFrame;
+  int totalFrames;
 
   VideoMeta(
-      {required this.codec,
+     {required this.codec,
       required this.fps,
       required this.totalFrames,
       required this.duration,
@@ -60,6 +61,9 @@ class VideoMeta extends Meta {
             created: DateTime.parse(json['created']),
             modified: DateTime.parse(json['modified']),
             path: json['path']);
+
+  VideoMeta.fromFile(File file)
+      : this.fromJson(jsonDecode(file.readAsStringSync()));
 
   void pprint() {
     print('--- Video Information ---');
@@ -119,6 +123,58 @@ List<FrameData> extractFrames(FrameIsolate args) {
   return frames;
 }
 
+/// Estimate the timestamps at the start of each segment
+///
+List<DateTime> timestampsFromSegment(VideoMeta meta, Duration segmentDuration) {
+  List<DateTime> segments = [];
+  for (int i = meta.startFrame;
+      i < meta.endFrame;
+      i += segmentDuration.inSeconds * meta.fps) {
+    segments.add(meta.created.add(Duration(seconds: i ~/ meta.fps)));
+  }
+  return segments;
+}
+
+/// Generate ranges of frame indices based on the [segmentDuration]
+///
+List<List<int>> frameIndexFromSegment(
+    VideoMeta meta, Duration segmentDuration, FrameCount frameCount) {
+  List<List<int>> segments = [];
+  int segment = segmentDuration.inSeconds * meta.fps;
+
+  for (int i = meta.startFrame; i < meta.endFrame; i += segment) {
+    // Drop all values greater than the end frame
+    var inc = List<int>.generate(segment, (inc) => i + inc);
+    var all = inc.where((idx) => idx <= meta.endFrame).toList();
+
+    switch (frameCount) {
+      case FrameCount.firstLast:
+        segments.add([all.first, all.last]);
+        break;
+      case FrameCount.even:
+        segments.add(all.where((idx) => idx % 2 == 0).toList());
+        break;
+      case FrameCount.odd:
+        segments.add(all.where((idx) => idx % 2 != 0).toList());
+        break;
+      case FrameCount.all:
+        segments.add(all);
+        break;
+      case FrameCount.random5:
+        final allRandom = all;
+        allRandom.shuffle();
+        segments.add(allRandom.take(5).toList());
+        break;
+      case FrameCount.randomHalf:
+        final halfRandom = all;
+        halfRandom.shuffle(Random());
+        segments.add(halfRandom.take(all.length ~/ 2).toList());
+        break;
+    }
+  }
+  return segments;
+}
+
 class Video extends UploadedMedia {
   // Logger log = Logger('Video');
   int startFrame = 0;
@@ -136,7 +192,7 @@ class Video extends UploadedMedia {
     created = timestamp;
 
     // Get frame count
-    totalFrames = frameCount();
+    totalFrames = frameCount;
 
     // Set the end frame (used for trimming)
     endFrame = totalFrames - 1;
@@ -146,8 +202,6 @@ class Video extends UploadedMedia {
 
     // Calculate the hash
     hash = sha256ofBytes(video.read().$2.data, 8);
-
-    printStats(); // TODO: Remove
   }
 
   Video.fromeCache(XFile file, DateTime timestamp, this.hash, this.startFrame,
@@ -171,10 +225,6 @@ class Video extends UploadedMedia {
       created: created,
       modified: lastModified,
       path: xfile.path);
-
-  void printStats() {
-    stats.pprint();
-  }
 
   // Future<String> sha256({chars=8}) async => await sha256ofFileAsString(xfile.path, chars);
 
@@ -255,7 +305,7 @@ class Video extends UploadedMedia {
   /// of the video. If the property is not supported by the codec, the number of
   /// frames is calculated manually.
   ///
-  int frameCount() {
+  int get frameCount {
     final frames = video.get(cv.CAP_PROP_FRAME_COUNT).toInt();
 
     // CAP_PROP_FRAME_COUNT is not supported by all codecs
@@ -272,64 +322,6 @@ class Video extends UploadedMedia {
         extractFrames, FrameIsolate(frameIds, frameFormat, xfile.path));
 
     return isolate.map((frame) => frame.bytes).toList();
-  }
-
-  /// Extract frames from the video within a range
-  ///
-  Future<List<Uint8List>> framesFromRange(int start, int end) {
-    return frames(frameIds: List<int>.generate(end - start, (i) => i + start));
-  }
-
-  /// Estimate the timestamps at the start of each segment
-  ///
-  List<DateTime> timestampsFromSegment(Video video, Duration segmentDuration) {
-    List<DateTime> segments = [];
-    for (int i = startFrame;
-        i < endFrame;
-        i += segmentDuration.inSeconds * fps) {
-      segments.add(created.add(Duration(seconds: i ~/ fps)));
-    }
-    return segments;
-  }
-
-  /// Generate ranges of frame indices based on the [segmentDuration]
-  ///
-  List<List<int>> frameIndexFromSegment(
-      Duration segmentDuration, FrameCount frameCount) {
-    List<List<int>> segments = [];
-    int segment = segmentDuration.inSeconds * fps;
-
-    for (int i = startFrame; i < endFrame; i += segment) {
-      // Drop all values greater than the end frame
-      var inc = List<int>.generate(segment, (inc) => i + inc);
-      var all = inc.where((idx) => idx <= endFrame).toList();
-
-      switch (frameCount) {
-        case FrameCount.firstLast:
-          segments.add([all.first, all.last]);
-          break;
-        case FrameCount.even:
-          segments.add(all.where((idx) => idx % 2 == 0).toList());
-          break;
-        case FrameCount.odd:
-          segments.add(all.where((idx) => idx % 2 != 0).toList());
-          break;
-        case FrameCount.all:
-          segments.add(all);
-          break;
-        case FrameCount.random5:
-          final allRandom = all;
-          allRandom.shuffle();
-          segments.add(allRandom.take(5).toList());
-          break;
-        case FrameCount.randomHalf:
-          final halfRandom = all;
-          halfRandom.shuffle(Random());
-          segments.add(halfRandom.take(all.length ~/ 2).toList());
-          break;
-      }
-    }
-    return segments;
   }
 
   /// Generate an [Image] from the video
@@ -357,7 +349,7 @@ class Thumbnail {
   Thumbnail(this.video, this.frameIdx);
 
   Thumbnail.fromBytes(Uint8List bytes, this.video, this.frameIdx) {
-    final xfile = XFileStorage.fromBytes(video.pwd, filename, bytes);
+    XFileStorage.fromBytes(video.pwd, filename, bytes);
     isCached = true;
   }
 

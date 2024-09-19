@@ -9,11 +9,11 @@ String get opencvInfo => cv.getBuildInformation();
 /// Metadata for [UploadedMedia] to be used in the cache
 ///
 class Meta {
-  final String name;
-  final String extension;
-  final DateTime created;
-  final DateTime modified;
-  final String path;
+  String name;
+  String extension;
+  DateTime created;
+  DateTime modified;
+  String path;
 
   Meta(this.name, this.extension, this.created, this.modified, this.path);
 
