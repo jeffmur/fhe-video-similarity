@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/load_button.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
@@ -20,6 +21,16 @@ class Config {
       {this.isEncrypted = false,
       this.isEncryptionDisabled = false,
       required this.encryptionSettings});
+}
+
+void trimVideoByDuration(Video video, Video other) {
+  final Duration videoDuration = video.duration;
+  final Duration otherDuration = other.duration;
+  final Duration absoluteDiff = (videoDuration - otherDuration).abs();
+
+  if (!areVideosInSameDuration(video, other)) {
+    video.trim(absoluteDiff, absoluteDiff);
+  }
 }
 
 void trimVideoByCreatedTimestamp(Video video, Video other) {
@@ -109,6 +120,10 @@ class PreprocessFormState extends State<PreprocessForm> {
         widget.thumbnail.video.endFrame.toDouble(),
       );
     });
+  }
+
+  bool isImportedCiphertextComparison() {
+    return widget.thumbnail.video is CiphertextVideo;
   }
 
   Widget preprocessTypeDropdown() {
@@ -256,16 +271,25 @@ class PreprocessFormState extends State<PreprocessForm> {
       create: (context) => SessionChanges(),
       child: Form(
         child: Column(
-          children: [
-            encryptionPage(widget.config.encryptionSettings),
-            frameSlider(),
-            preprocessTypeDropdown(),
-            frameCountDropdown(),
-            const SizedBox(height: 5),
-            Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [submit(), const SizedBox(width: 5), status()]),
-          ],
+          children: isImportedCiphertextComparison()
+            ? [
+                frameSlider(),
+            ]
+            : [
+                encryptionPage(widget.config.encryptionSettings),
+                frameSlider(),
+                preprocessTypeDropdown(),
+                frameCountDropdown(),
+                const SizedBox(height: 5),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    submit(),
+                    const SizedBox(width: 5),
+                    status()
+                  ]
+                )
+              ],
         ),
       ),
     );

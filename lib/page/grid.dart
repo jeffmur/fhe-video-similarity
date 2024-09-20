@@ -37,7 +37,9 @@ class _SelectableGridState extends State<SelectableGrid> {
 
   void deselectAll() {
     setState(() {
-      _selected = List.filled(render.length, false);
+      for (var i = 0; i < _selected.length; i++) {
+        _selected[i] = false;
+      }
     });
   }
 
