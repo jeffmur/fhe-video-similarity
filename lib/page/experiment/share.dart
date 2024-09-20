@@ -1,4 +1,3 @@
-// Preprocess, Encrypt, & Share a Video
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
@@ -36,10 +35,20 @@ class ShareArchiveState extends State<ShareArchive> {
       widget.thumbnail.video.startFrame,
       widget.thumbnail.video.endFrame,
       encryptionSettings: SessionChanges(),
+      isEncrypted: true,
+      isEncryptionDisabled: true,
     );
+    checkShareButtonStatus();
   }
 
-  Future<void> serializedVideo(Config config) async {
+  void checkShareButtonStatus() {
+    setState(() {
+      _showShareButton = m.isProcessed(
+          widget.thumbnail.video, _config.type, _config.frameCount);
+    });
+  }
+
+  Future<XFile> serializedVideo(Config config) async {
     List<double> frames = await m.getCachedNormalized(
       widget.thumbnail.video,
       config.type,
@@ -56,49 +65,45 @@ class ShareArchiveState extends State<ShareArchive> {
             archivePath: '$videoDir/$archiveName.zip')
         .create();
 
-    videoArchive = XFile(archiveFile.path);
-
-    setState(() {
-      _showShareButton = true;
-    });
+    return XFile(archiveFile.path);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Share Video'),
+        title: const Text('Encrypt & Share Video'),
       ),
       body: Column(
         children: [
-          // Video player?
+          ...videoInfo(widget.thumbnail.video),
           PreprocessForm(
             thumbnail: widget.thumbnail,
             config: _config,
-            onFormSubmit: (Config config) {
+            onConfigChange: (Config config) {
               _config = config;
-              serializedVideo(config);
+              checkShareButtonStatus(); // Call the state update function
             },
-            onVideoTrim: () {},
+            onVideoTrim: () {
+              checkShareButtonStatus(); // Call the state update function
+            },
+            onFormSubmit: () {
+              checkShareButtonStatus(); // Call the state update function
+            },
             key: preprocessFormKey,
           )
         ],
       ),
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-            const Spacer(),
-            if (_showShareButton)
-              ShareFile(subject: "Archive", file: videoArchive)
-          ],
-        ),
-      ),
+      floatingActionButton: _showShareButton
+          ? ShareFile(
+              button: const FloatingActionButton(
+                onPressed: null,
+                child: Icon(Icons.share),
+              ),
+              file: serializedVideo(_config),
+              subject: 'Share Encrypted Video',
+            )
+          : null,
     );
   }
 }

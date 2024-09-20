@@ -46,10 +46,24 @@ void trimVideoByCreatedTimestamp(Video video, Video other) {
   }
 }
 
+List<Widget> videoInfo(Video video) {
+  return [
+    Text("sha256: ${video.hash}"),
+    Text("Created: ${video.created}"),
+    Text("Duration: ${video.duration} seconds"),
+    Text("Frame Range: "
+        "${video.startFrame} - "
+        "${video.endFrame} of "
+        "${video.totalFrames}"),
+    Text("Encoding: ${video.stats.codec}"),
+  ];
+}
+
 class PreprocessForm extends StatefulWidget {
   final Thumbnail thumbnail;
   final Config config;
-  final Function(Config) onFormSubmit;
+  final Function() onFormSubmit;
+  final Function(Config) onConfigChange;
   final Function() onVideoTrim;
 
   const PreprocessForm({
@@ -57,6 +71,7 @@ class PreprocessForm extends StatefulWidget {
     required this.thumbnail,
     required this.onFormSubmit,
     required this.onVideoTrim,
+    required this.onConfigChange,
     required this.config,
   });
 
@@ -66,7 +81,7 @@ class PreprocessForm extends StatefulWidget {
 
 class PreprocessFormState extends State<PreprocessForm> {
   final Manager _manager = Manager();
-  bool _isCached = false;
+  bool isCached = false;
   late RangeValues frameRange;
   late double lowerLimit;
   late double upperLimit;
@@ -82,7 +97,7 @@ class PreprocessFormState extends State<PreprocessForm> {
 
   void _reloadCache() {
     setState(() {
-      _isCached = _manager.isProcessed(
+      isCached = _manager.isProcessed(
           widget.thumbnail.video, widget.config.type, widget.config.frameCount);
     });
   }
@@ -102,7 +117,7 @@ class PreprocessFormState extends State<PreprocessForm> {
       onChanged: (PreprocessType? value) {
         setState(() {
           widget.config.type = value!;
-          widget.onFormSubmit(widget.config);
+          widget.onConfigChange(widget.config);
           _reloadCache();
         });
       },
@@ -155,7 +170,7 @@ class PreprocessFormState extends State<PreprocessForm> {
       onChanged: (FrameCount? value) {
         setState(() {
           widget.config.frameCount = value!;
-          widget.onFormSubmit(widget.config);
+          widget.onConfigChange(widget.config);
           _reloadCache();
         });
       },
@@ -181,6 +196,7 @@ class PreprocessFormState extends State<PreprocessForm> {
     }
     setState(() {
       _reloadCache();
+      widget.onFormSubmit();
     });
   }
 
@@ -194,7 +210,7 @@ class PreprocessFormState extends State<PreprocessForm> {
   Widget status() {
     return Row(
       children: [
-        _isCached
+        isCached
             ? const Icon(Icons.check, color: Colors.green) // Green checkmark
             : const Icon(Icons.close, color: Colors.red) // Red X
       ],
@@ -212,7 +228,7 @@ class PreprocessFormState extends State<PreprocessForm> {
               : (bool? value) {
                   setState(() {
                     widget.config.isEncrypted = value!;
-                    widget.onFormSubmit(widget.config);
+                    widget.onConfigChange(widget.config);
                   });
                 },
         ),

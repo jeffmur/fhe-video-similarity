@@ -5,7 +5,7 @@ import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
 import 'package:flutter_fhe_video_similarity/media/video.dart';
-import 'package:flutter_fhe_video_similarity/page/experiment/page.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/compare.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/share.dart';
 import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
@@ -37,9 +37,7 @@ class _SelectableGridState extends State<SelectableGrid> {
 
   void deselectAll() {
     setState(() {
-      for (var element in render) {
-        _selected[render.indexOf(element)] = false;
-      }
+      _selected = List.filled(render.length, false);
     });
   }
 
@@ -67,7 +65,6 @@ class _SelectableGridState extends State<SelectableGrid> {
 
                         for (var path in thumbnailPaths) {
                           final thumbnail = await m.loadThumbnail(path);
-                          print("Got thumbnail: ${thumbnail.filename}");
                           addThumbnailToRender(thumbnail);
                         }
                         deselectAll(); // using new thumbnails
@@ -103,6 +100,7 @@ class _SelectableGridState extends State<SelectableGrid> {
                                 )));
                   }
                 },
+                enableOverlay: _allowMultiSelect,
                 overlay: Container(
                   color: Colors.black
                       .withOpacity(0.5), // Semi-transparent background
@@ -123,7 +121,7 @@ class _SelectableGridState extends State<SelectableGrid> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: _selected.where((isTrue) => isTrue).length >= 2
                 ? [
-                    highlightThumbnails(_selected, render, context, m),
+                    compareSelectedThumbnails(_selected, render, context, m),
                     const SizedBox(height: 10),
                     uploadVideo(m, context, addThumbnailToRender),
                     const SizedBox(height: 10),
@@ -155,8 +153,8 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
   });
 }
 
-Future<void> handleUploadedZip(
-    BuildContext context, XFile xfile, Manager m, void Function(Thumbnail) renderAdd) async {
+Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
+    void Function(Thumbnail) renderAdd) async {
   // Parse the zip file
   // Targets: {sha256}/{start}-{end}-{timestamp}/{PreprocessType}-{frameCount}-{SimilarityType}
   //          {sha256}/{start}-{end}-{timestamp}/meta.json
@@ -176,14 +174,29 @@ Future<void> handleUploadedZip(
   // Check if ciphertext video has been modified, if so, decrypt and show score
   if (video.pwd.contains('modified')) {
     double score = m.session.decryptedSumOfDoubles(video.ctFrames);
-    print('Decrypted video score: $score');
-    return;
+    // Ensure context is still valid before using Navigator
+    if (!context.mounted) return;
+    Navigator.of(context).push(MaterialPageRoute(
+    builder: (context) {
+      return AlertDialog( // Black Box??
+        title: const Text('Decrypted video score'), // TODO: Score type?
+        content: Text('Score: $score'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Close'),
+          )
+        ],
+      );
+    }));
+  } else {
+    final thumbnail = CiphertextThumbnail(video: video, meta: meta);
+    thumbnail.cache().then((_) {
+      renderAdd(thumbnail);
+    });
   }
-
-  final thumbnail = CiphertextThumbnail(video: video, meta: meta);
-  thumbnail.cache().then((_) {
-    renderAdd(thumbnail);
-  });
 }
 
 Widget uploadZip(
@@ -205,8 +218,8 @@ Widget uploadVideo(
   );
 }
 
-Widget highlightThumbnails(List<bool> selected, List<Thumbnail> thumbnails,
-    BuildContext context, Manager m) {
+Widget compareSelectedThumbnails(List<bool> selected,
+    List<Thumbnail> thumbnails, BuildContext context, Manager m) {
   return FloatingActionButton(
     heroTag: 'experiment',
     child: const Icon(Icons.compare_arrows),

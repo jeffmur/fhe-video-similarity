@@ -40,21 +40,12 @@ class ConfigureVideoState extends State<ConfigureVideo> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
         children: [
-          Text("sha256: ${widget.thumbnail.video.hash}"),
-          Text("Created: ${widget.thumbnail.video.created}"),
-          Text("Duration: ${widget.thumbnail.video.duration} seconds"),
-          Text("Frame Range: "
-              "${widget.thumbnail.video.startFrame} - "
-              "${widget.thumbnail.video.endFrame} of "
-              "${widget.thumbnail.video.totalFrames}"),
-
-          Text("Encoding: ${widget.thumbnail.video.stats.codec}"),
-
-          // Video player?
+          ...videoInfo(widget.thumbnail.video),
           PreprocessForm(
             thumbnail: widget.thumbnail,
             config: widget.defaultConfig,
-            onFormSubmit: widget.onUpdatedTestConfig,
+            onConfigChange: widget.onUpdatedTestConfig,
+            onFormSubmit: refresh,
             onVideoTrim: refresh,
             key: widget.preprocessFormKey,
           )
@@ -143,7 +134,7 @@ class _ExperimentState extends State<Experiment> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Experiment'),
+        title: const Text('Compare Videos'),
       ),
       body: Column(
         children: [
