@@ -75,6 +75,7 @@ class _ShareFileTriggerState extends State<ShareFileTrigger> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
+          print(snapshot.error);
           return IconButton(
             icon: const Icon(Icons.error),
             onPressed: () {},
@@ -96,17 +97,15 @@ class ShareFileElevatedButton extends StatelessWidget {
   final Future<XFile> file;
   final Widget child;
 
-  const ShareFileElevatedButton({super.key, required this.file, required this.child});
+  const ShareFileElevatedButton(
+      {super.key, required this.file, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return ShareFileTrigger(
       file: file,
       builder: (onPressed) {
-        return ElevatedButton(
-          onPressed: onPressed,
-          child: child
-        );
+        return ElevatedButton(onPressed: onPressed, child: child);
       },
     );
   }

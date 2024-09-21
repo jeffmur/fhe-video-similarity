@@ -175,15 +175,15 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
 
   // Check if ciphertext video has been modified, if so, decrypt and show score
   if (video.pwd.contains('modified')) {
-    double kldScore = m.session.decryptedSumOfDoubles(video.kld);
+    double kldScore = m.session.decryptedSumOfDoubles(video.kld).abs();
     double kldPercentile = normalizedPercentage(SimilarityType.kld, kldScore);
 
     double bhattacharyyaScore =
-        m.session.decryptedSumOfDoubles(video.bhattacharyya);
+        m.session.decryptedSumOfDoubles(video.bhattacharyya).abs();
     double bhattacharyyaPercentile =
         normalizedPercentage(SimilarityType.bhattacharyya, bhattacharyyaScore);
 
-    double cramerScore = m.session.decryptedSumOfDoubles(video.cramer);
+    double cramerScore = m.session.decryptedSumOfDoubles(video.cramer).abs();
     double cramerPercentile =
         normalizedPercentage(SimilarityType.cramer, cramerScore);
     // Ensure context is still valid before using Navigator

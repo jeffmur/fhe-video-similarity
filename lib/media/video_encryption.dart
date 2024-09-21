@@ -18,7 +18,9 @@ List<Ciphertext> encryptVideoFrames(Session session, List<double> frames) {
 }
 
 List<Ciphertext> ciphertextFromFiles(List<File> file, Afhe fhe) {
-  return file.map((f) => Ciphertext.fromBytes(fhe, f.readAsBytesSync())).toList();
+  return file
+      .map((f) => Ciphertext.fromBytes(fhe, f.readAsBytesSync()))
+      .toList();
 }
 
 List<File> filesFromSimilarityType(List<File> files, String type) {
@@ -67,10 +69,14 @@ class CiphertextVideo extends UploadedMedia implements Video {
   /// to require the object rather than the library selection (seal)
   CiphertextVideo.fromBinaryFiles(
       List<File> binFiles, Session session, this.meta)
-      : kld = ciphertextFromFiles(filesFromSimilarityType(binFiles, 'kld'), session.seal),
-        kldLog = ciphertextFromFiles(filesFromSimilarityType(binFiles, 'kld_log'), session.seal),
-        bhattacharyya = ciphertextFromFiles(filesFromSimilarityType(binFiles, 'bhattacharyya'), session.seal),
-        cramer = ciphertextFromFiles(filesFromSimilarityType(binFiles, 'cramer'), session.seal),
+      : kld = ciphertextFromFiles(
+            filesFromSimilarityType(binFiles, 'kld'), session.seal),
+        kldLog = ciphertextFromFiles(
+            filesFromSimilarityType(binFiles, 'kld_log'), session.seal),
+        bhattacharyya = ciphertextFromFiles(
+            filesFromSimilarityType(binFiles, 'bhattacharyya'), session.seal),
+        cramer = ciphertextFromFiles(
+            filesFromSimilarityType(binFiles, 'cramer'), session.seal),
         super(XFile('${meta.path}/meta.json'), meta.created) {
     init();
   }
@@ -79,7 +85,7 @@ class CiphertextVideo extends UploadedMedia implements Video {
   get stats => meta;
 
   @override
-  get duration => meta.duration;
+  get duration => Duration(seconds: (endFrame - startFrame) ~/ fps);
 
   @override
   get fps => meta.fps;
@@ -95,8 +101,24 @@ class CiphertextVideo extends UploadedMedia implements Video {
 
   @override
   void trim(Duration start, Duration end) {
-    throw UnsupportedError('CiphertextVideo does not support trimming');
-    // TODO: meta.segmentDuration, we can trim the video as the List<Ciphertext> is delimited by segmentDuration
+    const segmentDuration = Duration(seconds: 1); // Assume 1 second segments
+    int startIdx = (start.inSeconds / segmentDuration.inSeconds).round();
+    int? endIdx = (end.inSeconds == 0)
+        ? null
+        : (duration.inSeconds - (end.inSeconds / segmentDuration.inSeconds))
+            .round();
+
+    print('Trimming CiphertextVideo from $startIdx to $endIdx');
+    startFrame = fps * startIdx;
+    endFrame = (endIdx == null) ? endFrame : fps * endIdx;
+
+    // Update all encrypted frames
+    kld = kld.sublist(startIdx, endIdx);
+    print('kld: ${kld.length}');
+    kldLog = kldLog.sublist(startIdx, endIdx);
+    print('kldLog: ${kldLog.length}');
+    bhattacharyya = bhattacharyya.sublist(startIdx, endIdx);
+    cramer = cramer.sublist(startIdx, endIdx);
   }
 
   @override
