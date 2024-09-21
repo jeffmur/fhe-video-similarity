@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
@@ -107,7 +110,7 @@ class CiphertextSimilarityScores {
 
 class ImportCiphertextSimilarityScores {
   Session ciphertextHandler; // Untrusted 3rd party
-  List<Ciphertext> importCiphertext;
+  CiphertextVideo importCiphertext;
   Session plaintextEncoder; // Client
   List<double> toPlaintext;
 
@@ -117,23 +120,32 @@ class ImportCiphertextSimilarityScores {
   List<Ciphertext> score(SimilarityType type) {
     switch (type) {
       case SimilarityType.kld:
-        throw UnsupportedError('KLD not supported for imported ciphertext');
-      // return kld.score(x, logX, toPlaintext);
+        CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
+        return kld.homomorphicScore(
+            importCiphertext.kld, importCiphertext.kldLog, toPlaintext);
 
       case SimilarityType.bhattacharyya:
         CiphertextBhattacharyya bhattacharyya =
             CiphertextBhattacharyya(ciphertextHandler, plaintextEncoder);
         return bhattacharyya.homomorphicScore(
-            importCiphertext, bhattacharyya.sqrt(toPlaintext));
+            importCiphertext.bhattacharyya, bhattacharyya.sqrt(toPlaintext));
 
       case SimilarityType.cramer:
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
-        return cramer.homomorphicScore(importCiphertext, toPlaintext);
+        return cramer.homomorphicScore(importCiphertext.cramer, toPlaintext);
 
       default:
         throw ArgumentError('Unsupported similarity type');
     }
+  }
+
+  Map<String, List<Ciphertext>> scoreAll() { // TODO: Support some?
+    return {
+      'kld': score(SimilarityType.kld),
+      'bhattacharyya': score(SimilarityType.bhattacharyya),
+      'cramer': score(SimilarityType.cramer),
+    };
   }
 }
 
@@ -153,12 +165,6 @@ class SimilarityResultsState extends State<SimilarityResults> {
         isBaselineImportedCiphertext
             ? (widget.baseline, widget.comparison)
             : (widget.comparison, widget.baseline);
-    final ctFrames = await importCiphertext.frames();
-
-    List<Ciphertext> ciphertextData = ctFrames
-        .map((e) => Ciphertext.fromBytes(
-            ciphertextHandler.encryptionSettings.session.seal, e))
-        .toList();
 
     // Fetch data to compare
     List<double> plaintextData = await _manager.getCachedNormalized(
@@ -166,22 +172,25 @@ class SimilarityResultsState extends State<SimilarityResults> {
         plaintextEncoder.type,
         plaintextEncoder.frameCount);
 
-    List<Ciphertext> homomorphicScore = ImportCiphertextSimilarityScores(
+    Map<String, List<Ciphertext>> scores = ImportCiphertextSimilarityScores(
             ciphertextHandler.encryptionSettings.session,
-            ciphertextData,
+            importCiphertext,
             plaintextEncoder.encryptionSettings.session,
             plaintextData)
-        .score(SimilarityType
-            .cramer); // TODO: Support multiple / select similarity types
+        .scoreAll();
 
     // Apply plaintext to ciphertext data via homomorphic score
     return ExportModifiedCiphertextVideoZip(
       tempDir: await ApplicationStorage('tmp').path,
       archivePath:
-          await ApplicationStorage('${importCiphertext.meta.path}/score').path,
-      modifiedCiphertext: homomorphicScore,
+          await ApplicationStorage('${importCiphertext.meta.path}/scores').path,
+      scores: scores,
       meta: importCiphertext.meta,
-    ).create().then((File out) => XFile(out.path));
+    ).create().then((File out) async {
+      // Delete tmp directory
+      await Directory(await ApplicationStorage('tmp').path).delete(recursive: true);
+      return XFile(out.path);
+    });
   }
 
   bool isImportedCiphertextComparison() {

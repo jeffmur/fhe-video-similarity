@@ -82,19 +82,22 @@ class Manager {
 
   Future<Thumbnail> loadThumbnail(String pwd,
       [String filename = "thumbnail.jpg"]) async {
-    print(pwd);
     if (pwd.contains(filename)) {
       pwd = pwd.substring(1, pwd.indexOf(filename) - 1);
     }
     VideoMeta meta = await loadMeta(pwd);
-    print(meta.toJson());
     if (pwd.contains('ciphertext') || pwd.contains('modified')) {
-      List<String> dirs = await manifest.listDirectories(pwd);
-      if (dirs.isEmpty) {
-        throw Exception('No directories found');
+      // Recursively fetch all the binary files from the directory using manifest
+      List<String> dirs =
+          await manifest.listDirectories(pwd); // kld, kld_log, etc.
+      List<File> files = [];
+      for (String dir in dirs) {
+        List<File> filesInDir = await manifest.listFiles(dir);
+        for (File file in filesInDir) {
+          files.add(file);
+        }
       }
-      List<File> files = await manifest.listFiles(dirs.first);
-      print("loadThumbnail: ${files.length}");
+
       if (files.isEmpty) {
         throw Exception('No files found');
       }

@@ -79,6 +79,7 @@ class ShareFileState extends State<ShareFile> {
           return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
           // Handle any error that occurred while loading the file
+          print(snapshot.error);
           return IconButton(
             icon: const Icon(Icons.error),
             onPressed: () {},

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cross_file/cross_file.dart' show XFile;
-import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
+import 'package:flutter_fhe_video_similarity/media/similarity.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
@@ -166,34 +167,55 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
           manifest: m.manifest)
       .extractFiles();
 
-  File metaFile = files.firstWhere((file) => file.path.contains('meta.json'));
+  File metaFile = getFileByBasename(files, 'meta.json')!;
   VideoMeta meta = VideoMeta.fromFile(metaFile);
+  files.remove(metaFile); // Remove meta file from list\
 
-  // Remove meta.json from files
-  files.remove(metaFile);
   final video = CiphertextVideo.fromBinaryFiles(files, m.session, meta);
 
   // Check if ciphertext video has been modified, if so, decrypt and show score
   if (video.pwd.contains('modified')) {
-    double score = m.session.decryptedSumOfDoubles(video.ctFrames);
+    double kldScore = m.session.decryptedSumOfDoubles(video.kld);
+    double kldPercentile = normalizedPercentage(SimilarityType.kld, kldScore);
+
+    double bhattacharyyaScore =
+        m.session.decryptedSumOfDoubles(video.bhattacharyya);
+    double bhattacharyyaPercentile =
+        normalizedPercentage(SimilarityType.bhattacharyya, bhattacharyyaScore);
+
+    double cramerScore = m.session.decryptedSumOfDoubles(video.cramer);
+    double cramerPercentile =
+        normalizedPercentage(SimilarityType.cramer, cramerScore);
     // Ensure context is still valid before using Navigator
     if (!context.mounted) return;
-    Navigator.of(context).push(MaterialPageRoute(
-    builder: (context) {
-      return AlertDialog( // Black Box??
-        title: const Text('Decrypted video score'), // TODO: Score type?
-        content: Text('Score: $score'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Close'),
-          )
-        ],
-      );
-    }));
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Decryption Results'),
+          content: Column(
+            children: [
+              Text('KLD Score: $kldScore'),
+              Text('KLD Percentile: $kldPercentile'),
+              Text('Bhattacharyya Score: $bhattacharyyaScore'),
+              Text('Bhattacharyya Percentile: $bhattacharyyaPercentile'),
+              Text('Cramer Score: $cramerScore'),
+              Text('Cramer Percentile: $cramerPercentile'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   } else {
+    // Make available for comparison
     final thumbnail = CiphertextThumbnail(video: video, meta: meta);
     thumbnail.cache().then((_) {
       renderAdd(thumbnail);
