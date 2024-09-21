@@ -1,34 +1,33 @@
-import 'dart:io'; // To check platform
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For clipboard
 import 'package:share_plus/share_plus.dart';
-export 'package:share_plus/share_plus.dart'; // For XFile
+import 'package:flutter/services.dart'; // Clipboard
 
-class ShareFile extends StatefulWidget {
-  final Widget button;
-  final String subject;
-  final Future<XFile> file; // Future of XFile
+export 'package:cross_file/cross_file.dart' show XFile;
 
-  const ShareFile({
+class ShareFileTrigger extends StatefulWidget {
+  final Future<XFile> file;
+  final Widget Function(VoidCallback)
+      builder; // Builder for any button or widget with onPressed
+
+  const ShareFileTrigger({
     super.key,
-    required this.button,
-    required this.subject,
-    required this.file, // Accept Future<XFile>
+    required this.file,
+    required this.builder,
   });
 
   @override
-  ShareFileState createState() => ShareFileState();
+  _ShareFileTriggerState createState() => _ShareFileTriggerState();
 }
 
-class ShareFileState extends State<ShareFile> {
+class _ShareFileTriggerState extends State<ShareFileTrigger> {
   XFile? _file;
 
-  void shareFile() {
+  Future<void> shareFile() async {
     if (_file == null) return;
 
     if (Platform.isAndroid || Platform.isIOS) {
-      // Use share_plus package to share the file on Android/iOS
-      Share.shareXFiles([_file!], subject: widget.subject);
+      Share.shareXFiles([_file!]);
     } else {
       showClipboardDialog();
     }
@@ -39,7 +38,6 @@ class ShareFileState extends State<ShareFile> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(widget.subject),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -72,30 +70,62 @@ class ShareFileState extends State<ShareFile> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<XFile>(
-      future: widget.file, // Build the widget with the Future<XFile>
+      future: widget.file,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // Show a loading indicator or disable the button while waiting
           return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
-          // Handle any error that occurred while loading the file
-          print(snapshot.error);
           return IconButton(
             icon: const Icon(Icons.error),
             onPressed: () {},
           );
         } else if (snapshot.hasData) {
-          _file = snapshot.data; // Assign the loaded XFile
-          return GestureDetector(
-            onTap: () {
-              shareFile();
-            },
-            child: widget.button,
-          );
+          _file = snapshot.data; // Store the loaded file
+          return widget.builder(() {
+            shareFile(); // Pass shareFile as onPressed to the widget
+          });
         } else {
-          // Handle the case where no file is available (null case)
           return const SizedBox.shrink();
         }
+      },
+    );
+  }
+}
+
+class ShareFileElevatedButton extends StatelessWidget {
+  final Future<XFile> file;
+  final Widget child;
+
+  const ShareFileElevatedButton({super.key, required this.file, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShareFileTrigger(
+      file: file,
+      builder: (onPressed) {
+        return ElevatedButton(
+          onPressed: onPressed,
+          child: child
+        );
+      },
+    );
+  }
+}
+
+class ShareFileFloatingActionButton extends StatelessWidget {
+  final Future<XFile> file;
+
+  const ShareFileFloatingActionButton({super.key, required this.file});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShareFileTrigger(
+      file: file,
+      builder: (onPressed) {
+        return FloatingActionButton(
+          onPressed: onPressed,
+          child: const Icon(Icons.share),
+        );
       },
     );
   }

@@ -95,13 +95,8 @@ class ShareArchiveState extends State<ShareArchive> {
         ],
       ),
       floatingActionButton: _showShareButton
-          ? ShareFile(
-              button: const FloatingActionButton(
-                onPressed: null,
-                child: Icon(Icons.share),
-              ),
-              file: serializedVideo(_config),
-              subject: 'Share Encrypted Video',
+          ? ShareFileFloatingActionButton(
+              file: serializedVideo(_config)
             )
           : null,
     );

@@ -140,7 +140,8 @@ class ImportCiphertextSimilarityScores {
     }
   }
 
-  Map<String, List<Ciphertext>> scoreAll() { // TODO: Support some?
+  Map<String, List<Ciphertext>> scoreAll() {
+    // TODO: Support some?
     return {
       'kld': score(SimilarityType.kld),
       'bhattacharyya': score(SimilarityType.bhattacharyya),
@@ -188,7 +189,8 @@ class SimilarityResultsState extends State<SimilarityResults> {
       meta: importCiphertext.meta,
     ).create().then((File out) async {
       // Delete tmp directory
-      await Directory(await ApplicationStorage('tmp').path).delete(recursive: true);
+      await Directory(await ApplicationStorage('tmp').path)
+          .delete(recursive: true);
       return XFile(out.path);
     });
   }
@@ -342,13 +344,9 @@ class SimilarityResultsState extends State<SimilarityResults> {
             : const SizedBox(),
         _ciphertextComparison ?? const SizedBox(),
         isImportedCiphertextComparison()
-            ? ShareFile(
-                button: ElevatedButton(
-                  onPressed: () {},
-                  child: const Text('Export Homomorphic Similarity Scores'),
-                ),
-                subject: 'Homomorphic Similarity Scores',
-                file: computeImportCiphertextSimilarityScore())
+            ? ShareFileElevatedButton(
+                file: computeImportCiphertextSimilarityScore(),
+                child: const Text('Export Homomorphic Similarity Scores'))
             : const SizedBox(),
       ],
     );
