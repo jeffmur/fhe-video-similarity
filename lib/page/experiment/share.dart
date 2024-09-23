@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
@@ -57,6 +58,7 @@ class ShareArchiveState extends State<ShareArchive> {
     final videoDir = await m.getVideoWorkingDirectory(widget.thumbnail.video);
     final archiveName = '${config.type.name}-${config.frameCount.name}';
     final workingDir = '$videoDir/tmp';
+    DateTime startArchive = DateTime.now();
     final archiveFile = await ExportCiphertextVideoZip(
             frames: frames,
             ctVideo: widget.thumbnail.video,
@@ -64,6 +66,9 @@ class ShareArchiveState extends State<ShareArchive> {
             tempDir: workingDir, // create a temp directory for video
             archivePath: '$videoDir/$archiveName.zip')
         .create();
+    Duration archiveTook = DateTime.now().difference(startArchive);
+    Logging().metric('📦 Packaged encrypted archive in ${archiveTook.inMilliseconds}ms',
+        correlationId: widget.thumbnail.video.stats.id);
 
     return XFile(archiveFile.path);
   }
@@ -95,9 +100,7 @@ class ShareArchiveState extends State<ShareArchive> {
         ],
       ),
       floatingActionButton: _showShareButton
-          ? ShareFileFloatingActionButton(
-              file: serializedVideo(_config)
-            )
+          ? ShareFileFloatingActionButton(file: serializedVideo(_config))
           : null,
     );
   }

@@ -57,10 +57,8 @@ class _SelectableGridState extends State<SelectableGrid> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => LoggingPage()));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => LoggingPage()));
                   },
                   child: const Text('View Logs'),
                 ),
@@ -151,11 +149,18 @@ class _SelectableGridState extends State<SelectableGrid> {
 
 Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
     int trimEnd, void Function(Thumbnail) renderAdd) async {
+  Logging log = Logging();
+  DateTime start = DateTime.now();
   // Cache the video + metadata
   // Targets: {sha256}/{start}-{end}-{timestamp}/raw.mp4
   //          {sha256}/{start}-{end}-{timestamp}/meta.json
   final video = Video(xfile, timestamp,
       start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
+
+  Duration processed = DateTime.now().difference(start);
+  // log.info('Loaded Video in ${processed.inMilliseconds}ms : ${video.stats.toString()}');
+  log.info('Loaded Video in ${processed.inMilliseconds}ms ${video.stats.toString()}',
+      correlationId: video.stats.id);
 
   video.cache().then((value) {
     // Store the thumbnail
@@ -163,6 +168,9 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
     final frame0 = Thumbnail(video, video.startFrame);
     frame0.cache().then((_) {
       renderAdd(frame0);
+      Duration cached = DateTime.now().difference(start) - processed;
+      log.info('Cached Video in ${cached.inMilliseconds}ms',
+          correlationId: video.stats.id);
     });
   });
 }

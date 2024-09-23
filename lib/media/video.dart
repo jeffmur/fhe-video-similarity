@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart' as mat;
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
@@ -20,9 +21,10 @@ class VideoMeta extends Meta {
   int endFrame;
   int totalFrames;
   String encryptionStatus;
+  late String id; // Unique identifier of Video
 
   VideoMeta(
-     {required this.codec,
+      {required this.codec,
       required this.fps,
       required this.totalFrames,
       required this.duration,
@@ -35,7 +37,9 @@ class VideoMeta extends Meta {
       required DateTime created,
       required DateTime modified,
       required String path})
-      : super(name, extension, created, modified, path);
+      : super(name, extension, created, modified, path) {
+    id = '${sha256.substring(0, 8)}-${created.millisecondsSinceEpoch}';
+  }
 
   @override
   Map toJson() => {
@@ -44,7 +48,7 @@ class VideoMeta extends Meta {
         'fps': fps,
         'totalFrames': totalFrames,
         'sha256': sha256,
-        'duration': duration.inSeconds,
+        'durationSeconds': duration.inSeconds,
         'startFrame': startFrame,
         'endFrame': endFrame,
         'encryptionStatus': encryptionStatus,
@@ -55,7 +59,7 @@ class VideoMeta extends Meta {
             codec: json['codec'],
             fps: json['fps'],
             totalFrames: json['totalFrames'],
-            duration: Duration(seconds: json['duration']),
+            duration: Duration(seconds: json['durationSeconds']),
             sha256: json['sha256'],
             startFrame: json['startFrame'],
             endFrame: json['endFrame'],
@@ -72,7 +76,7 @@ class VideoMeta extends Meta {
   void pprint() {
     print('--- Video Information ---');
     print(' * Codec: $codec');
-    print(' * Duration: $duration');
+    print(' * Duration: $duration seconds');
     print(' * FPS: $fps');
     print(' * Frame Count: $totalFrames');
     print(' * Start Frame: $startFrame');
@@ -80,6 +84,9 @@ class VideoMeta extends Meta {
     print(' * Path: $path');
     print('-------------------------');
   }
+
+  @override
+  String toString() => toJson().toString();
 }
 
 enum ImageFormat { jpg, png }
@@ -103,7 +110,6 @@ class FrameIsolate {
 
 List<FrameData> extractFrames(FrameIsolate args) {
   final frames = <FrameData>[];
-  print('extractFrames');
 
   // Open the video file in the isolate
   final copy = cv.VideoCapture.fromFile(args.videoPath);
@@ -113,14 +119,12 @@ List<FrameData> extractFrames(FrameIsolate args) {
     var (success, image) = copy.read();
     while (success && idx <= args.frameIds.last) {
       if (args.frameIds.contains(idx)) {
-        print("[videoFrames] Reading Frame $idx");
         final frameBytes = cv.imencode(".${args.frameFormat}", image).$2;
         frames.add(FrameData(idx, frameBytes));
       }
       (success, image) = copy.read();
       idx += 1;
     }
-    print('[videoFrames] end of video: $idx');
   }
   copy.release();
 
@@ -260,8 +264,8 @@ class Video extends UploadedMedia {
   /// Seek to a specific position in the video
   ///
   void trim(Duration start, Duration end) {
+    final log = Logging();
     final fps = video.get(cv.CAP_PROP_FPS);
-    print("Start: $start, End: $end");
     int trimStart = (start.inSeconds * fps).toInt();
     int trimLast = (end.inSeconds * fps).toInt();
 
@@ -274,13 +278,13 @@ class Video extends UploadedMedia {
     }
 
     // Check if the target frame is within the video frame range
-    if (trimStart >= 0) {
-      print("[trim] Seeking $trimStart frames from the start");
+    if (trimStart > 0) {
+      log.info("Seeking $trimStart frames from the start ($startFrame => ${startFrame + trimStart})");
       startFrame = startFrame + trimStart;
     }
 
     if (trimLast > 0 && trimLast < endFrame) {
-      print("[trim] Cutting $trimLast frames from the end");
+      log.info("Cutting $trimLast frames from the end ($endFrame => ${endFrame - trimLast})");
       endFrame = (endFrame - trimLast);
     }
   }

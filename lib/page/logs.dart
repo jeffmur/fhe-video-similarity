@@ -65,9 +65,15 @@ class LoggingPageState extends State<LoggingPage> {
       itemCount: _logHistory.length,
       itemBuilder: (context, index) {
         final log = _logHistory[index];
+        final _timestamp = csvHeaders[0];
+        final _level = csvHeaders[1];
+        final _message = csvHeaders[2];
+        final _identifier = csvHeaders[3];
         return ListTile(
-          title: Text('${log['timestamp']} - ${log['level']}'),
-          subtitle: Text(log['message']!),
+          title: log.containsKey(_identifier) && log[_identifier] != ''
+              ? Text('${log[_timestamp]} - ${log[_level]} - ${log[_identifier]}')
+              : Text('${log[_timestamp]} - ${log[_level]}'),
+          subtitle: Text(log[_message]!),
         );
       },
     );

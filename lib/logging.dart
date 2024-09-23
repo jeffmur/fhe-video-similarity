@@ -15,6 +15,9 @@ String formatDateTime(DateTime dateTime) {
       '${dateTime.millisecond.toString().padLeft(3, '0')}Z';
 }
 
+String csvDelimiter = ';';
+List<String> csvHeaders = ['Timestamp', 'LogLevel', 'Message', 'CorrelationId'];
+
 enum LogLevel { metric, info, debug, warning, error }
 
 class Logging {
@@ -30,7 +33,7 @@ class Logging {
     // Initialize the log file with headers if not present
     if (!_logFile.existsSync()) {
       _logFile.createSync();
-      _logFile.writeAsStringSync('Timestamp,Level,Message\n',
+      _logFile.writeAsStringSync('${csvHeaders.join(csvDelimiter)}\n',
           mode: FileMode.write); // CSV header
     }
   }
@@ -40,33 +43,35 @@ class Logging {
   }
 
   // Synchronous log writing
-  void log(LogLevel level, String message) {
+  void log(LogLevel level, String message, {String? correlationId}) {
     final String timestamp = _getFormattedTimestamp();
     final String logLevel = _getLogLevelString(level);
+    final String identifier = correlationId ?? '';
 
     // Write to file in append mode
-    final String logEntry = '$timestamp,$logLevel,$message\n';
+    final String logEntry =
+        '${[timestamp, logLevel, message, identifier].join(csvDelimiter)}\n';
     _logFile.writeAsStringSync(logEntry, mode: FileMode.append, flush: true);
   }
 
-  void metric(String message) {
-    log(LogLevel.metric, message);
+  void metric(String message, {String? correlationId}) {
+    log(LogLevel.metric, message, correlationId: correlationId);
   }
 
-  void info(String message) {
-    log(LogLevel.info, message);
+  void info(String message, {String? correlationId}) {
+    log(LogLevel.info, message, correlationId: correlationId);
   }
 
-  void debug(String message) {
-    log(LogLevel.debug, message);
+  void debug(String message, {String? correlationId}) {
+    log(LogLevel.debug, message, correlationId: correlationId);
   }
 
-  void warning(String message) {
-    log(LogLevel.warning, message);
+  void warning(String message, {String? correlationId}) {
+    log(LogLevel.warning, message, correlationId: correlationId);
   }
 
-  void error(String message) {
-    log(LogLevel.error, message);
+  void error(String message, {String? correlationId}) {
+    log(LogLevel.error, message, correlationId: correlationId);
   }
 
   // Helper to format the current timestamp
@@ -92,7 +97,7 @@ class Logging {
   }
 
   void clearLog() {
-    _logFile.writeAsStringSync('Timestamp,Level,Message\n',
+    _logFile.writeAsStringSync('${csvHeaders.join(csvDelimiter)}\n',
         mode: FileMode.write); // CSV header
   }
 
@@ -111,13 +116,14 @@ class Logging {
 
     // Skip the first line (CSV header)
     for (int i = 1; i < lines.length; i++) {
-      final List<String> fields = lines[i].split(',');
+      final List<String> fields = lines[i].split(csvDelimiter);
 
-      if (fields.length == 3) {
+      if (fields.length >= 3 && fields.length <= 4) {
         logHistory.add({
-          'timestamp': fields[0],
-          'level': fields[1],
-          'message': fields[2],
+          csvHeaders[0]: fields[0],
+          csvHeaders[1]: fields[1],
+          csvHeaders[2]: fields[2],
+          csvHeaders[3]: fields.length > 3 ? fields[3] : '',
         });
       }
     }

@@ -199,7 +199,7 @@ class PreprocessFormState extends State<PreprocessForm> {
     );
   }
 
-  Future<void> preprocess() async {
+  Future<void> process() async {
     DateTime start = DateTime.now();
     try {
       await _manager.storeProcessedVideoCSV(
@@ -215,16 +215,21 @@ class PreprocessFormState extends State<PreprocessForm> {
         _reloadCache();
         widget.onFormSubmit();
         Duration took = DateTime.now().difference(start);
-        Logging().metric("Preprocess took ${took.inMilliseconds}ms with "
-            "${widget.config.type.name} and "
-            "${widget.config.frameCount.name} frame count.");
+        Logging().metric(
+            "⚙️ Processed in ${took.inMilliseconds}ms {"
+              "type: ${widget.config.type.name}, "
+              "frameCount: ${widget.config.frameCount.name}, "
+              "durationSeconds: ${widget.thumbnail.video.duration}, "
+              "frameRange: ${widget.thumbnail.video.startFrame} - ${widget.thumbnail.video.endFrame} "
+            "}",
+            correlationId: widget.thumbnail.video.stats.id);
       });
     }
   }
 
   Widget submit() {
     return LoadButton(
-      onPressed: preprocess,
+      onPressed: process,
       text: "Preprocess",
     );
   }
@@ -279,24 +284,19 @@ class PreprocessFormState extends State<PreprocessForm> {
       child: Form(
         child: Column(
           children: isImportedCiphertextComparison()
-            ? [
-                frameSlider(),
-              ]
-            : [
-                encryptionPage(widget.config.encryptionSettings),
-                frameSlider(),
-                preprocessTypeDropdown(),
-                frameCountDropdown(),
-                const SizedBox(height: 5),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    submit(),
-                    const SizedBox(width: 5),
-                    status()
-                  ]
-                )
-              ],
+              ? [
+                  frameSlider(),
+                ]
+              : [
+                  encryptionPage(widget.config.encryptionSettings),
+                  frameSlider(),
+                  preprocessTypeDropdown(),
+                  frameCountDropdown(),
+                  const SizedBox(height: 5),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [submit(), const SizedBox(width: 5), status()])
+                ],
         ),
       ),
     );
