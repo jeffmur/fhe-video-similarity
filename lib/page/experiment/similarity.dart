@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
@@ -118,26 +119,37 @@ class ImportCiphertextSimilarityScores {
       this.importCiphertext, this.plaintextEncoder, this.toPlaintext);
 
   List<Ciphertext> score(SimilarityType type) {
+    List<Ciphertext> result = [];
+    DateTime start = DateTime.now();
+    String typeName = '';
     switch (type) {
       case SimilarityType.kld:
+        typeName = 'KLD';
         CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
-        return kld.homomorphicScore(
+        result = kld.homomorphicScore(
             importCiphertext.kld, importCiphertext.kldLog, toPlaintext);
 
       case SimilarityType.bhattacharyya:
+        typeName = 'Bhattacharyya';
         CiphertextBhattacharyya bhattacharyya =
             CiphertextBhattacharyya(ciphertextHandler, plaintextEncoder);
-        return bhattacharyya.homomorphicScore(
+        result = bhattacharyya.homomorphicScore(
             importCiphertext.bhattacharyya, bhattacharyya.sqrt(toPlaintext));
 
       case SimilarityType.cramer:
+        typeName = 'Cramer';
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
-        return cramer.homomorphicScore(importCiphertext.cramer, toPlaintext);
+        result = cramer.homomorphicScore(importCiphertext.cramer, toPlaintext);
 
       default:
         throw ArgumentError('Unsupported similarity type');
     }
+    Duration took = DateTime.now().difference(start);
+    Logging().metric(
+        '📊 $typeName Computed Homomorphic Score in ${took.inMilliseconds}ms',
+        correlationId: importCiphertext.stats.id);
+    return result;
   }
 
   Map<String, List<Ciphertext>> scoreAll() {

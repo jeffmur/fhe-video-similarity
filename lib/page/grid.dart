@@ -159,7 +159,8 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
 
   Duration processed = DateTime.now().difference(start);
   // log.info('Loaded Video in ${processed.inMilliseconds}ms : ${video.stats.toString()}');
-  log.info('Loaded Video in ${processed.inMilliseconds}ms ${video.stats.toString()}',
+  log.info(
+      'Loaded Video in ${processed.inMilliseconds}ms ${video.stats.toString()}',
       correlationId: video.stats.id);
 
   video.cache().then((value) {
@@ -179,7 +180,9 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
     void Function(Thumbnail) renderAdd) async {
   // Parse the zip file
   // Targets: {sha256}/{start}-{end}-{timestamp}/{PreprocessType}-{frameCount}-{SimilarityType}
-  //          {sha256}/{start}-{end}-{timestamp}/meta.json
+  //          {sha256}/{start}-{end}-{timestamp}/meta.json\
+  Logging log = Logging();
+  DateTime start = DateTime.now();
   List<File> files = await ImportCiphertextVideoZip(
           extractDir: await ApplicationStorage('tmp').path,
           archivePath: xfile.path,
@@ -191,18 +194,36 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
   files.remove(metaFile); // Remove meta file from list\
 
   final video = CiphertextVideo.fromBinaryFiles(files, m.session, meta);
+  Duration processed = DateTime.now().difference(start);
+  log.info(
+      'Loaded CiphertextVideo in ${processed.inMilliseconds}ms ${video.stats.toString()}',
+      correlationId: video.stats.id);
 
   // Check if ciphertext video has been modified, if so, decrypt and show score
   if (video.pwd.contains('modified')) {
+    start = DateTime.now();
     double kldScore = m.session.decryptedSumOfDoubles(video.kld).abs();
+    Duration kldScoreDuration = DateTime.now().difference(start);
+    log.metric('🔓 KLD Decrypted Score $kldScore took ${kldScoreDuration.inMilliseconds} ms',
+        correlationId: video.stats.id);
     double kldPercentile = normalizedPercentage(SimilarityType.kld, kldScore);
 
+    start = DateTime.now();
     double bhattacharyyaScore =
         m.session.decryptedSumOfDoubles(video.bhattacharyya).abs();
+    Duration bhattacharyyaScoreDuration = DateTime.now().difference(start);
+    log.metric(
+        '🔓 Bhattacharyya Decrypted Score $bhattacharyyaScore took ${bhattacharyyaScoreDuration.inMilliseconds} ms',
+        correlationId: video.stats.id);
     double bhattacharyyaPercentile =
         normalizedPercentage(SimilarityType.bhattacharyya, bhattacharyyaScore);
 
+    start = DateTime.now();
     double cramerScore = m.session.decryptedSumOfDoubles(video.cramer).abs();
+    Duration cramerScoreDuration = DateTime.now().difference(start);
+    log.metric('🔓 Cramer Decrypted Score $cramerScore took ${cramerScoreDuration.inMilliseconds} ms',
+        correlationId: video.stats.id);
+
     double cramerPercentile =
         normalizedPercentage(SimilarityType.cramer, cramerScore);
     // Ensure context is still valid before using Navigator

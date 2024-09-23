@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'dart:convert';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
 
 import 'seal.dart';
@@ -14,8 +15,8 @@ export 'dart:io' show File;
 ///
 File? getFileByBasename(List<File> files, String basename) {
   try {
-    return files.singleWhere(
-        (element) => element.path.split('/').last == basename);
+    return files
+        .singleWhere((element) => element.path.split('/').last == basename);
   } catch (e) {
     return null;
   }
@@ -65,21 +66,65 @@ class ExportCiphertextVideoZip extends ExportArchive {
 
   @override
   Future<File> create() async {
+    Logging log = Logging();
+    DateTime start = DateTime.now();
     final cipherX = session.encryptVecDouble(frames);
+    Duration encryptTime = DateTime.now().difference(start);
+    log.metric(
+        '🔒 Encrypted ${frames.length} frames in ${encryptTime.inMilliseconds}ms',
+        correlationId: ctVideo.stats.id);
+
+    start = DateTime.now();
     // Kullback-Leibler Divergence (kld.enc, kld_log.enc)
-    super.addFile(await serializeEncryptedFrames(cipherX, tempDir, 'kld.enc'));
-    super.addFile(await serializeEncryptedFrames(
-        session.encryptVecDouble(frames.map((e) => math.log(e)).toList()),
-        tempDir,
-        'kld_log.enc'));
+    await serializeEncryptedFrames(cipherX, tempDir, 'kld.enc').then((file) {
+      super.addFile(file);
+      Duration kldTime = DateTime.now().difference(start);
+      Duration kldTotal = kldTime + encryptTime;
+      log.metric(
+          '📄 Added kld.enc in ${kldTotal.inMilliseconds}ms '
+          '(${kldTime.inMilliseconds}ms + ${encryptTime.inMilliseconds}ms)',
+          correlationId: ctVideo.stats.id);
+    });
+    start = DateTime.now();
+    final cipherLogX = session.encryptVecDouble(frames.map(math.log).toList());
+    Duration encryptLogTime = DateTime.now().difference(start);
+    log.metric(
+        '🔒 Encrypted ${frames.length} log frames in ${encryptLogTime.inMilliseconds}ms',
+        correlationId: ctVideo.stats.id);
+
+    start = DateTime.now();
+    await serializeEncryptedFrames(cipherLogX, tempDir, 'kld_log.enc').then((file) {
+      super.addFile(file);
+      Duration kldLogTime = DateTime.now().difference(start);
+      Duration kldLogTotal = kldLogTime + encryptLogTime;
+      log.metric(
+          '📄 Added kld_log.enc in ${kldLogTotal.inMilliseconds}ms '
+          '(${kldLogTime.inMilliseconds}ms + ${encryptLogTime.inMilliseconds}ms)',
+          correlationId: ctVideo.stats.id);
+    });
 
     // Bhattacharyya Distance (bhattacharyya.enc)
-    super.addFile(
-        await serializeEncryptedFrames(cipherX, tempDir, 'bhattacharyya.enc'));
+    await serializeEncryptedFrames(cipherX, tempDir, 'bhattacharyya.enc')
+        .then((file) {
+      super.addFile(file);
+      Duration bhattacharyyaTime = DateTime.now().difference(start);
+      Duration bhattacharyyaTotal = bhattacharyyaTime + encryptTime;
+      log.metric(
+          '📄 Added bhattacharyya.enc in ${bhattacharyyaTotal.inMilliseconds}ms '
+          '(${bhattacharyyaTime.inMilliseconds}ms + ${encryptTime.inMilliseconds}ms)',
+          correlationId: ctVideo.stats.id);
+    });
 
     // Cramer's Distance (cramer.enc)
-    super.addFile(
-        await serializeEncryptedFrames(cipherX, tempDir, 'cramer.enc'));
+    await serializeEncryptedFrames(cipherX, tempDir, 'cramer.enc').then((file) {
+      super.addFile(file);
+      Duration cramerTime = DateTime.now().difference(start);
+      Duration cramerTotal = cramerTime + encryptTime;
+      log.metric(
+          '📄 Added cramer.enc in ${cramerTotal.inMilliseconds}ms '
+          '(${cramerTime.inMilliseconds}ms + ${encryptTime.inMilliseconds}ms)',
+          correlationId: ctVideo.stats.id);
+    });
 
     // Metadata
     VideoMeta meta = ctVideo.stats;
@@ -148,8 +193,8 @@ class ImportCiphertextVideoZip extends ImportArchive {
     List<File>? kld_log;
     if (kld_log_enc != null) {
       kld_log = await addFilesToManifest(
-        await extractCiphertextVideo(kld_log_enc, extractSubDir: 'kld_log'),
-        '$cachePath/kld_log');
+          await extractCiphertextVideo(kld_log_enc, extractSubDir: 'kld_log'),
+          '$cachePath/kld_log');
     }
 
     final bhattacharyya_enc = getFileByBasename(files, 'bhattacharyya.enc');

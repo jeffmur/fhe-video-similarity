@@ -59,18 +59,20 @@ class ShareArchiveState extends State<ShareArchive> {
     final archiveName = '${config.type.name}-${config.frameCount.name}';
     final workingDir = '$videoDir/tmp';
     DateTime startArchive = DateTime.now();
-    final archiveFile = await ExportCiphertextVideoZip(
+    return ExportCiphertextVideoZip(
             frames: frames,
             ctVideo: widget.thumbnail.video,
             session: config.encryptionSettings.session,
             tempDir: workingDir, // create a temp directory for video
             archivePath: '$videoDir/$archiveName.zip')
-        .create();
-    Duration archiveTook = DateTime.now().difference(startArchive);
-    Logging().metric('📦 Packaged encrypted archive in ${archiveTook.inMilliseconds}ms',
-        correlationId: widget.thumbnail.video.stats.id);
-
-    return XFile(archiveFile.path);
+        .create()
+        .then((file) {
+      Duration archiveTook = DateTime.now().difference(startArchive);
+      Logging().metric(
+          '📦 Packaged encrypted archive in ${archiveTook.inMilliseconds}ms',
+          correlationId: widget.thumbnail.video.stats.id);
+      return XFile(file.path);
+    });
   }
 
   @override
