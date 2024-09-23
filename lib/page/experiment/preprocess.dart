@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
@@ -199,6 +200,7 @@ class PreprocessFormState extends State<PreprocessForm> {
   }
 
   Future<void> preprocess() async {
+    DateTime start = DateTime.now();
     try {
       await _manager.storeProcessedVideoCSV(
         widget.thumbnail.video,
@@ -206,13 +208,18 @@ class PreprocessFormState extends State<PreprocessForm> {
         widget.config.frameCount,
       );
     } on UnsupportedError catch (_) {
-      print("Unsupported PreprocessType: ${widget.config.type.name}");
-      // TODO: Show error message
+      // TODO: Show error message?
+      Logging().error("Unsupported PreprocessType: ${widget.config.type.name}");
+    } finally {
+      setState(() {
+        _reloadCache();
+        widget.onFormSubmit();
+        Duration took = DateTime.now().difference(start);
+        Logging().metric("Preprocess took ${took.inMilliseconds}ms with "
+            "${widget.config.type.name} and "
+            "${widget.config.frameCount.name} frame count.");
+      });
     }
-    setState(() {
-      _reloadCache();
-      widget.onFormSubmit();
-    });
   }
 
   Widget submit() {
@@ -274,7 +281,7 @@ class PreprocessFormState extends State<PreprocessForm> {
           children: isImportedCiphertextComparison()
             ? [
                 frameSlider(),
-            ]
+              ]
             : [
                 encryptionPage(widget.config.encryptionSettings),
                 frameSlider(),

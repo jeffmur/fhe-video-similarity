@@ -15,7 +15,7 @@ String formatDateTime(DateTime dateTime) {
       '${dateTime.millisecond.toString().padLeft(3, '0')}Z';
 }
 
-enum LogLevel { INFO, DEBUG, WARNING, ERROR }
+enum LogLevel { metric, info, debug, warning, error }
 
 class Logging {
   static final Logging _instance = Logging._internal();
@@ -49,20 +49,24 @@ class Logging {
     _logFile.writeAsStringSync(logEntry, mode: FileMode.append, flush: true);
   }
 
+  void metric(String message) {
+    log(LogLevel.metric, message);
+  }
+
   void info(String message) {
-    log(LogLevel.INFO, message);
+    log(LogLevel.info, message);
   }
 
   void debug(String message) {
-    log(LogLevel.DEBUG, message);
+    log(LogLevel.debug, message);
   }
 
   void warning(String message) {
-    log(LogLevel.WARNING, message);
+    log(LogLevel.warning, message);
   }
 
   void error(String message) {
-    log(LogLevel.ERROR, message);
+    log(LogLevel.error, message);
   }
 
   // Helper to format the current timestamp
@@ -74,11 +78,13 @@ class Logging {
   // Convert LogLevel enum to string
   String _getLogLevelString(LogLevel level) {
     switch (level) {
-      case LogLevel.DEBUG:
+      case LogLevel.metric:
+        return 'METRIC';
+      case LogLevel.debug:
         return 'DEBUG';
-      case LogLevel.WARNING:
+      case LogLevel.warning:
         return 'WARNING';
-      case LogLevel.ERROR:
+      case LogLevel.error:
         return 'ERROR';
       default:
         return 'INFO';

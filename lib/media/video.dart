@@ -299,7 +299,6 @@ class Video extends UploadedMedia {
       frames += 1;
       (success, _) = copy.read();
     }
-    print("Manual Frame count: $frames");
     copy.release();
     return frames;
   }
@@ -317,7 +316,6 @@ class Video extends UploadedMedia {
     if (frames == 0) {
       return _frameCountManual();
     }
-    print("Frame count: $frames");
     return frames;
   }
 

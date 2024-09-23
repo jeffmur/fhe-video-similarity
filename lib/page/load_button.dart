@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter_fhe_video_similarity/logging.dart';
+
 class LoadButton extends StatefulWidget {
   final Future<void> Function() onPressed;
   final String text;
@@ -36,7 +38,7 @@ class LoadButtonState extends State<LoadButton> {
     try {
       await widget.onPressed();
     } catch (e) {
-      print('Error: $e');
+      Logging().error('Error in LoadButton: $e');
       rethrow;
     } finally {
       setState(() {

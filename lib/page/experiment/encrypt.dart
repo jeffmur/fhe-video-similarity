@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' as m;
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
@@ -55,7 +56,7 @@ class SessionChanges extends ChangeNotifier {
           Session.fromContextMap(encryptionTypeFromString(scheme), context);
       notifyListeners();
     } catch (e) {
-      print(e);
+      Logging().error('Failed to validate session: $e');
       // _log.add(e.toString());
     }
   }

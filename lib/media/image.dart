@@ -17,13 +17,6 @@ class Image extends UploadedMedia {
 
   Image(super.file, super.timestamp);
 
-  void printStats() {
-    print('--- Image Information ---');
-    print(' * Name: ${xfile.name}');
-    print(' * Created: ${created.toLocal()}');
-    print(' * Last Modified: ${lastModified.toLocal()}');
-  }
-
   Image.fromBytes(super.bytes, super.timestamp, super.pwd, super.name)
       : super.fromBytes();
 }

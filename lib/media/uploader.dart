@@ -43,10 +43,6 @@ FloatingActionButton selectVideoFromGallery(
       videoContextDialog(context,
           (DateTime start, int trimStart, int trimEnd) async {
         final XFile video = await selectVideo(ImageSource.gallery);
-        print('Selected video: ${video.path}');
-        print('Start DateTime: ${start.toIso8601String()}');
-        print('Trim Start: $trimStart');
-        print('Trim End: $trimEnd');
 
         onVideoSelected(video, start, trimStart, trimEnd);
       });

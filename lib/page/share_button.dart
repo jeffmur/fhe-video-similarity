@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart'; // Clipboard
 
@@ -75,7 +76,8 @@ class _ShareFileTriggerState extends State<ShareFileTrigger> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
-          print(snapshot.error);
+          // TODO: Show error message
+          Logging().error('Error in ShareFileTrigger: ${snapshot.error}');
           return IconButton(
             icon: const Icon(Icons.error),
             onPressed: () {},

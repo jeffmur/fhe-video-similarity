@@ -49,8 +49,6 @@ class _SelectableGridState extends State<SelectableGrid> {
   Widget build(BuildContext context) {
     Manager m = Manager();
     manifest.init();
-    final log = Logging();
-    log.info("Hello World 2");
     return Scaffold(
         appBar: AppBar(
           title: const Text('GhostPeerShare'),
