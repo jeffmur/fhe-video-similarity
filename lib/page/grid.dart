@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cross_file/cross_file.dart' show XFile;
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
@@ -10,6 +9,8 @@ import 'package:flutter_fhe_video_similarity/page/experiment/compare.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/share.dart';
 import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
+import 'package:flutter_fhe_video_similarity/page/logs.dart';
 
 class SelectableGrid extends StatefulWidget {
   const SelectableGrid({super.key});
@@ -48,12 +49,24 @@ class _SelectableGridState extends State<SelectableGrid> {
   Widget build(BuildContext context) {
     Manager m = Manager();
     manifest.init();
+    final log = Logging();
+    log.info("Hello World 2");
     return Scaffold(
         appBar: AppBar(
           title: const Text('GhostPeerShare'),
           actions: [
             Row(
               children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => LoggingPage()));
+                  },
+                  child: const Text('View Logs'),
+                ),
+                const SizedBox(width: 10),
                 const Text('Load'),
                 OverflowBar(
                   children: [

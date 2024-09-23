@@ -108,15 +108,12 @@ class CiphertextVideo extends UploadedMedia implements Video {
         : (duration.inSeconds - (end.inSeconds / segmentDuration.inSeconds))
             .round();
 
-    print('Trimming CiphertextVideo from $startIdx to $endIdx');
     startFrame = fps * startIdx;
     endFrame = (endIdx == null) ? endFrame : fps * endIdx;
 
     // Update all encrypted frames
     kld = kld.sublist(startIdx, endIdx);
-    print('kld: ${kld.length}');
     kldLog = kldLog.sublist(startIdx, endIdx);
-    print('kldLog: ${kldLog.length}');
     bhattacharyya = bhattacharyya.sublist(startIdx, endIdx);
     cramer = cramer.sublist(startIdx, endIdx);
   }
