@@ -103,7 +103,8 @@ class ExportCiphertextVideoZip extends ExportArchive {
           correlationId: ctVideo.stats.id);
     });
 
-    // Bhattacharyya Distance (bhattacharyya.enc)
+    // Bhattacharyya Distance (bhattacharyya.enc
+    start = DateTime.now();
     await serializeEncryptedFrames(cipherX, tempDir, 'bhattacharyya.enc')
         .then((file) {
       super.addFile(file);
@@ -116,6 +117,7 @@ class ExportCiphertextVideoZip extends ExportArchive {
     });
 
     // Cramer's Distance (cramer.enc)
+    start = DateTime.now();
     await serializeEncryptedFrames(cipherX, tempDir, 'cramer.enc').then((file) {
       super.addFile(file);
       Duration cramerTime = DateTime.now().difference(start);
@@ -127,9 +129,13 @@ class ExportCiphertextVideoZip extends ExportArchive {
     });
 
     // Metadata
+    start = DateTime.now();
     VideoMeta meta = ctVideo.stats;
     meta.encryptionStatus = 'ciphertext';
     super.addFile(await serializeVideoMeta(meta, tempDir, metadataFilename));
+    Duration metaTime = DateTime.now().difference(start);
+    log.info('📄 Added meta.json in ${metaTime.inMilliseconds}ms',
+        correlationId: ctVideo.stats.id);
     return super.create();
   }
 }

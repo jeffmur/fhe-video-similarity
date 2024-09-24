@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 
 class ExportArchive {
   final String tempDir;
@@ -16,13 +17,15 @@ class ExportArchive {
   void addFile(File file) => files.add(file);
 
   Future<File> create() async {
+    Logging log = Logging();
+    DateTime start = DateTime.now();
     final archive = ZipFileEncoder();
     archive.create(archivePath);
-
     for (var file in files) {
       archive.addFile(file);
     }
     await archive.close();
+    log.debug('Wrote archive to $archivePath in ${DateTime.now().difference(start).inMilliseconds}ms');
     return File(archivePath);
   }
 }

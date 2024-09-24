@@ -163,7 +163,7 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
       'Loaded Video in ${processed.inMilliseconds}ms ${video.stats.toString()}',
       correlationId: video.stats.id);
 
-  video.cache().then((value) {
+  await video.cache().then((value) {
     // Store the thumbnail
     // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
     final frame0 = Thumbnail(video, video.startFrame);
@@ -257,7 +257,7 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
   } else {
     // Make available for comparison
     final thumbnail = CiphertextThumbnail(video: video, meta: meta);
-    thumbnail.cache().then((_) {
+    await thumbnail.cache().then((_) {
       renderAdd(thumbnail);
     });
   }
