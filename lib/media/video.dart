@@ -89,6 +89,16 @@ class VideoMeta extends Meta {
   String toString() => toJson().toString();
 }
 
+/// Get the OpenCV API preference based on the platform
+///
+int get cvApiPreference {
+  if(Platform.isAndroid) {
+    return cv.CAP_ANDROID;
+  } else {
+    return cv.CAP_FFMPEG;
+  }
+}
+
 enum ImageFormat { jpg, png }
 
 enum FrameCount { all, even, odd, firstLast, random5, randomHalf }
@@ -102,32 +112,79 @@ class FrameData {
 
 class FrameIsolate {
   final List<int> frameIds;
-  final String frameFormat;
   final String videoPath;
+  String frameFormat = 'png';
 
-  FrameIsolate(this.frameIds, this.frameFormat, this.videoPath);
+  FrameIsolate(this.frameIds, this.videoPath);
 }
 
-List<FrameData> extractFrames(FrameIsolate args) {
-  final frames = <FrameData>[];
+Future<List<Uint8List>> extractFrames(FrameIsolate args) async {
+  final frames = <Uint8List>[];
 
   // Open the video file in the isolate
-  final copy = cv.VideoCapture.fromFile(args.videoPath);
+  final copy =
+      cv.VideoCapture.fromFile(args.videoPath, apiPreference: cvApiPreference);
 
   if (copy.isOpened && args.frameIds.isNotEmpty) {
     var idx = 0;
-    var (success, image) = copy.read();
+    var (success, image) = await copy.readAsync();
     while (success && idx <= args.frameIds.last) {
       if (args.frameIds.contains(idx)) {
         final frameBytes = cv.imencode(".${args.frameFormat}", image).$2;
-        frames.add(FrameData(idx, frameBytes));
+        frames.add(frameBytes);
       }
-      (success, image) = copy.read();
+      (success, image) = await copy.readAsync();
       idx += 1;
     }
   }
   copy.release();
 
+  return frames;
+}
+
+/// Extract the frame sizes of the video
+///
+Future<List<int>> extractFrameSizes(FrameIsolate args) async {
+  final sizes = <int>[];
+
+  // Open the video file in the isolate
+  // final copy = cv.VideoCapture.fromFile(args.videoPath, apiPreference: cvApiPreference);
+  final copy = await cv.VideoCaptureAsync.fromFileAsync(args.videoPath,
+      apiPreference: cvApiPreference);
+
+  var success = await copy.grabAsync();
+  if (!copy.isOpened || args.frameIds.isEmpty || !success) return [];
+
+  var idx = 0;
+  // Iterate through 0..N inclusively, assumes frameIds are sorted
+  while (success && idx <= args.frameIds.last) {
+    if (args.frameIds.contains(idx)) {
+      var (success, image) = await copy.readAsync();
+      sizes.add(image.size.length);
+    }
+    success = await copy.grabAsync();
+    idx += 1;
+  }
+  await copy.releaseAsync();
+
+  return sizes;
+}
+
+/// Step through the video frame by frame and count the number of frames
+///
+/// Exposing this method to the user is not recommended as it is slow and
+/// inefficient. Use [frameCount] instead.
+///
+int countAllFrames(String videoPath) {
+  // Create + Release video copy
+  final copy = cv.VideoCapture.fromFile(videoPath);
+  var frames = 0;
+  var (success, _) = copy.read();
+  while (success) {
+    frames += 1;
+    (success, _) = copy.read();
+  }
+  copy.release();
   return frames;
 }
 
@@ -195,12 +252,11 @@ class Video extends UploadedMedia {
   Video(XFile file, DateTime timestamp,
       {Duration start = Duration.zero, Duration end = Duration.zero})
       : super(file, timestamp) {
-    video =
-        cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
+    video = cv.VideoCapture.fromFile(file.path, apiPreference: cvApiPreference);
     created = timestamp;
 
     // Get frame count
-    totalFrames = frameCount;
+    totalFrames = countAllFrames(file.path);
 
     // Set the end frame (used for trimming)
     endFrame = totalFrames - 1;
@@ -215,8 +271,7 @@ class Video extends UploadedMedia {
   Video.fromeCache(XFile file, DateTime timestamp, this.hash, this.startFrame,
       this.endFrame, this.totalFrames)
       : super(file, timestamp) {
-    video =
-        cv.VideoCapture.fromFile(file.path, apiPreference: _cvApiPreference);
+    video = cv.VideoCapture.fromFile(file.path, apiPreference: cvApiPreference);
     created = timestamp;
   }
 
@@ -250,17 +305,6 @@ class Video extends UploadedMedia {
   int get fps => video.get(cv.CAP_PROP_FPS).toInt();
   Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ fps);
 
-  /// Get the OpenCV API preference based on the platform
-  ///
-  int get _cvApiPreference {
-    switch (Platform.operatingSystem) {
-      case 'android':
-        return cv.CAP_ANDROID;
-      default:
-        return cv.CAP_ANY;
-    }
-  }
-
   /// Seek to a specific position in the video
   ///
   void trim(Duration start, Duration end) {
@@ -279,32 +323,16 @@ class Video extends UploadedMedia {
 
     // Check if the target frame is within the video frame range
     if (trimStart > 0) {
-      log.info("Seeking $trimStart frames from the start ($startFrame => ${startFrame + trimStart})");
+      log.info(
+          "Seeking $trimStart frames from the start ($startFrame => ${startFrame + trimStart})");
       startFrame = startFrame + trimStart;
     }
 
     if (trimLast > 0 && trimLast < endFrame) {
-      log.info("Cutting $trimLast frames from the end ($endFrame => ${endFrame - trimLast})");
+      log.info(
+          "Cutting $trimLast frames from the end ($endFrame => ${endFrame - trimLast})");
       endFrame = (endFrame - trimLast);
     }
-  }
-
-  /// Step through the video frame by frame and count the number of frames
-  ///
-  /// Exposing this method to the user is not recommended as it is slow and
-  /// inefficient. Use [frameCount] instead.
-  ///
-  int _frameCountManual() {
-    // Create + Release video copy
-    final copy = cv.VideoCapture.fromFile(xfile.path);
-    var frames = 0;
-    var (success, _) = copy.read();
-    while (success) {
-      frames += 1;
-      (success, _) = copy.read();
-    }
-    copy.release();
-    return frames;
   }
 
   /// Calculate the number of frames in the video
@@ -318,17 +346,19 @@ class Video extends UploadedMedia {
 
     // CAP_PROP_FRAME_COUNT is not supported by all codecs
     if (frames == 0) {
-      return _frameCountManual();
+      return countAllFrames(xfile.path);
     }
     return frames;
   }
 
-  Future<List<Uint8List>> frames(
-      {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
-    List<FrameData> isolate = await compute<FrameIsolate, List<FrameData>>(
-        extractFrames, FrameIsolate(frameIds, frameFormat, xfile.path));
+  Future<List<int>> probeFrameSizes({List<int> frameIds = const [0]}) async {
+    return await compute<FrameIsolate, List<int>>(
+        extractFrameSizes, FrameIsolate(frameIds, xfile.path));
+  }
 
-    return isolate.map((frame) => frame.bytes).toList();
+  Future<List<Uint8List>> probeFrames({List<int> frameIds = const [0]}) async {
+    return await compute<FrameIsolate, List<Uint8List>>(
+        extractFrames, FrameIsolate(frameIds, xfile.path));
   }
 
   /// Generate an [Image] from the video
@@ -337,7 +367,7 @@ class Video extends UploadedMedia {
   ///
   Future<Image> thumbnail(String filename, [frameIdx = 0]) async {
     Uint8List frameFromIndex =
-        await frames(frameIds: [frameIdx]).then((frames) => frames.first);
+        await probeFrames(frameIds: [frameIdx]).then((frames) => frames.first);
     Uint8List resizedFrame = resize(frameFromIndex, ImageFormat.png, 500, 500);
 
     return Image.fromBytes(resizedFrame, created, xfile.path, filename);

@@ -55,7 +55,7 @@ class CiphertextVideo extends UploadedMedia implements Video {
     video = VideoCapture.empty();
     startFrame = meta.startFrame;
     endFrame = meta.endFrame;
-    totalFrames = frameCount;
+    totalFrames = meta.totalFrames;
     hash = meta.sha256;
   }
 
@@ -123,7 +123,13 @@ class CiphertextVideo extends UploadedMedia implements Video {
   }
 
   @override
-  Future<List<Uint8List>> frames(
+  Future<List<Uint8List>> probeFrames(
+      {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
+    throw UnsupportedError('CiphertextVideo does not support frames');
+  }
+
+  @override
+  Future<List<int>> probeFrameSizes(
       {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
     throw UnsupportedError('CiphertextVideo does not support frames');
   }

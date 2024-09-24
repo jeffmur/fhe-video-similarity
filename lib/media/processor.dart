@@ -1,7 +1,8 @@
 import 'dart:typed_data';
-import 'dart:collection';
+import 'package:pool/pool.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'video.dart';
 
 String sha256ofBytes(Uint8List bytes, int chars) =>
@@ -20,7 +21,8 @@ class NormalizedByteArray {
   ///
   /// Returns a map of startFrame to normalized byte arrays
   ///
-  Future<Map> preprocess(Video video, FrameCount frameCount, {Duration segment = const Duration(seconds: 1)}) async {
+  Future<Map> preprocess(Video video, FrameCount frameCount,
+      {Duration segment = const Duration(seconds: 1)}) async {
     switch (type) {
       case PreprocessType.sso:
         List<List<int>> bytes =
@@ -67,22 +69,42 @@ List<double> normalizeSumOfElements(List<int> values) {
   return values.map((e) => e / sum).toList();
 }
 
+///
+/// Tradeoffs:
+/// - Higher concurrency (using futures) leads to more memory usage, causing the main thread to slow
+/// - Lower concurrency (using for loop / stream) leads to less memory usage, but slower processing time
+///
+/// Performance on 60 second video:
+/// - Linux 32GB RAM, 16 cores ~ 30 seconds
+/// - Android 8GB RAM, 8 cores ~ 226 seconds
+///
+
 /// Count the number of bytes within each video segment with limited concurrency
+///
 Future<List<List<int>>> countBytesInVideoSegment(
     Video video, Duration segment, FrameCount frameCount,
     {int maxConcurrency = 2}) async {
+  final log = Logging();
   var frameRangesFromSegment =
       frameIndexFromSegment(video.stats, segment, frameCount);
 
-  // Create a list of futures to fetch frames and calculate byte lengths
-  List<Future<List<int>>> byteLengthFutures = frameRangesFromSegment.map((range) async {
-    // Fetch the frames for each segment
-    final frames = await video.frames(frameIds: range);
+  // Create a pool to limit concurrency
+  final pool = Pool(maxConcurrency);
 
-    // Calculate byte lengths for each frame
-    return frames.map((frame) => frame.length).toList();
+  // Create a list of futures, limiting concurrency using pool.withResource
+  List<Future<List<int>>> byteLengthFutures =
+      frameRangesFromSegment.map((range) async {
+    return await pool.withResource(() async {
+      // log.debug('Processing segment $range');
+      print("Processing segment $range");
+      return await video.probeFrameSizes(frameIds: range);
+    });
   }).toList();
 
   // Wait for all futures to complete and return the results
-  return await Future.wait(byteLengthFutures);
+  final results = await Future.wait(byteLengthFutures);
+
+  // Close the pool when you're done to clean up resources
+  await pool.close();
+  return results;
 }

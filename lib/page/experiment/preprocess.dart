@@ -219,7 +219,7 @@ class PreprocessFormState extends State<PreprocessForm> {
             "⚙️ Processed in ${took.inMilliseconds}ms {"
               "type: ${widget.config.type.name}, "
               "frameCount: ${widget.config.frameCount.name}, "
-              "durationSeconds: ${widget.thumbnail.video.duration}, "
+              "durationSeconds: ${widget.thumbnail.video.duration.inSeconds}, "
               "frameRange: ${widget.thumbnail.video.startFrame} - ${widget.thumbnail.video.endFrame} "
             "}",
             correlationId: widget.thumbnail.video.stats.id);
