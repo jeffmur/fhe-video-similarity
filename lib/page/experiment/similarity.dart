@@ -196,7 +196,7 @@ class SimilarityResultsState extends State<SimilarityResults> {
     return ExportModifiedCiphertextVideoZip(
       tempDir: await ApplicationStorage('tmp').path,
       archivePath:
-          await ApplicationStorage('${importCiphertext.meta.path}/scores').path,
+          await ApplicationStorage('${importCiphertext.meta.path}/scores.zip').path,
       scores: scores,
       meta: importCiphertext.meta,
     ).create().then((File out) async {

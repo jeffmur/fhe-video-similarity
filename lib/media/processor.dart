@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'dart:collection';
+import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
 import 'video.dart';
 
@@ -18,10 +20,9 @@ class NormalizedByteArray {
   ///
   /// Returns a map of startFrame to normalized byte arrays
   ///
-  Future<Map> preprocess(Video video, FrameCount frameCount) async {
+  Future<Map> preprocess(Video video, FrameCount frameCount, {Duration segment = const Duration(seconds: 1)}) async {
     switch (type) {
       case PreprocessType.sso:
-        const segment = Duration(seconds: 1);
         List<List<int>> bytes =
             await countBytesInVideoSegment(video, segment, frameCount);
 
@@ -29,15 +30,11 @@ class NormalizedByteArray {
         List<int> sumOfFrameSegments =
             bytes.map((segment) => segment.reduce((a, b) => a + b)).toList();
 
-        print('[DEBUG] Length: ${sumOfFrameSegments.length}');
-
         // Normalize each segment with the sum of ALL elements
         final normalized = normalizeSumOfElements(sumOfFrameSegments);
 
-        print('[DEBUG] Normalized: $normalized');
-
+        // Align each segment with timestamp
         final timestamps = timestampsFromSegment(video.stats, segment);
-        print('[DEBUG] Timestamps: $timestamps');
 
         return {
           'bytes': bytes,
@@ -70,22 +67,22 @@ List<double> normalizeSumOfElements(List<int> values) {
   return values.map((e) => e / sum).toList();
 }
 
-/// Count the number of bytes within each video segment
-///
+/// Count the number of bytes within each video segment with limited concurrency
 Future<List<List<int>>> countBytesInVideoSegment(
-    Video video, Duration segment, FrameCount frameCount) async {
-  List<List<int>> byteLengths = [];
-  var frameRangesFromSegment = frameIndexFromSegment(video.stats, segment, frameCount);
+    Video video, Duration segment, FrameCount frameCount,
+    {int maxConcurrency = 2}) async {
+  var frameRangesFromSegment =
+      frameIndexFromSegment(video.stats, segment, frameCount);
 
-  for (var range in frameRangesFromSegment) {
-    print('[DEBUG] Frame Range: $range');
+  // Create a list of futures to fetch frames and calculate byte lengths
+  List<Future<List<int>>> byteLengthFutures = frameRangesFromSegment.map((range) async {
+    // Fetch the frames for each segment
     final frames = await video.frames(frameIds: range);
 
-    List<int> frameByteLengths = [];
-    for (var frame in frames) {
-      frameByteLengths.add(frame.length);
-    }
-    byteLengths.add(frameByteLengths);
-  }
-  return byteLengths;
+    // Calculate byte lengths for each frame
+    return frames.map((frame) => frame.length).toList();
+  }).toList();
+
+  // Wait for all futures to complete and return the results
+  return await Future.wait(byteLengthFutures);
 }
