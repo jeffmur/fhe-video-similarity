@@ -58,7 +58,7 @@ class _SelectableGridState extends State<SelectableGrid> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => LoggingPage()));
+                        MaterialPageRoute(builder: (context) => const LoggingPage()));
                   },
                   child: const Text('View Logs'),
                 ),

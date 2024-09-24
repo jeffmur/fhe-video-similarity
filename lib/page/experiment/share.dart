@@ -5,6 +5,7 @@ import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
+import 'package:flutter_fhe_video_similarity/page/logs.dart';
 import 'package:flutter_fhe_video_similarity/page/share_button.dart';
 
 class ShareArchive extends StatefulWidget {
@@ -80,6 +81,19 @@ class ShareArchiveState extends State<ShareArchive> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Encrypt & Share Video'),
+        actions: [
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => const LoggingPage()));
+                },
+                child: const Text('View Logs'),
+              ),
+            ]
+          ),
+        ]
       ),
       body: Column(
         children: [

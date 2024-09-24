@@ -92,7 +92,7 @@ class VideoMeta extends Meta {
 /// Get the OpenCV API preference based on the platform
 ///
 int get cvApiPreference {
-  if(Platform.isAndroid) {
+  if (Platform.isAndroid) {
     return cv.CAP_ANDROID;
   } else {
     return cv.CAP_FFMPEG;
@@ -119,27 +119,29 @@ class FrameIsolate {
 }
 
 Future<List<Uint8List>> extractFrames(FrameIsolate args) async {
-  final frames = <Uint8List>[];
+  final bytes = <Uint8List>[];
 
   // Open the video file in the isolate
-  final copy =
-      cv.VideoCapture.fromFile(args.videoPath, apiPreference: cvApiPreference);
+  final copy = await cv.VideoCaptureAsync.fromFileAsync(args.videoPath,
+      apiPreference: cvApiPreference);
+  var success = await copy.grabAsync();
+  if (!copy.isOpened || args.frameIds.isEmpty || !success) return [];
 
-  if (copy.isOpened && args.frameIds.isNotEmpty) {
-    var idx = 0;
-    var (success, image) = await copy.readAsync();
-    while (success && idx <= args.frameIds.last) {
-      if (args.frameIds.contains(idx)) {
-        final frameBytes = cv.imencode(".${args.frameFormat}", image).$2;
-        frames.add(frameBytes);
+  var idx = 0;
+  // Iterate through 0..N inclusively, assumes frameIds are sorted
+  while (success && idx <= args.frameIds.last) {
+    if (args.frameIds.contains(idx)) {
+      var (exist, image) = await copy.readAsync();
+      if (!image.isEmpty) {
+        bytes.add((await cv.imencodeAsync(".${args.frameFormat}", image)).$2);
       }
-      (success, image) = await copy.readAsync();
-      idx += 1;
     }
+    success = await copy.grabAsync();
+    idx += 1;
   }
-  copy.release();
+  await copy.releaseAsync();
 
-  return frames;
+  return bytes;
 }
 
 /// Extract the frame sizes of the video
@@ -148,10 +150,8 @@ Future<List<int>> extractFrameSizes(FrameIsolate args) async {
   final sizes = <int>[];
 
   // Open the video file in the isolate
-  // final copy = cv.VideoCapture.fromFile(args.videoPath, apiPreference: cvApiPreference);
   final copy = await cv.VideoCaptureAsync.fromFileAsync(args.videoPath,
       apiPreference: cvApiPreference);
-
   var success = await copy.grabAsync();
   if (!copy.isOpened || args.frameIds.isEmpty || !success) return [];
 
@@ -159,14 +159,17 @@ Future<List<int>> extractFrameSizes(FrameIsolate args) async {
   // Iterate through 0..N inclusively, assumes frameIds are sorted
   while (success && idx <= args.frameIds.last) {
     if (args.frameIds.contains(idx)) {
-      var (success, image) = await copy.readAsync();
-      sizes.add(image.size.length);
+      var (exist, image) = await copy.readAsync();
+      if (!image.isEmpty) {
+        var frameData =
+            (await cv.imencodeAsync(".${args.frameFormat}", image)).$2;
+        sizes.add(frameData.length);
+      }
     }
     success = await copy.grabAsync();
     idx += 1;
   }
   await copy.releaseAsync();
-
   return sizes;
 }
 
