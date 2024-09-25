@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/seal.dart';
@@ -54,7 +53,13 @@ class PlaintextSimilarityScores {
   }
 
   String score(SimilarityType type) {
-    return Similarity(type).score(baseline, comparison).toStringAsExponential();
+    DateTime start = DateTime.now();
+    String score =
+        Similarity(type).score(baseline, comparison).toStringAsExponential();
+    Duration computeScore = DateTime.now().difference(start);
+    Logging().metric(
+        '📊 ${similarityTypeToString(type)} Computed Score in ${computeScore.inMicroseconds}μs');
+    return score;
   }
 
   String percentile(SimilarityType type) {
@@ -72,30 +77,63 @@ class CiphertextSimilarityScores {
       this.plaintextEncoder, this.toPlaintext);
 
   double compute(SimilarityType type) {
+    double? score;
+    DateTime start = DateTime.now();
     List<Ciphertext> x = ciphertextHandler.encryptVecDouble(toCiphertext);
+    Duration encryptX = DateTime.now().difference(start);
+    String typeName = similarityTypeToString(type);
 
     switch (type) {
       case SimilarityType.kld:
+        start = DateTime.now();
         CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
         List<Ciphertext> logX =
             ciphertextHandler.encryptVecDouble(kld.log(toCiphertext));
-        return kld.score(x, logX, toPlaintext);
+        Duration encryptLogX = DateTime.now().difference(start);
+        start = DateTime.now();
+        score = kld.score(x, logX, toPlaintext);
+        Duration computeScore = DateTime.now().difference(start);
+        Duration total = encryptX + encryptLogX + computeScore;
+        Logging().metric(
+            '📊 $typeName Computed Ciphertext Score in ${total.inMilliseconds}ms, '
+            'encryptX: ${encryptX.inMilliseconds}ms, '
+            'encryptLogX: ${encryptLogX.inMilliseconds}ms, '
+            'computeScore: ${computeScore.inMilliseconds}ms');
 
       case SimilarityType.bhattacharyya:
+        start = DateTime.now();
         CiphertextBhattacharyya bhattacharyya =
             CiphertextBhattacharyya(ciphertextHandler, plaintextEncoder);
         List<Ciphertext> sqrtX = ciphertextHandler
             .encryptVecDouble(bhattacharyya.sqrt(toCiphertext));
-        return bhattacharyya.score(sqrtX, bhattacharyya.sqrt(toPlaintext));
+        Duration encryptSqrtX = DateTime.now().difference(start);
+        start = DateTime.now();
+        score = bhattacharyya.score(sqrtX, bhattacharyya.sqrt(toPlaintext));
+        Duration computeScore = DateTime.now().difference(start);
+        Duration total = encryptX + encryptSqrtX + computeScore;
+        Logging().metric(
+            '📊 $typeName Computed Ciphertext Score in ${total.inMilliseconds}ms, '
+            'encryptX: ${encryptX.inMilliseconds}ms, '
+            'encryptSqrtX: ${encryptSqrtX.inMilliseconds}ms, '
+            'computeScore: ${computeScore.inMilliseconds}ms');
 
       case SimilarityType.cramer:
+        start = DateTime.now();
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
-        return cramer.score(x, toPlaintext);
+        score = cramer.score(x, toPlaintext);
+        Duration computeScore = DateTime.now().difference(start);
+        Duration total = encryptX + computeScore;
+        Logging().metric(
+            '📊 $typeName Computed Ciphertext Score in ${total.inMilliseconds}ms, '
+            'encryptX: ${encryptX.inMilliseconds}ms, '
+            'computeScore: ${computeScore.inMilliseconds}ms');
 
       default:
         throw ArgumentError('Unsupported similarity type');
     }
+
+    return score;
   }
 
   String score(SimilarityType type) {
@@ -121,23 +159,20 @@ class ImportCiphertextSimilarityScores {
   List<Ciphertext> score(SimilarityType type) {
     List<Ciphertext> result = [];
     DateTime start = DateTime.now();
-    String typeName = '';
+    String typeName = similarityTypeToString(type);
     switch (type) {
       case SimilarityType.kld:
-        typeName = 'KLD';
         CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
         result = kld.homomorphicScore(
             importCiphertext.kld, importCiphertext.kldLog, toPlaintext);
 
       case SimilarityType.bhattacharyya:
-        typeName = 'Bhattacharyya';
         CiphertextBhattacharyya bhattacharyya =
             CiphertextBhattacharyya(ciphertextHandler, plaintextEncoder);
         result = bhattacharyya.homomorphicScore(
             importCiphertext.bhattacharyya, bhattacharyya.sqrt(toPlaintext));
 
       case SimilarityType.cramer:
-        typeName = 'Cramer';
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
         result = cramer.homomorphicScore(importCiphertext.cramer, toPlaintext);
@@ -196,7 +231,8 @@ class SimilarityResultsState extends State<SimilarityResults> {
     return ExportModifiedCiphertextVideoZip(
       tempDir: await ApplicationStorage('tmp').path,
       archivePath:
-          await ApplicationStorage('${importCiphertext.meta.path}/scores.zip').path,
+          await ApplicationStorage('${importCiphertext.meta.path}/scores.zip')
+              .path,
       scores: scores,
       meta: importCiphertext.meta,
     ).create().then((File out) async {

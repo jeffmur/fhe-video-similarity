@@ -6,6 +6,14 @@ import 'seal.dart';
 
 enum SimilarityType { kld, bhattacharyya, cramer }
 
+String similarityTypeToString(SimilarityType type) {
+  return switch (type) {
+    SimilarityType.kld => 'KLD',
+    SimilarityType.bhattacharyya => 'Bhattacharyya',
+    SimilarityType.cramer => 'Cramer',
+  };
+}
+
 double normalizedPercentage(SimilarityType type, double score) {
   return switch (type) {
         SimilarityType.kld => 1 / (1 + score),

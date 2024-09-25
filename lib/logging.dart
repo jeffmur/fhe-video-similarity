@@ -18,7 +18,7 @@ String formatDateTime(DateTime dateTime) {
 String csvDelimiter = ';';
 List<String> csvHeaders = ['Timestamp', 'LogLevel', 'Message', 'CorrelationId'];
 
-enum LogLevel { metric, info, debug, warning, error }
+enum LogLevel { info, metric, debug, warning, error }
 
 class Logging {
   static final Logging _instance = Logging._internal();
@@ -105,26 +105,26 @@ class Logging {
     return _logFile.path;
   }
 
-  // Read full log history from the CSV file
-  List<Map<String, String>> readLogHistory() {
-    if (!_logFile.existsSync()) {
-      return [];
-    }
-
+  /// Read full log history from the CSV file
+  ///
+  /// Optionally, you can pass a [filter] function to filter the log entries.
+  ///
+  List<Map<String, String>> readLogHistory(
+      {bool Function(Map<String, String>)? filter}) {
     final List<Map<String, String>> logHistory = [];
     final List<String> lines = _logFile.readAsLinesSync();
 
-    // Skip the first line (CSV header)
     for (int i = 1; i < lines.length; i++) {
-      final List<String> fields = lines[i].split(csvDelimiter);
+      final List<String> values = lines[i].split(csvDelimiter);
+      final Map<String, String> logEntry = {
+        'Timestamp': values[0],
+        'LogLevel': values[1],
+        'Message': values[2],
+        'CorrelationId': values[3],
+      };
 
-      if (fields.length >= 3 && fields.length <= 4) {
-        logHistory.add({
-          csvHeaders[0]: fields[0],
-          csvHeaders[1]: fields[1],
-          csvHeaders[2]: fields[2],
-          csvHeaders[3]: fields.length > 3 ? fields[3] : '',
-        });
+      if (filter == null || filter(logEntry)) {
+        logHistory.add(logEntry);
       }
     }
 
