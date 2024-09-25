@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/similarity.dart';
@@ -115,17 +116,11 @@ class _ExperimentState extends State<Experiment> {
 
   void alignVideos() {
     setState(() {
-      // if (widget.baseline.video is CiphertextVideo) {
-      //   trimVideoByDuration(widget.comparison.video, widget.baseline.video);
-      // } else if (widget.comparison.video is CiphertextVideo) {
-      //   trimVideoByDuration(widget.baseline.video, widget.comparison.video);
-      // } else {
-        widget.baseline.video.duration > widget.comparison.video.duration
-            ? trimVideoByCreatedTimestamp(
-                widget.baseline.video, widget.comparison.video)
-            : trimVideoByCreatedTimestamp(
-                widget.comparison.video, widget.baseline.video);
-      // }
+      widget.baseline.video.duration > widget.comparison.video.duration
+          ? trimVideoByCreatedTimestamp(
+              widget.baseline.video, widget.comparison.video)
+          : trimVideoByCreatedTimestamp(
+              widget.comparison.video, widget.baseline.video);
     });
   }
 

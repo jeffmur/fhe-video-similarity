@@ -214,9 +214,9 @@ class PreprocessFormState extends State<PreprocessForm> {
       setState(() {
         _reloadCache();
         widget.onFormSubmit();
-        Duration took = DateTime.now().difference(start);
+        String took = nonZeroDuration(DateTime.now().difference(start));
         Logging().metric(
-            "⚙️ Processed in ${took.inMilliseconds}ms {"
+            "⚙️ Processed in $took {"
               "type: ${widget.config.type.name}, "
               "frameCount: ${widget.config.frameCount.name}, "
               "durationSeconds: ${widget.thumbnail.video.duration.inSeconds}, "

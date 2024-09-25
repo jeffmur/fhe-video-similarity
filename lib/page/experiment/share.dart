@@ -68,9 +68,9 @@ class ShareArchiveState extends State<ShareArchive> {
             archivePath: '$videoDir/$archiveName.zip')
         .create()
         .then((file) {
-      Duration archiveTook = DateTime.now().difference(startArchive);
+      String archiveTook = nonZeroDuration(DateTime.now().difference(startArchive));
       Logging().metric(
-          '📦 Packaged encrypted archive in ${archiveTook.inMilliseconds}ms',
+          '📦 Packaged encrypted archive in $archiveTook',
           correlationId: widget.thumbnail.video.stats.id);
       return XFile(file.path);
     });
@@ -79,22 +79,17 @@ class ShareArchiveState extends State<ShareArchive> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Encrypt & Share Video'),
-        actions: [
-          Row(
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => const LoggingPage()));
-                },
-                child: const Text('View Logs'),
-              ),
-            ]
+      appBar: AppBar(title: const Text('Encrypt & Share Video'), actions: [
+        Row(children: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const LoggingPage()));
+            },
+            child: const Text('View Logs'),
           ),
-        ]
-      ),
+        ]),
+      ]),
       body: Column(
         children: [
           ...videoInfo(widget.thumbnail.video),

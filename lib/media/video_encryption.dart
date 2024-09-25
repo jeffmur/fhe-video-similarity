@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/primatives.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:opencv_dart/opencv_dart.dart';
@@ -101,14 +102,16 @@ class CiphertextVideo extends UploadedMedia implements Video {
   @override
   void trim(Duration start, Duration end) {
     const segmentDuration = Duration(seconds: 1); // Assume 1 second segments
-    int startIdx = (start.inSeconds / segmentDuration.inSeconds).round();
+    int startIdx = (start.inSeconds ~/ segmentDuration.inSeconds);
     int? endIdx = (end.inSeconds == 0)
         ? null
-        : (duration.inSeconds - (end.inSeconds / segmentDuration.inSeconds))
-            .round();
+        : (duration.inSeconds - (end.inSeconds ~/ segmentDuration.inSeconds)) + 1;
 
     startFrame = fps * startIdx;
     endFrame = (endIdx == null) ? endFrame : fps * endIdx;
+
+    Logging().debug(
+        'Trimming CiphertextVideo List<Ciphertext> from $startIdx to $endIdx');
 
     // Update all encrypted frames
     kld = kld.sublist(startIdx, endIdx);

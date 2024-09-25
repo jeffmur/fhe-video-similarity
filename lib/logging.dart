@@ -1,6 +1,18 @@
 import 'dart:io';
 import 'package:path/path.dart';
 
+/// Print [Duration] in seconds, milliseconds or microseconds.
+///
+String nonZeroDuration(Duration duration) {
+  if (duration >= const Duration(milliseconds: 1000)) {
+    return '${duration.inSeconds}s';
+  } else if (duration >= const Duration(milliseconds: 1)) {
+    return '${duration.inMilliseconds}ms';
+  } else {
+    return '${duration.inMicroseconds}µs';
+  }
+}
+
 /// Format a [DateTime] object as a string.
 ///
 /// Format the [DateTime] object as a string in the format 'YYYY-MM-DDTHH:MM:SSZ'.

@@ -259,7 +259,7 @@ class Video extends UploadedMedia {
     created = timestamp;
 
     // Get frame count
-    totalFrames = countAllFrames(file.path);
+    totalFrames = frameCount;
 
     // Set the end frame (used for trimming)
     endFrame = totalFrames - 1;

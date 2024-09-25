@@ -71,7 +71,7 @@ class ExportCiphertextVideoZip extends ExportArchive {
     final cipherX = session.encryptVecDouble(frames);
     Duration encryptTime = DateTime.now().difference(start);
     log.metric(
-        '🔒 Encrypted ${frames.length} frames in ${encryptTime.inMilliseconds}ms',
+        '🔒 Encrypted ${frames.length} frames in ${nonZeroDuration(encryptTime)}',
         correlationId: ctVideo.stats.id);
 
     start = DateTime.now();
@@ -81,38 +81,48 @@ class ExportCiphertextVideoZip extends ExportArchive {
       Duration kldTime = DateTime.now().difference(start);
       Duration kldTotal = kldTime + encryptTime;
       log.metric(
-          '📄 Added kld.enc in ${kldTotal.inMilliseconds}ms '
-          '(${kldTime.inMilliseconds}ms + ${encryptTime.inMilliseconds}ms)',
+          '📄 Added kld.enc in ${nonZeroDuration(kldTotal)} '
+          '(${nonZeroDuration(kldTime)} + ${nonZeroDuration(encryptTime)})',
           correlationId: ctVideo.stats.id);
     });
     start = DateTime.now();
     final cipherLogX = session.encryptVecDouble(frames.map(math.log).toList());
     Duration encryptLogTime = DateTime.now().difference(start);
     log.metric(
-        '🔒 Encrypted ${frames.length} log frames in ${encryptLogTime.inMilliseconds}ms',
+        '🔒 Encrypted ${frames.length} log frames in ${nonZeroDuration(encryptLogTime)}',
         correlationId: ctVideo.stats.id);
 
     start = DateTime.now();
-    await serializeEncryptedFrames(cipherLogX, tempDir, 'kld_log.enc').then((file) {
+    await serializeEncryptedFrames(cipherLogX, tempDir, 'kld_log.enc')
+        .then((file) {
       super.addFile(file);
       Duration kldLogTime = DateTime.now().difference(start);
       Duration kldLogTotal = kldLogTime + encryptLogTime;
       log.metric(
-          '📄 Added kld_log.enc in ${kldLogTotal.inMilliseconds}ms '
-          '(${kldLogTime.inMilliseconds}ms + ${encryptLogTime.inMilliseconds}ms)',
+          '📄 Added kld_log.enc in ${nonZeroDuration(kldLogTotal)} '
+          '(${nonZeroDuration(kldLogTime)} + ${nonZeroDuration(encryptLogTime)})',
           correlationId: ctVideo.stats.id);
     });
 
-    // Bhattacharyya Distance (bhattacharyya.enc
     start = DateTime.now();
-    await serializeEncryptedFrames(cipherX, tempDir, 'bhattacharyya.enc')
+    final cipherSqrtX =
+        session.encryptVecDouble(frames.map(math.sqrt).toList());
+    Duration encryptSqrtTime = DateTime.now().difference(start);
+    log.metric(
+        '🔒 Encrypted ${frames.length} sqrt frames in ${nonZeroDuration(encryptSqrtTime)}',
+        correlationId: ctVideo.stats.id);
+
+    // Bhattacharyya Distance (bhattacharyya_sqrt.enc)
+    start = DateTime.now();
+    await serializeEncryptedFrames(
+            cipherSqrtX, tempDir, 'bhattacharyya_sqrt.enc')
         .then((file) {
       super.addFile(file);
       Duration bhattacharyyaTime = DateTime.now().difference(start);
-      Duration bhattacharyyaTotal = bhattacharyyaTime + encryptTime;
+      Duration bhattacharyyaTotal = bhattacharyyaTime + encryptSqrtTime;
       log.metric(
-          '📄 Added bhattacharyya.enc in ${bhattacharyyaTotal.inMilliseconds}ms '
-          '(${bhattacharyyaTime.inMilliseconds}ms + ${encryptTime.inMilliseconds}ms)',
+          '📄 Added bhattacharyya_sqrt.enc in ${nonZeroDuration(bhattacharyyaTotal)} '
+          '(${nonZeroDuration(bhattacharyyaTime)} + ${nonZeroDuration(encryptSqrtTime)})',
           correlationId: ctVideo.stats.id);
     });
 
@@ -123,8 +133,8 @@ class ExportCiphertextVideoZip extends ExportArchive {
       Duration cramerTime = DateTime.now().difference(start);
       Duration cramerTotal = cramerTime + encryptTime;
       log.metric(
-          '📄 Added cramer.enc in ${cramerTotal.inMilliseconds}ms '
-          '(${cramerTime.inMilliseconds}ms + ${encryptTime.inMilliseconds}ms)',
+          '📄 Added cramer.enc in ${nonZeroDuration(cramerTotal)} '
+          '(${nonZeroDuration(cramerTime)} + ${nonZeroDuration(encryptTime)})',
           correlationId: ctVideo.stats.id);
     });
 
@@ -134,7 +144,7 @@ class ExportCiphertextVideoZip extends ExportArchive {
     meta.encryptionStatus = 'ciphertext';
     super.addFile(await serializeVideoMeta(meta, tempDir, metadataFilename));
     Duration metaTime = DateTime.now().difference(start);
-    log.info('📄 Added meta.json in ${metaTime.inMilliseconds}ms',
+    log.info('📄 Added meta.json in ${nonZeroDuration(metaTime)}',
         correlationId: ctVideo.stats.id);
     return super.create();
   }
@@ -203,9 +213,10 @@ class ImportCiphertextVideoZip extends ImportArchive {
           '$cachePath/kld_log');
     }
 
-    final bhattacharyya_enc = getFileByBasename(files, 'bhattacharyya.enc');
+    final bhattacharyya_sqrt_enc =
+        getFileByBasename(files, 'bhattacharyya_sqrt.enc');
     final bhattacharyya = await addFilesToManifest(
-        await extractCiphertextVideo(bhattacharyya_enc!,
+        await extractCiphertextVideo(bhattacharyya_sqrt_enc!,
             extractSubDir: 'bhattacharyya'),
         '$cachePath/bhattacharyya');
 
@@ -252,10 +263,10 @@ class ExportModifiedCiphertextVideoZip extends ExportArchive {
       super.addFile(
           await serializeEncryptedFrames(scores['kld']!, tempDir, 'kld.enc'));
     }
-    // Bhattacharyya Distance (bhattacharyya.enc)
+    // Bhattacharyya Distance (bhattacharyya_sqrt.enc)
     if (scores.containsKey('bhattacharyya')) {
       super.addFile(await serializeEncryptedFrames(
-          scores['bhattacharyya']!, tempDir, 'bhattacharyya.enc'));
+          scores['bhattacharyya']!, tempDir, 'bhattacharyya_sqrt.enc'));
     }
     // Cramer's Distance (cramer.enc)
     if (scores.containsKey('cramer')) {

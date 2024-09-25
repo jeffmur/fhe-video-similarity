@@ -158,9 +158,8 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
       start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
 
   Duration processed = DateTime.now().difference(start);
-  // log.info('Loaded Video in ${processed.inMilliseconds}ms : ${video.stats.toString()}');
   log.info(
-      'Loaded Video in ${processed.inMilliseconds}ms ${video.stats.toString()}',
+      'Loaded Video in ${nonZeroDuration(processed)} ${video.stats.toString()}',
       correlationId: video.stats.id);
 
   await video.cache().then((value) {
@@ -170,7 +169,7 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
     frame0.cache().then((_) {
       renderAdd(frame0);
       Duration cached = DateTime.now().difference(start) - processed;
-      log.info('Cached Video in ${cached.inMilliseconds}ms',
+      log.info('Cached Video in ${nonZeroDuration(cached)}',
           correlationId: video.stats.id);
     });
   });
@@ -196,32 +195,32 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
   final video = CiphertextVideo.fromBinaryFiles(files, m.session, meta);
   Duration processed = DateTime.now().difference(start);
   log.info(
-      'Loaded CiphertextVideo in ${processed.inMilliseconds}ms ${video.stats.toString()}',
+      'Loaded CiphertextVideo in ${nonZeroDuration(processed)} ${video.stats.toString()}',
       correlationId: video.stats.id);
 
   // Check if ciphertext video has been modified, if so, decrypt and show score
   if (video.pwd.contains('modified')) {
     start = DateTime.now();
     double kldScore = m.session.decryptedSumOfDoubles(video.kld).abs();
-    Duration kldScoreDuration = DateTime.now().difference(start);
-    log.metric('🔓 KLD Decrypted Score $kldScore took ${kldScoreDuration.inMilliseconds} ms',
+    String kldScoreDuration = nonZeroDuration(DateTime.now().difference(start));
+    log.metric('🔓 KLD Decrypted Score $kldScore took $kldScoreDuration',
         correlationId: video.stats.id);
     double kldPercentile = normalizedPercentage(SimilarityType.kld, kldScore);
 
     start = DateTime.now();
     double bhattacharyyaScore =
         m.session.decryptedSumOfDoubles(video.bhattacharyya).abs();
-    Duration bhattacharyyaScoreDuration = DateTime.now().difference(start);
+    String bhattacharyyaScoreDuration = nonZeroDuration(DateTime.now().difference(start));
     log.metric(
-        '🔓 Bhattacharyya Decrypted Score $bhattacharyyaScore took ${bhattacharyyaScoreDuration.inMilliseconds} ms',
+        '🔓 Bhattacharyya Decrypted Score $bhattacharyyaScore took $bhattacharyyaScoreDuration',
         correlationId: video.stats.id);
     double bhattacharyyaPercentile =
         normalizedPercentage(SimilarityType.bhattacharyya, bhattacharyyaScore);
 
     start = DateTime.now();
     double cramerScore = m.session.decryptedSumOfDoubles(video.cramer).abs();
-    Duration cramerScoreDuration = DateTime.now().difference(start);
-    log.metric('🔓 Cramer Decrypted Score $cramerScore took ${cramerScoreDuration.inMilliseconds} ms',
+    String cramerScoreDuration = nonZeroDuration(DateTime.now().difference(start));
+    log.metric('🔓 Cramer Decrypted Score $cramerScore took $cramerScoreDuration',
         correlationId: video.stats.id);
 
     double cramerPercentile =

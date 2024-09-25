@@ -25,7 +25,8 @@ class ExportArchive {
       archive.addFile(file);
     }
     await archive.close();
-    log.debug('Wrote archive to $archivePath in ${DateTime.now().difference(start).inMilliseconds}ms');
+    String took = nonZeroDuration(DateTime.now().difference(start));
+    log.debug('Wrote archive to $archivePath in $took');
     return File(archivePath);
   }
 }
