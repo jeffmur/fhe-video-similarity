@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:pool/pool.dart';
 import 'package:flutter/foundation.dart';
@@ -9,7 +10,7 @@ String sha256ofBytes(Uint8List bytes, int chars) =>
 
 enum PreprocessType {
   sso, // https://faculty.washington.edu/lagesse/publications/SSO.pdf
-  motion // https://docs.opencv.org/4.x/d4/dee/tutorial_optical_flow.html
+  // motion // https://docs.opencv.org/4.x/d4/dee/tutorial_optical_flow.html
 }
 
 class NormalizedByteArray {
@@ -22,10 +23,14 @@ class NormalizedByteArray {
   ///
   Future<Map> preprocess(Video video, FrameCount frameCount,
       {Duration segment = const Duration(seconds: 1)}) async {
+    // Tradeoff: Higher concurrency leads to more memory usage
+    // Findings: Multi-threading unstable on mobile, high failure rate
+    final maxConcurrency = (Platform.isAndroid || Platform.isIOS) ? 1 : 3;
     switch (type) {
       case PreprocessType.sso:
-        List<List<int>> bytes =
-            await countBytesInVideoSegment(video, segment, frameCount);
+        List<List<int>> bytes = await countBytesInVideoSegment(
+            video, segment, frameCount,
+            maxConcurrency: maxConcurrency);
 
         // For this algorithm, first calculate the sum of each segment
         List<int> sumOfFrameSegments =
@@ -42,9 +47,9 @@ class NormalizedByteArray {
           'normalized': normalized,
           'timestamps': timestamps,
         };
-      case PreprocessType.motion:
-        // preprocessMotion(video);
-        throw UnsupportedError('Motion preprocessing not implemented');
+      // case PreprocessType.motion:
+      //   // preprocessMotion(video);
+      //   throw UnsupportedError('Motion preprocessing not implemented');
     }
   }
 }
