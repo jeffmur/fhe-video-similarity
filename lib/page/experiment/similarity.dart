@@ -94,8 +94,7 @@ class CiphertextSimilarityScores {
         score = kld.score(x, logX, toPlaintext);
         Duration computeScore = DateTime.now().difference(start);
         String total = nonZeroDuration(encryptX + encryptLogX + computeScore);
-        Logging().metric(
-            '📊 $typeName Computed Ciphertext Score in $total, '
+        Logging().metric('📊 $typeName Computed Ciphertext Score in $total, '
             'encryptX: ${nonZeroDuration(encryptX)}, '
             'encryptLogX: ${nonZeroDuration(encryptLogX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
@@ -111,8 +110,7 @@ class CiphertextSimilarityScores {
         score = bhattacharyya.score(sqrtX, bhattacharyya.sqrt(toPlaintext));
         Duration computeScore = DateTime.now().difference(start);
         String total = nonZeroDuration(encryptX + encryptSqrtX + computeScore);
-        Logging().metric(
-            '📊 $typeName Computed Ciphertext Score in $total, '
+        Logging().metric('📊 $typeName Computed Ciphertext Score in $total, '
             'encryptX: ${nonZeroDuration(encryptX)}, '
             'encryptSqrtX: ${nonZeroDuration(encryptSqrtX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
@@ -124,8 +122,7 @@ class CiphertextSimilarityScores {
         score = cramer.score(x, toPlaintext);
         Duration computeScore = DateTime.now().difference(start);
         String total = nonZeroDuration(encryptX + computeScore);
-        Logging().metric(
-            '📊 $typeName Computed Ciphertext Score in $total, '
+        Logging().metric('📊 $typeName Computed Ciphertext Score in $total, '
             'encryptX: ${nonZeroDuration(encryptX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
 
@@ -160,6 +157,13 @@ class ImportCiphertextSimilarityScores {
     List<Ciphertext> result = [];
     DateTime start = DateTime.now();
     String typeName = similarityTypeToString(type);
+
+    Logging().debug(
+        'Sizes: '
+        'kld:${importCiphertext.kld.length} '
+        'bhattacharyya:${importCiphertext.bhattacharyya.length} '
+        'cramer:${importCiphertext.cramer.length} '
+        'q:${toPlaintext.length}');
     switch (type) {
       case SimilarityType.kld:
         CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
@@ -181,8 +185,7 @@ class ImportCiphertextSimilarityScores {
         throw ArgumentError('Unsupported similarity type');
     }
     String took = nonZeroDuration(DateTime.now().difference(start));
-    Logging().metric(
-        '📊 $typeName Computed Homomorphic Score in $took',
+    Logging().metric('📊 $typeName Computed Homomorphic Score in $took',
         correlationId: importCiphertext.stats.id);
     return result;
   }

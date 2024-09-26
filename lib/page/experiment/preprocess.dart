@@ -6,7 +6,6 @@ import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/load_button.dart';
-import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 
 class Config {
@@ -22,40 +21,6 @@ class Config {
       {this.isEncrypted = false,
       this.isEncryptionDisabled = false,
       required this.encryptionSettings});
-}
-
-void trimVideoByDuration(Video video, Video other) {
-  final Duration videoDuration = video.duration;
-  final Duration otherDuration = other.duration;
-  final Duration absoluteDiff = (videoDuration - otherDuration).abs();
-
-  if (!areVideosInSameDuration(video, other)) {
-    video.trim(absoluteDiff, absoluteDiff);
-  }
-}
-
-void trimVideoByCreatedTimestamp(Video video, Video other) {
-  const Duration noChange = Duration.zero;
-  final Duration videoDuration = video.duration;
-  final DateTime videoStart = video.created;
-  final DateTime videoEnd = videoStart.add(video.duration);
-
-  final DateTime otherStart = other.created;
-  final DateTime otherEnd = otherStart.add(other.duration);
-  final Duration otherDuration = other.duration;
-  final Duration absoluteDiff = (videoDuration - otherDuration).abs();
-
-  if (!areVideosInSameDuration(video, other) &&
-      !videoStart.isAtSameMomentAs(otherStart) &&
-      videoStart.isBefore(otherStart)) {
-    video.trim(absoluteDiff, noChange);
-  }
-
-  // By default, the video will be trimmed from the end
-  if (!areVideosInSameDuration(video, other) &&
-      !videoEnd.isAtSameMomentAs(otherEnd)) {
-    video.trim(noChange, absoluteDiff);
-  }
 }
 
 List<Widget> videoInfo(Video video) {
@@ -147,32 +112,43 @@ class PreprocessFormState extends State<PreprocessForm> {
   }
 
   Widget frameSlider() {
+    // Calculate the total number of seconds in the video based on FPS
+    int fps = widget.thumbnail.video.fps;
+
     return RangeSlider(
-      values: frameRange,
-      min: lowerLimit,
-      max: upperLimit,
-      divisions: (upperLimit - lowerLimit).toInt(),
+      values: RangeValues(
+        frameRange.start / fps,  // Convert frames to seconds
+        frameRange.end / fps,    // Convert frames to seconds
+      ),
+      min: lowerLimit / fps,     // Convert frames to seconds
+      max: upperLimit / fps,     // Convert frames to seconds
+      divisions: (upperLimit - lowerLimit).toInt() ~/ fps,  // Use second-based divisions
       labels: RangeLabels(
-        frameRange.start.round().toString(),
-        frameRange.end.round().toString(),
+        '${(frameRange.start / fps).round()}s',  // Display seconds
+        '${(frameRange.end / fps).round()}s',    // Display seconds
       ),
       onChanged: (RangeValues values) {
         setState(() {
-          frameRange = values;
+          // Convert the seconds back to frames, ensuring whole-second adjustments
+          frameRange = RangeValues(
+            (values.start * fps).round().toDouble(),
+            (values.end * fps).round().toDouble(),
+          );
         });
       },
       onChangeEnd: (RangeValues values) {
         setState(() {
-          widget.thumbnail.video.startFrame = values.start.toInt();
-          widget.thumbnail.video.endFrame = values.end.toInt();
+          // Convert seconds back to frames and update start/end frames
+          widget.thumbnail.video.startFrame = (values.start * fps).round().toInt();
+          widget.thumbnail.video.endFrame = (values.end * fps).round().toInt();
           widget.onVideoTrim();
           _reloadCache();
         });
       },
       onChangeStart: (RangeValues values) {
         setState(() {
-          widget.thumbnail.video.startFrame = values.start.toInt();
-          widget.thumbnail.video.endFrame = values.end.toInt();
+          widget.thumbnail.video.startFrame = (values.start * fps).round().toInt();
+          widget.thumbnail.video.endFrame = (values.end * fps).round().toInt();
           widget.onVideoTrim();
           _reloadCache();
         });
@@ -217,10 +193,10 @@ class PreprocessFormState extends State<PreprocessForm> {
         String took = nonZeroDuration(DateTime.now().difference(start));
         Logging().metric(
             "⚙️ Processed in $took {"
-              "type: ${widget.config.type.name}, "
-              "frameCount: ${widget.config.frameCount.name}, "
-              "durationSeconds: ${widget.thumbnail.video.duration.inSeconds}, "
-              "frameRange: ${widget.thumbnail.video.startFrame} - ${widget.thumbnail.video.endFrame} "
+            "type: ${widget.config.type.name}, "
+            "frameCount: ${widget.config.frameCount.name}, "
+            "durationSeconds: ${widget.thumbnail.video.duration.inSeconds}, "
+            "frameRange: ${widget.thumbnail.video.startFrame} - ${widget.thumbnail.video.endFrame} "
             "}",
             correlationId: widget.thumbnail.video.stats.id);
       });

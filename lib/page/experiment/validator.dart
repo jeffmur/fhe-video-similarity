@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/media/trim.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/page/load_button.dart';
 
@@ -15,8 +16,7 @@ Text failureText(String text,
 // Returns true if the two videos overlap in timeline
 //
 bool areVideosInSameTimeline(Video video, Video other) {
-  Duration diff = video.created.difference(other.created);
-  return diff.inSeconds.abs() < video.duration.inSeconds;
+  return areOnDifferentTimelines(video, other) == false;
 }
 
 Text areVideosInSameTimelineStatus(Video video, Video other) {
@@ -26,14 +26,15 @@ Text areVideosInSameTimelineStatus(Video video, Video other) {
 }
 
 // Returns true if the two videos share the same duration
+// with a tolerance of 1 second
 //
-bool areVideosInSameDuration(Video video, Video other) {
-  return video.duration == other.duration;
+bool areVidoesInSameSecondDuration(Video video, Video other) {
+  return (video.duration.inSeconds - other.duration.inSeconds).abs() < 1;
 }
 
 Widget areVideosInSameDurationStatus(
     Video video, Video other, Future<void> Function() failurePrompt) {
-  return areVideosInSameDuration(video, other)
+  return areVidoesInSameSecondDuration(video, other)
       ? successText("Videos share the same duration")
       : Column(children: [
           failureText("Videos do not share the same duration"),

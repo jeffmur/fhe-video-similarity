@@ -85,7 +85,8 @@ class CiphertextVideo extends UploadedMedia implements Video {
   get stats => meta;
 
   @override
-  get duration => Duration(seconds: (endFrame - startFrame) ~/ fps);
+  Duration get duration =>
+      Duration(milliseconds: ((endFrame - startFrame) / fps * 1000).round());
 
   @override
   get fps => meta.fps;
@@ -101,19 +102,29 @@ class CiphertextVideo extends UploadedMedia implements Video {
 
   @override
   void trim(Duration start, Duration end) {
-    const segmentDuration = Duration(seconds: 1); // Assume 1 second segments
-    int startIdx = (start.inSeconds ~/ segmentDuration.inSeconds);
-    int? endIdx = (end.inSeconds == 0)
-        ? null
-        : (duration.inSeconds - (end.inSeconds ~/ segmentDuration.inSeconds)) + 1;
+    const segmentDuration = Duration(seconds: 1); // Assuming 1-second segments
 
+    // Calculate start index based on the start time
+    int startIdx = (start.inSeconds / segmentDuration.inSeconds).floor();
+
+    // Update startFrame based on start index
     startFrame = fps * startIdx;
-    endFrame = (endIdx == null) ? endFrame : fps * endIdx;
 
+    // Calculate end index based on the end time
+    int? endIdx = (end == Duration.zero)
+        ? null
+        : (duration.inSeconds -
+            (end.inSeconds / segmentDuration.inSeconds).floor());
+
+    // If endIdx is not null, update endFrame based on end index
+    if (endIdx != null) {
+      endFrame = fps * endIdx;
+    }
+
+    // Debug log for trimming
     Logging().debug(
         'Trimming CiphertextVideo List<Ciphertext> from $startIdx to $endIdx');
 
-    // Update all encrypted frames
     kld = kld.sublist(startIdx, endIdx);
     kldLog = kldLog.sublist(startIdx, endIdx);
     bhattacharyya = bhattacharyya.sublist(startIdx, endIdx);

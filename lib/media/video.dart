@@ -261,10 +261,13 @@ class Video extends UploadedMedia {
     // Get frame count
     totalFrames = frameCount;
 
-    // Set the end frame (used for trimming)
-    endFrame = totalFrames - 1;
+    // Calculate the number of 'extra' frames exceeding the absolute second
+    var extraFrames = (totalFrames % fps).toInt();
 
-    // Set the start and end positions
+    // Set the end frame (used for trimming)
+    endFrame = totalFrames - extraFrames;
+
+    // Set the start and end positions, based on user input
     trim(start, end);
 
     // Calculate the hash
@@ -306,36 +309,42 @@ class Video extends UploadedMedia {
   }
 
   int get fps => video.get(cv.CAP_PROP_FPS).toInt();
-  Duration get duration => Duration(seconds: (endFrame - startFrame) ~/ fps);
+  Duration get duration =>
+      Duration(milliseconds: ((endFrame - startFrame) / fps * 1000).round());
 
-  /// Seek to a specific position in the video
+  /// Trim the video to match the duration of another video
   ///
-  void trim(Duration start, Duration end) {
+  /// [fromStart] trims from the beginning
+  /// [fromEnd] trims from the end
+  void trim(Duration fromStart, Duration fromEnd) {
     final log = Logging();
-    final fps = video.get(cv.CAP_PROP_FPS);
-    int trimStart = (start.inSeconds * fps).toInt();
-    int trimLast = (end.inSeconds * fps).toInt();
 
-    if (startFrame > endFrame ||
-        startFrame < 0 ||
-        trimStart > totalFrames ||
-        trimLast > totalFrames ||
-        (trimStart + trimLast) > totalFrames) {
-      throw ArgumentError('Invalid trim range');
+    // Convert trim durations to frame numbers based on fps
+    int trimStartFrames = fromStart.inSeconds * fps;
+    int trimEndFrames = fromEnd.inSeconds * fps;
+    int totalFrames = duration.inSeconds * fps;
+
+    // Ensure trimming doesn't exceed bounds
+    if (trimStartFrames + trimEndFrames > totalFrames) {
+      throw ArgumentError('Trim range exceeds total video frames');
     }
 
-    // Check if the target frame is within the video frame range
-    if (trimStart > 0) {
-      log.info(
-          "Seeking $trimStart frames from the start ($startFrame => ${startFrame + trimStart})");
-      startFrame = startFrame + trimStart;
+    // Apply trimming from the start
+    if (trimStartFrames > 0) {
+      log.debug("Trimming $trimStartFrames frames from the start "
+          "($startFrame => ${startFrame + trimStartFrames})");
+      startFrame = startFrame + trimStartFrames;
     }
 
-    if (trimLast > 0 && trimLast < endFrame) {
-      log.info(
-          "Cutting $trimLast frames from the end ($endFrame => ${endFrame - trimLast})");
-      endFrame = (endFrame - trimLast);
+    // Apply trimming from the end
+    if (trimEndFrames > 0) {
+      log.debug("Trimming $trimEndFrames frames from the end "
+          "($endFrame => ${endFrame - trimEndFrames})");
+      endFrame = endFrame - trimEndFrames;
     }
+
+    log.debug(
+        "Final frame range after trimming: startFrame=$startFrame, endFrame=$endFrame");
   }
 
   /// Calculate the number of frames in the video
