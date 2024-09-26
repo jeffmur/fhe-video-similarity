@@ -239,14 +239,39 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Decryption Results'),
-          content: Column(
+          content: Table(
+            columnWidths: const {
+              0: FixedColumnWidth(100),
+            },
             children: [
-              Text('KLD Score: $kldScore'),
-              Text('KLD Percentile: $kldPercentile'),
-              Text('Bhattacharyya Score: $bhattacharyyaScore'),
-              Text('Bhattacharyya Percentile: $bhattacharyyaPercentile'),
-              Text('Cramer Score: $cramerScore'),
-              Text('Cramer Percentile: $cramerPercentile'),
+              const TableRow(
+                children: [
+                  Text('Metric'),
+                  Text('Score'),
+                  Text('Percentile'),
+                ],
+              ),
+              TableRow(
+                children: [
+                  const Text('KLD'),
+                  Text(kldScore.toStringAsFixed(2)),
+                  Text(kldPercentile.toStringAsFixed(2)),
+                ],
+              ),
+              TableRow(
+                children: [
+                  const Text('Bhattacharyya'),
+                  Text(bhattacharyyaScore.toStringAsFixed(2)),
+                  Text(bhattacharyyaPercentile.toStringAsFixed(2)),
+                ],
+              ),
+              TableRow(
+                children: [
+                  const Text('Cramer'),
+                  Text(cramerScore.toStringAsFixed(2)),
+                  Text(cramerPercentile.toStringAsFixed(2)),
+                ],
+              ),
             ],
           ),
           actions: [
