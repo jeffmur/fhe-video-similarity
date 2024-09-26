@@ -1,47 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/processor.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/load_button.dart';
-import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 
 class Config {
   PreprocessType type;
   FrameCount frameCount;
   int startFrame;
   int endFrame;
+  bool isEncrypted;
+  bool isEncryptionDisabled;
+  SessionChanges encryptionSettings;
 
-  Config(this.type, this.frameCount, this.startFrame, this.endFrame);
+  Config(this.type, this.frameCount, this.startFrame, this.endFrame,
+      {this.isEncrypted = false,
+      this.isEncryptionDisabled = false,
+      required this.encryptionSettings});
 }
 
-void trimVideoByCreatedTimestamp(Video video, Video other) {
-  const Duration noChange = Duration.zero;
-  final Duration videoDuration = video.duration;
-  final DateTime videoStart = video.created;
-  final DateTime videoEnd = videoStart.add(video.duration);
-
-  final DateTime otherStart = other.created;
-  final DateTime otherEnd = otherStart.add(other.duration);
-  final Duration otherDuration = other.duration;
-  final Duration absoluteDiff = (videoDuration - otherDuration).abs();
-
-  if (!areVideosInSameDuration(video, other) &&
-      !videoStart.isAtSameMomentAs(otherStart) &&
-      videoStart.isBefore(otherStart)) {
-    video.trim(absoluteDiff, noChange);
-  }
-
-  // By default, the video will be trimmed from the end
-  if (!areVideosInSameDuration(video, other) &&
-      !videoEnd.isAtSameMomentAs(otherEnd)) {
-    video.trim(noChange, absoluteDiff);
-  }
+List<Widget> videoInfo(Video video) {
+  return [
+    Text("sha256: ${video.hash}"),
+    Text("Created: ${video.created}"),
+    Text("Duration: ${video.duration} seconds"),
+    Text("Frame Range: "
+        "${video.startFrame} - "
+        "${video.endFrame} of "
+        "${video.totalFrames}"),
+    Text("Encoding: ${video.stats.codec}"),
+  ];
 }
 
 class PreprocessForm extends StatefulWidget {
   final Thumbnail thumbnail;
   final Config config;
-  final Function(Config) onFormSubmit;
+  final Function() onFormSubmit;
+  final Function(Config) onConfigChange;
   final Function() onVideoTrim;
 
   const PreprocessForm({
@@ -49,6 +48,7 @@ class PreprocessForm extends StatefulWidget {
     required this.thumbnail,
     required this.onFormSubmit,
     required this.onVideoTrim,
+    required this.onConfigChange,
     required this.config,
   });
 
@@ -58,7 +58,7 @@ class PreprocessForm extends StatefulWidget {
 
 class PreprocessFormState extends State<PreprocessForm> {
   final Manager _manager = Manager();
-  bool _isCached = false;
+  bool isCached = false;
   late RangeValues frameRange;
   late double lowerLimit;
   late double upperLimit;
@@ -74,12 +74,9 @@ class PreprocessFormState extends State<PreprocessForm> {
 
   void _reloadCache() {
     setState(() {
-      _isCached = _manager.isProcessed(
-          widget.thumbnail.video,
-          widget.config.type,
-          widget.config.frameCount
-        );
-      });
+      isCached = _manager.isProcessed(
+          widget.thumbnail.video, widget.config.type, widget.config.frameCount);
+    });
   }
 
   void refreshSlider() {
@@ -91,13 +88,17 @@ class PreprocessFormState extends State<PreprocessForm> {
     });
   }
 
+  bool isImportedCiphertextComparison() {
+    return widget.thumbnail.video is CiphertextVideo;
+  }
+
   Widget preprocessTypeDropdown() {
     return DropdownButton<PreprocessType>(
       value: widget.config.type,
       onChanged: (PreprocessType? value) {
         setState(() {
           widget.config.type = value!;
-          widget.onFormSubmit(widget.config);
+          widget.onConfigChange(widget.config);
           _reloadCache();
         });
       },
@@ -111,32 +112,43 @@ class PreprocessFormState extends State<PreprocessForm> {
   }
 
   Widget frameSlider() {
+    // Calculate the total number of seconds in the video based on FPS
+    int fps = widget.thumbnail.video.fps;
+
     return RangeSlider(
-      values: frameRange,
-      min: lowerLimit,
-      max: upperLimit,
-      divisions: (upperLimit - lowerLimit).toInt(),
+      values: RangeValues(
+        frameRange.start / fps,  // Convert frames to seconds
+        frameRange.end / fps,    // Convert frames to seconds
+      ),
+      min: lowerLimit / fps,     // Convert frames to seconds
+      max: upperLimit / fps,     // Convert frames to seconds
+      divisions: (upperLimit - lowerLimit).toInt() ~/ fps,  // Use second-based divisions
       labels: RangeLabels(
-        frameRange.start.round().toString(),
-        frameRange.end.round().toString(),
+        '${(frameRange.start / fps).round()}s',  // Display seconds
+        '${(frameRange.end / fps).round()}s',    // Display seconds
       ),
       onChanged: (RangeValues values) {
         setState(() {
-          frameRange = values;
+          // Convert the seconds back to frames, ensuring whole-second adjustments
+          frameRange = RangeValues(
+            (values.start * fps).round().toDouble(),
+            (values.end * fps).round().toDouble(),
+          );
         });
       },
       onChangeEnd: (RangeValues values) {
         setState(() {
-          widget.thumbnail.video.startFrame = values.start.toInt();
-          widget.thumbnail.video.endFrame = values.end.toInt();
+          // Convert seconds back to frames and update start/end frames
+          widget.thumbnail.video.startFrame = (values.start * fps).round().toInt();
+          widget.thumbnail.video.endFrame = (values.end * fps).round().toInt();
           widget.onVideoTrim();
           _reloadCache();
         });
       },
       onChangeStart: (RangeValues values) {
         setState(() {
-          widget.thumbnail.video.startFrame = values.start.toInt();
-          widget.thumbnail.video.endFrame = values.end.toInt();
+          widget.thumbnail.video.startFrame = (values.start * fps).round().toInt();
+          widget.thumbnail.video.endFrame = (values.end * fps).round().toInt();
           widget.onVideoTrim();
           _reloadCache();
         });
@@ -150,7 +162,7 @@ class PreprocessFormState extends State<PreprocessForm> {
       onChanged: (FrameCount? value) {
         setState(() {
           widget.config.frameCount = value!;
-          widget.onFormSubmit(widget.config);
+          widget.onConfigChange(widget.config);
           _reloadCache();
         });
       },
@@ -163,7 +175,8 @@ class PreprocessFormState extends State<PreprocessForm> {
     );
   }
 
-  Future<void> preprocess() async {
+  Future<void> process() async {
+    DateTime start = DateTime.now();
     try {
       await _manager.storeProcessedVideoCSV(
         widget.thumbnail.video,
@@ -171,17 +184,28 @@ class PreprocessFormState extends State<PreprocessForm> {
         widget.config.frameCount,
       );
     } on UnsupportedError catch (_) {
-      print("Unsupported PreprocessType: ${widget.config.type.name}");
-      // TODO: Show error message
+      // TODO: Show error message?
+      Logging().error("Unsupported PreprocessType: ${widget.config.type.name}");
+    } finally {
+      setState(() {
+        _reloadCache();
+        widget.onFormSubmit();
+        String took = nonZeroDuration(DateTime.now().difference(start));
+        Logging().metric(
+            "⚙️ Processed in $took {"
+            "type: ${widget.config.type.name}, "
+            "frameCount: ${widget.config.frameCount.name}, "
+            "durationSeconds: ${widget.thumbnail.video.duration.inSeconds}, "
+            "frameRange: ${widget.thumbnail.video.startFrame} - ${widget.thumbnail.video.endFrame} "
+            "}",
+            correlationId: widget.thumbnail.video.stats.id);
+      });
     }
-    setState(() {
-      _reloadCache();
-    });
   }
 
   Widget submit() {
     return LoadButton(
-      onPressed: preprocess,
+      onPressed: process,
       text: "Preprocess",
     );
   }
@@ -189,23 +213,67 @@ class PreprocessFormState extends State<PreprocessForm> {
   Widget status() {
     return Row(
       children: [
-        _isCached
+        isCached
             ? const Icon(Icons.check, color: Colors.green) // Green checkmark
             : const Icon(Icons.close, color: Colors.red) // Red X
       ],
     );
   }
 
+  Widget encryptionPage(SessionChanges session) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Checkbox(
+          value: widget.config.isEncrypted,
+          onChanged: widget.config.isEncryptionDisabled
+              ? null
+              : (bool? value) {
+                  setState(() {
+                    widget.config.isEncrypted = value!;
+                    widget.onConfigChange(widget.config);
+                  });
+                },
+        ),
+        Expanded(
+          child: ListTile(
+            leading: const Icon(Icons.lock),
+            title: Text('Encrypt? ${widget.config.isEncrypted}'),
+            subtitle: const Text('Tap to configure encryption settings'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => EncryptionSettings(session: session)),
+              );
+            },
+          ),
+        )
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Form(
-      child: Wrap(
-        children: [
-          frameSlider(),
-          preprocessTypeDropdown(),
-          frameCountDropdown(),
-          Row(children: [submit(), const SizedBox(width: 5), status()])
-        ],
+    return ChangeNotifierProvider(
+      create: (context) => SessionChanges(),
+      child: Form(
+        child: Column(
+          children: isImportedCiphertextComparison()
+              ? [
+                  frameSlider(),
+                ]
+              : [
+                  encryptionPage(widget.config.encryptionSettings),
+                  frameSlider(),
+                  preprocessTypeDropdown(),
+                  frameCountDropdown(),
+                  const SizedBox(height: 5),
+                  Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [submit(), const SizedBox(width: 5), status()])
+                ],
+        ),
       ),
     );
   }

@@ -1,9 +1,6 @@
-// import 'dart:isolate';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'cache.dart' show manifest;
-// import 'package:logging/logging.dart';
-
 import 'storage.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
@@ -12,11 +9,11 @@ String get opencvInfo => cv.getBuildInformation();
 /// Metadata for [UploadedMedia] to be used in the cache
 ///
 class Meta {
-  final String name;
-  final String extension;
-  final DateTime created;
-  final DateTime modified;
-  final String path;
+  String name;
+  String extension;
+  DateTime created;
+  DateTime modified;
+  String path;
 
   Meta(this.name, this.extension, this.created, this.modified, this.path);
 
@@ -28,7 +25,7 @@ class Meta {
         'path': path
       };
 
-  Meta.fromJSON(Map<String, dynamic> json)
+  Meta.fromJson(Map<String, dynamic> json)
       : this(json['name'], json['extension'], DateTime.parse(json['created']),
             DateTime.parse(json['modified']), json['path']);
 

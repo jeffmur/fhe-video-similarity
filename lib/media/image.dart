@@ -1,6 +1,4 @@
-// import 'dart:isolate';
 import 'dart:typed_data';
-// import 'package:logging/logging.dart';
 
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 import 'primatives.dart';
@@ -18,13 +16,6 @@ class Image extends UploadedMedia {
   ImageFormat format = ImageFormat.png;
 
   Image(super.file, super.timestamp);
-
-  void printStats() {
-    print('--- Image Information ---');
-    print(' * Name: ${xfile.name}');
-    print(' * Created: ${created.toLocal()}');
-    print(' * Last Modified: ${lastModified.toLocal()}');
-  }
 
   Image.fromBytes(super.bytes, super.timestamp, super.pwd, super.name)
       : super.fromBytes();

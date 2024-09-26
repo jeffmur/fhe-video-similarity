@@ -34,16 +34,23 @@ dependencies:
   csv: ^6.0.0
   path_provider: ^2.1.2
 
+  file_picker: ^8.1.2 # Select files from native file system
   image_picker: ^1.1.0 # Select images from native file system
   opencv_dart: ^1.2.1 # OpenCV
-  fhel: ^0.0.8 # Fully Homomorphic Encryption Library
+  fhel: ^0.0.12 # Fully Homomorphic Encryption Library
   fhe_similarity_score: ^0.0.2 # Similarity Score Calculation
-
   crypto: ^3.0.3 # sha256
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
+  provider: ^6.1.2
+  share_plus: ^10.0.2
+  archive: ^3.6.1
+  path: ^1.9.0
+  cross_file: ^0.3.4+2
+  pool: ^1.5.1
+  multi_select_flutter: ^4.1.3
 
 dev_dependencies:
   flutter_test:

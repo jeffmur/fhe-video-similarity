@@ -25,6 +25,7 @@ abstract class Storage {
 class ApplicationStorage extends Storage {
   ApplicationStorage(super.primaryKey);
 
+  @override
   Future<String> get path async {
     final directory = await getApplicationDocumentsDirectory();
     return '${directory.path}/$primaryKey';

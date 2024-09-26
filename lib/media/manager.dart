@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
+import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'uploader.dart';
-import 'dart:isolate';
 import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
-import 'cache.dart' show manifest;
+import 'cache.dart' as cache;
 import 'primatives.dart' show opencvInfo, resolveNestedValue;
 import 'video.dart' show Thumbnail, Video, VideoMeta, FrameCount;
-import 'package:image_picker/image_picker.dart' show XFile, ImageSource;
 
 // Expose additional classes so caller doesn't have to import them separately
 export 'video.dart' show Video, Thumbnail;
 export 'processor.dart' show PreprocessType;
 
-enum MediaType { video }
+enum MediaType { video, zip }
 
 /// Singleton class to manage all the media related operations
 ///
 class Manager {
   static final Manager _instance = Manager._internal();
+  Session session = Session();
 
   /// Get the only instance of the manager
   factory Manager() {
@@ -29,6 +30,8 @@ class Manager {
   /// Initialize the manager
   Manager._internal();
 
+  cache.Manifest get manifest => cache.manifest;
+
   /// Backend library build information
   String get backendInfo => opencvInfo;
 
@@ -36,26 +39,17 @@ class Manager {
   Widget get backendInfoWidget =>
       Expanded(child: SingleChildScrollView(child: Text(backendInfo)));
 
-  /// Upload media from the gallery
-  ///
-  Future<XFile> xFileFromGallery(MediaType source) async {
-    switch (source) {
-      case MediaType.video:
-        return selectVideo(ImageSource.gallery);
-      default:
-        throw UnsupportedError('Unsupported media type');
-    }
-  }
-
   /// Select media from the gallery
   ///
   FloatingActionButton floatingSelectMediaFromGallery(
-      MediaType mediaType,
-      BuildContext context,
-      Function(XFile, DateTime, int, int) onMediaSelected) {
+      MediaType mediaType, BuildContext context,
+      {void Function(XFile)? onXFileSelected,
+      void Function(XFile, DateTime, int, int)? onMediaSelected}) {
     switch (mediaType) {
       case MediaType.video:
-        return selectVideoFromGallery(context, onMediaSelected);
+        return selectVideoFromGallery(context, onMediaSelected!);
+      case MediaType.zip:
+        return selectZipFromSystem(context, onXFileSelected!);
       default:
         throw UnsupportedError('Unsupported media type');
     }
@@ -83,7 +77,7 @@ class Manager {
   Future<VideoMeta> loadMeta(String pwd,
       [String filename = "meta.json"]) async {
     XFile cached = await manifest.read(pwd, filename);
-    return VideoMeta.fromJSON(jsonDecode(await cached.readAsString()));
+    return VideoMeta.fromJson(jsonDecode(await cached.readAsString()));
   }
 
   Future<Thumbnail> loadThumbnail(String pwd,
@@ -92,8 +86,26 @@ class Manager {
       pwd = pwd.substring(1, pwd.indexOf(filename) - 1);
     }
     VideoMeta meta = await loadMeta(pwd);
-    Video video = await loadVideo(pwd, meta);
+    if (pwd.contains('ciphertext') || pwd.contains('modified')) {
+      // Recursively fetch all the binary files from the directory using manifest
+      List<String> dirs =
+          await manifest.listDirectories(pwd); // kld, kld_log, etc.
+      List<File> files = [];
+      for (String dir in dirs) {
+        List<File> filesInDir = await manifest.listFiles(dir);
+        for (File file in filesInDir) {
+          files.add(file);
+        }
+      }
 
+      if (files.isEmpty) {
+        throw Exception('No files found');
+      }
+      return CiphertextThumbnail(
+          meta: meta,
+          video: CiphertextVideo.fromBinaryFiles(files, session, meta));
+    }
+    Video video = await loadVideo(pwd, meta);
     XFile cached = await manifest.read(pwd, filename);
     return Thumbnail.fromBytes(await cached.readAsBytes(), video, 0);
   }
@@ -102,7 +114,8 @@ class Manager {
   ///
   Future<XFileStorage> storeProcessedVideoCSV(
       Video video, PreprocessType type, FrameCount frameCount) async {
-    final content = await NormalizedByteArray(type).preprocess(video, frameCount);
+    final content =
+        await NormalizedByteArray(type).preprocess(video, frameCount);
 
     final List<List<int>> bytes = content['bytes'];
     final List<double> normalized = content['normalized'];
@@ -127,6 +140,10 @@ class Manager {
 
     return manifest.write(csv.convert(rows).codeUnits, video.pwd,
         "${type.name}-${frameCount.name}.csv");
+  }
+
+  Future<String> getVideoWorkingDirectory(Video video) async {
+    return await ApplicationStorage(video.pwd).path;
   }
 
   Future<List<double>> getCachedNormalized(

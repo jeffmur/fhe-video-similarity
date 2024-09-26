@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter_fhe_video_similarity/logging.dart';
+
 class LoadButton extends StatefulWidget {
   final Future<void> Function() onPressed;
   final String text;
   final bool timer;
 
-  const LoadButton({super.key, required this.onPressed, required this.text, this.timer = true});
+  const LoadButton(
+      {super.key,
+      required this.onPressed,
+      required this.text,
+      this.timer = true});
 
   @override
   LoadButtonState createState() => LoadButtonState();
@@ -32,7 +38,7 @@ class LoadButtonState extends State<LoadButton> {
     try {
       await widget.onPressed();
     } catch (e) {
-      print('Error: $e');
+      Logging().error('Error in LoadButton: $e');
       rethrow;
     } finally {
       setState(() {
@@ -64,9 +70,9 @@ class LoadButtonState extends State<LoadButton> {
             ? const SizedBox.shrink()
             : Row(children: [
                 const SizedBox(width: 5),
-                Text('${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
-              ]
-            )
+                Text(
+                    '${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
+              ])
       ],
     );
   }

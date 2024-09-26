@@ -66,12 +66,14 @@ class OverlayWidget extends StatefulWidget {
   final Widget child;
   final Widget overlay;
   final Function onTap;
+  final bool enableOverlay;
 
   const OverlayWidget({
     super.key,
     required this.child,
     required this.overlay,
     required this.onTap,
+    this.enableOverlay = true,
   });
 
   @override
@@ -87,7 +89,9 @@ class _OverlayWidgetState extends State<OverlayWidget> {
       onTap: () {
         widget.onTap();
         setState(() {
-          showBanner = !showBanner; // Toggle banner visibility on tap
+          if (widget.enableOverlay) {
+            showBanner = !showBanner; // Toggle banner visibility on tap
+          }
         });
       },
       child: Stack(
@@ -100,7 +104,7 @@ class _OverlayWidgetState extends State<OverlayWidget> {
               child: widget.child,
             ),
           ),
-          if (showBanner)
+          if (showBanner && widget.enableOverlay)
             Center(
               child: widget.overlay,
             ),

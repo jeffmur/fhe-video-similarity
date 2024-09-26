@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
+import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
+import 'package:flutter_fhe_video_similarity/media/similarity.dart';
+import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
-import 'package:flutter_fhe_video_similarity/page/experiment/page.dart';
+import 'package:flutter_fhe_video_similarity/media/video.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/compare.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/share.dart';
 import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
+import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
+import 'package:flutter_fhe_video_similarity/page/logs.dart';
 
 class SelectableGrid extends StatefulWidget {
   const SelectableGrid({super.key});
@@ -12,6 +21,7 @@ class SelectableGrid extends StatefulWidget {
 }
 
 class _SelectableGridState extends State<SelectableGrid> {
+  bool _allowMultiSelect = false;
   List<bool> _selected = List.empty(growable: true);
   List<Thumbnail> render = List.empty(growable: true);
 
@@ -30,8 +40,8 @@ class _SelectableGridState extends State<SelectableGrid> {
 
   void deselectAll() {
     setState(() {
-      for (var element in render) {
-        _selected[render.indexOf(element)] = false;
+      for (var i = 0; i < _selected.length; i++) {
+        _selected[i] = false;
       }
     });
   }
@@ -46,6 +56,16 @@ class _SelectableGridState extends State<SelectableGrid> {
           actions: [
             Row(
               children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoggingPage()));
+                  },
+                  child: const Text('View Logs'),
+                ),
+                const SizedBox(width: 10),
                 const Text('Load'),
                 OverflowBar(
                   children: [
@@ -67,12 +87,12 @@ class _SelectableGridState extends State<SelectableGrid> {
                     ),
                   ],
                 ),
-                // const SizedBox(width: 10),
-                // const Text('Select'),
-                // Checkbox(
-                //   value: _allowMultiSelect,
-                //   onChanged: (val) => setState(() => _allowMultiSelect = val!),
-                // )
+                const SizedBox(width: 10),
+                const Text('Select'),
+                Checkbox(
+                  value: _allowMultiSelect,
+                  onChanged: (val) => setState(() => _allowMultiSelect = val!),
+                )
               ],
             ),
           ],
@@ -82,10 +102,20 @@ class _SelectableGridState extends State<SelectableGrid> {
           children: List.generate(render.length, (idx) {
             return OverlayWidget(
                 onTap: () {
-                  setState(() {
-                    _selected[idx] = !_selected[idx];
-                  });
+                  if (_allowMultiSelect) {
+                    setState(() {
+                      _selected[idx] = !_selected[idx];
+                    });
+                  } else {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ShareArchive(
+                                  thumbnail: render[idx],
+                                )));
+                  }
                 },
+                enableOverlay: _allowMultiSelect,
                 overlay: Container(
                   color: Colors.black
                       .withOpacity(0.5), // Semi-transparent background
@@ -106,36 +136,185 @@ class _SelectableGridState extends State<SelectableGrid> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: _selected.where((isTrue) => isTrue).length >= 2
                 ? [
-                    _selectImages(_selected, render, context, m),
+                    compareSelectedThumbnails(_selected, render, context, m),
                     const SizedBox(height: 10),
-                    _upload(m, context, addThumbnailToRender),
+                    uploadVideo(m, context, addThumbnailToRender),
+                    const SizedBox(height: 10),
+                    uploadZip(m, context, addThumbnailToRender)
                   ]
-                : [_upload(m, context, addThumbnailToRender)]));
+                : [
+                    uploadVideo(m, context, addThumbnailToRender),
+                    const SizedBox(height: 10),
+                    uploadZip(m, context, addThumbnailToRender)
+                  ]));
   }
 }
 
-Widget _upload(Manager m, BuildContext context, Function(Thumbnail) renderAdd) {
-  return m.floatingSelectMediaFromGallery(MediaType.video, context,
-      (xfile, timestamp, trimStart, trimEnd) async {
-    // Cache the video + metadata
-    // Targets: {sha256}/{start}-{end}-{timestamp}/raw.mp4
-    //          {sha256}/{start}-{end}-{timestamp}/meta.json
-    final video = Video(xfile, timestamp,
-        start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
+Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
+    int trimEnd, void Function(Thumbnail) renderAdd) async {
+  Logging log = Logging();
+  DateTime start = DateTime.now();
+  // Cache the video + metadata
+  // Targets: {sha256}/{start}-{end}-{timestamp}/raw.mp4
+  //          {sha256}/{start}-{end}-{timestamp}/meta.json
+  final video = Video(xfile, timestamp,
+      start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
 
-    video.cache().then((value) {
-      // Store the thumbnail
-      // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
-      final frame0 = Thumbnail(video, video.startFrame);
-      frame0.cache().then((value) {
-        renderAdd(frame0);
-      });
+  Duration processed = DateTime.now().difference(start);
+  log.info(
+      'Loaded Video in ${nonZeroDuration(processed)} ${video.stats.toString()}',
+      correlationId: video.stats.id);
+
+  await video.cache().then((value) {
+    // Store the thumbnail
+    // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
+    final frame0 = Thumbnail(video, video.startFrame);
+    frame0.cache().then((_) {
+      renderAdd(frame0);
+      Duration cached = DateTime.now().difference(start) - processed;
+      log.info('Cached Video in ${nonZeroDuration(cached)}',
+          correlationId: video.stats.id);
     });
   });
 }
 
-Widget _selectImages(List<bool> selected, List<Thumbnail> thumbnails,
-    BuildContext context, Manager m) {
+Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
+    void Function(Thumbnail) renderAdd) async {
+  // Parse the zip file
+  // Targets: {sha256}/{start}-{end}-{timestamp}/{PreprocessType}-{frameCount}-{SimilarityType}
+  //          {sha256}/{start}-{end}-{timestamp}/meta.json\
+  Logging log = Logging();
+  DateTime start = DateTime.now();
+  List<File> files = await ImportCiphertextVideoZip(
+          extractDir: await ApplicationStorage('tmp').path,
+          archivePath: xfile.path,
+          manifest: m.manifest)
+      .extractFiles();
+
+  File metaFile = getFileByBasename(files, 'meta.json')!;
+  VideoMeta meta = VideoMeta.fromFile(metaFile);
+  files.remove(metaFile); // Remove meta file from list\
+
+  final video = CiphertextVideo.fromBinaryFiles(files, m.session, meta);
+  Duration processed = DateTime.now().difference(start);
+  log.info(
+      'Loaded CiphertextVideo in ${nonZeroDuration(processed)} ${video.stats.toString()}',
+      correlationId: video.stats.id);
+
+  // Check if ciphertext video has been modified, if so, decrypt and show score
+  if (video.pwd.contains('modified')) {
+    start = DateTime.now();
+    double kldScore = m.session.decryptedSumOfDoubles(video.kld).abs();
+    String kldScoreDuration = nonZeroDuration(DateTime.now().difference(start));
+    log.metric('🔓 KLD Decrypted Score $kldScore took $kldScoreDuration',
+        correlationId: video.stats.id);
+    double kldPercentile = normalizedPercentage(SimilarityType.kld, kldScore);
+
+    start = DateTime.now();
+    double bhattacharyyaScore =
+        m.session.decryptedSumOfDoubles(video.bhattacharyya).abs();
+    String bhattacharyyaScoreDuration =
+        nonZeroDuration(DateTime.now().difference(start));
+    log.metric(
+        '🔓 Bhattacharyya Decrypted Score $bhattacharyyaScore took $bhattacharyyaScoreDuration',
+        correlationId: video.stats.id);
+    double bhattacharyyaPercentile =
+        normalizedPercentage(SimilarityType.bhattacharyya, bhattacharyyaScore);
+
+    start = DateTime.now();
+    double cramerScore =
+        sqrt(m.session.decryptedSumOfDoubles(video.cramer).abs());
+    String cramerScoreDuration =
+        nonZeroDuration(DateTime.now().difference(start));
+    log.metric(
+        '🔓 Cramer Decrypted Score $cramerScore took $cramerScoreDuration',
+        correlationId: video.stats.id);
+
+    double cramerPercentile =
+        normalizedPercentage(SimilarityType.cramer, cramerScore);
+    // Ensure context is still valid before using Navigator
+    if (!context.mounted) return;
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Decryption Results'),
+          content: Table(
+            columnWidths: const {
+              0: FixedColumnWidth(100),
+            },
+            children: [
+              const TableRow(
+                children: [
+                  Text('Metric'),
+                  Text('Score'),
+                  Text('Percentile'),
+                ],
+              ),
+              TableRow(
+                children: [
+                  const Text('KLD'),
+                  Text(kldScore.toStringAsFixed(2)),
+                  Text(kldPercentile.toStringAsFixed(2)),
+                ],
+              ),
+              TableRow(
+                children: [
+                  const Text('Bhattacharyya'),
+                  Text(bhattacharyyaScore.toStringAsFixed(2)),
+                  Text(bhattacharyyaPercentile.toStringAsFixed(2)),
+                ],
+              ),
+              TableRow(
+                children: [
+                  const Text('Cramer'),
+                  Text(cramerScore.toStringAsFixed(2)),
+                  Text(cramerPercentile.toStringAsFixed(2)),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  } else {
+    // Make available for comparison
+    final thumbnail = CiphertextThumbnail(video: video, meta: meta);
+    await thumbnail.cache().then((_) {
+      renderAdd(thumbnail);
+    });
+  }
+}
+
+Widget uploadZip(
+    Manager m, BuildContext context, Function(Thumbnail) renderAdd) {
+  return m.floatingSelectMediaFromGallery(
+    MediaType.zip,
+    context,
+    onXFileSelected: (xfile) => handleUploadedZip(context, xfile, m, renderAdd),
+  );
+}
+
+Widget uploadVideo(
+    Manager m, BuildContext context, Function(Thumbnail) renderAdd) {
+  return m.floatingSelectMediaFromGallery(
+    MediaType.video,
+    context,
+    onMediaSelected: (xfile, timestamp, trimStart, trimEnd) =>
+        handleUploadedVideo(xfile, timestamp, trimStart, trimEnd, renderAdd),
+  );
+}
+
+Widget compareSelectedThumbnails(List<bool> selected,
+    List<Thumbnail> thumbnails, BuildContext context, Manager m) {
   return FloatingActionButton(
     heroTag: 'experiment',
     child: const Icon(Icons.compare_arrows),

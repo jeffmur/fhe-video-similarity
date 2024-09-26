@@ -17,6 +17,10 @@ dart run fhel:setup $PLATFORM --arch $ARCH
 
 ### Linux
 
+#### Dependencies
+
+- [Zenity](https://help.gnome.org/users/zenity/stable) for Dialog Box Popup
+
 From the root of this project, run the application:
 
 ```bash
