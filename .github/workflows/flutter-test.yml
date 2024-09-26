@@ -18,7 +18,7 @@ jobs:
           build: linux
         - os: ubuntu-latest
           build: apk
-        flutter-version: [ 3.19.6 ]
+        flutter-version: [ 3.24.3 ]
 
     runs-on: ${{ matrix.test.os }}
     steps:
