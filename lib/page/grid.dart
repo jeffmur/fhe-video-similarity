@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
 import 'package:flutter_fhe_video_similarity/media/similarity.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
@@ -57,8 +58,10 @@ class _SelectableGridState extends State<SelectableGrid> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => const LoggingPage()));
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoggingPage()));
                   },
                   child: const Text('View Logs'),
                 ),
@@ -210,7 +213,8 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
     start = DateTime.now();
     double bhattacharyyaScore =
         m.session.decryptedSumOfDoubles(video.bhattacharyya).abs();
-    String bhattacharyyaScoreDuration = nonZeroDuration(DateTime.now().difference(start));
+    String bhattacharyyaScoreDuration =
+        nonZeroDuration(DateTime.now().difference(start));
     log.metric(
         '🔓 Bhattacharyya Decrypted Score $bhattacharyyaScore took $bhattacharyyaScoreDuration',
         correlationId: video.stats.id);
@@ -218,9 +222,12 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
         normalizedPercentage(SimilarityType.bhattacharyya, bhattacharyyaScore);
 
     start = DateTime.now();
-    double cramerScore = m.session.decryptedSumOfDoubles(video.cramer).abs();
-    String cramerScoreDuration = nonZeroDuration(DateTime.now().difference(start));
-    log.metric('🔓 Cramer Decrypted Score $cramerScore took $cramerScoreDuration',
+    double cramerScore =
+        sqrt(m.session.decryptedSumOfDoubles(video.cramer).abs());
+    String cramerScoreDuration =
+        nonZeroDuration(DateTime.now().difference(start));
+    log.metric(
+        '🔓 Cramer Decrypted Score $cramerScore took $cramerScoreDuration',
         correlationId: video.stats.id);
 
     double cramerPercentile =
