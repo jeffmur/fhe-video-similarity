@@ -25,7 +25,7 @@ class NormalizedByteArray {
       {Duration segment = const Duration(seconds: 1)}) async {
     // Tradeoff: Higher concurrency leads to more memory usage
     // Findings: Multi-threading unstable on mobile, high failure rate
-    final maxConcurrency = (Platform.isAndroid || Platform.isIOS) ? 1 : 3;
+    final maxConcurrency = (Platform.isAndroid || Platform.isIOS) ? 1 : 2;
     switch (type) {
       case PreprocessType.sso:
         List<List<int>> bytes = await countBytesInVideoSegment(
