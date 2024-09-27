@@ -54,12 +54,11 @@ class PlaintextSimilarityScores {
 
   String score(SimilarityType type) {
     DateTime start = DateTime.now();
-    String score =
-        Similarity(type).score(baseline, comparison).toStringAsExponential();
-    Duration computeScore = DateTime.now().difference(start);
+    double score = Similarity(type).score(baseline, comparison);
+    String computeScore = nonZeroDuration(DateTime.now().difference(start));
     Logging().metric(
-        '📊 ${similarityTypeToString(type)} Computed Score in ${computeScore.inMicroseconds}μs');
-    return score;
+        '📊 ${similarityTypeToString(type)} => $score Plaintext Score took $computeScore');
+    return score.toStringAsExponential();
   }
 
   String percentile(SimilarityType type) {
@@ -93,8 +92,9 @@ class CiphertextSimilarityScores {
         start = DateTime.now();
         score = kld.score(x, logX, toPlaintext);
         Duration computeScore = DateTime.now().difference(start);
-        String total = nonZeroDuration(encryptX + encryptLogX + computeScore);
-        Logging().metric('📊 $typeName Computed Ciphertext Score in $total, '
+
+        Logging().metric('📊 $typeName => $score Ciphertext Score in '
+            'total: ${nonZeroDuration(encryptX + encryptLogX + computeScore)}, '
             'encryptX: ${nonZeroDuration(encryptX)}, '
             'encryptLogX: ${nonZeroDuration(encryptLogX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
@@ -106,24 +106,31 @@ class CiphertextSimilarityScores {
         List<Ciphertext> sqrtX = ciphertextHandler
             .encryptVecDouble(bhattacharyya.sqrt(toCiphertext));
         Duration encryptSqrtX = DateTime.now().difference(start);
+
         start = DateTime.now();
         score = bhattacharyya.score(sqrtX, bhattacharyya.sqrt(toPlaintext));
         Duration computeScore = DateTime.now().difference(start);
-        String total = nonZeroDuration(encryptX + encryptSqrtX + computeScore);
-        Logging().metric('📊 $typeName Computed Ciphertext Score in $total, '
+
+        Logging().metric('📊 $typeName => $score Ciphertext Score in '
+            'total: ${nonZeroDuration(encryptX + encryptSqrtX + computeScore)}, '
             'encryptX: ${nonZeroDuration(encryptX)}, '
             'encryptSqrtX: ${nonZeroDuration(encryptSqrtX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
 
       case SimilarityType.cramer:
         start = DateTime.now();
+        List<Ciphertext> cumulativeSumX =
+            ciphertextHandler.encryptVecDouble(cumulativeSum(toCiphertext));
+        Duration encryptCumulativeSumX = DateTime.now().difference(start);
+
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
-        score = cramer.score(x, toPlaintext);
+        score = cramer.score(cumulativeSumX, cumulativeSum(toPlaintext));
         Duration computeScore = DateTime.now().difference(start);
-        String total = nonZeroDuration(encryptX + computeScore);
-        Logging().metric('📊 $typeName Computed Ciphertext Score in $total, '
-            'encryptX: ${nonZeroDuration(encryptX)}, '
+
+        Logging().metric('📊 $typeName => $score Ciphertext Score in '
+            'total: ${nonZeroDuration(encryptCumulativeSumX + computeScore)}, '
+            'encryptCumulativeSumX: ${nonZeroDuration(encryptCumulativeSumX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
 
       default:
@@ -158,12 +165,12 @@ class ImportCiphertextSimilarityScores {
     DateTime start = DateTime.now();
     String typeName = similarityTypeToString(type);
 
-    Logging().debug(
-        'Sizes: '
+    Logging().debug('Sizes: '
         'kld:${importCiphertext.kld.length} '
         'bhattacharyya:${importCiphertext.bhattacharyya.length} '
         'cramer:${importCiphertext.cramer.length} '
         'q:${toPlaintext.length}');
+
     switch (type) {
       case SimilarityType.kld:
         CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
@@ -179,7 +186,7 @@ class ImportCiphertextSimilarityScores {
       case SimilarityType.cramer:
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
-        result = cramer.homomorphicScore(importCiphertext.cramer, toPlaintext);
+        result = cramer.homomorphicScore(importCiphertext.cramer, cumulativeSum(toPlaintext));
 
       default:
         throw ArgumentError('Unsupported similarity type');

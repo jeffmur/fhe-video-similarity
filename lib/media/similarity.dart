@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:fhe_similarity_score/kld.dart' as kld;
 import 'package:fhe_similarity_score/bhattacharyya.dart' as bhattacharyya;
 import 'package:fhe_similarity_score/cramer.dart' as cramer;
+import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
 import 'seal.dart';
 
 enum SimilarityType { kld, bhattacharyya, cramer }
@@ -35,7 +36,7 @@ class Similarity {
       case SimilarityType.bhattacharyya:
         return bhattacharyya.coefficient(v1, v2);
       case SimilarityType.cramer:
-        return cramer.distance(v1, v2);
+        return cramer.distance(cumulativeSum(v1), cumulativeSum(v2));
     }
   }
 
@@ -65,8 +66,10 @@ class CiphertextKLD {
         .abs();
   }
 
-  List<Ciphertext> homomorphicScore(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
-    return kld.divergenceOfCiphertextVecDouble(plaintextEncoder.seal, x, logX, y);
+  List<Ciphertext> homomorphicScore(
+      List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
+    return kld.divergenceOfCiphertextVecDouble(
+        plaintextEncoder.seal, x, logX, y);
   }
 
   double percentile(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
@@ -90,7 +93,8 @@ class CiphertextBhattacharyya {
         .abs();
   }
 
-  List<Ciphertext> homomorphicScore(List<Ciphertext> sqrtX, List<double> sqrtY) {
+  List<Ciphertext> homomorphicScore(
+      List<Ciphertext> sqrtX, List<double> sqrtY) {
     return bhattacharyya.coefficientOfCiphertextVecDouble(
         plaintextEncoder.seal, sqrtX, sqrtY);
   }
@@ -106,10 +110,10 @@ class CiphertextCramer {
   final Session plaintextEncoder;
   CiphertextCramer(this.ciphertextHandler, this.plaintextEncoder);
 
-  double score(List<Ciphertext> x, List<double> y) {
+  double score(List<Ciphertext> cumulativeSumX, List<double> cumulativeSumY) {
     return math.sqrt(ciphertextHandler
-        .decryptedSumOfDoubles(
-            cramer.distanceOfCiphertextVecDouble(plaintextEncoder.seal, x, y))
+        .decryptedSumOfDoubles(cramer.distanceOfCiphertextVecDouble(
+            plaintextEncoder.seal, cumulativeSumX, cumulativeSumY))
         .abs());
   }
 

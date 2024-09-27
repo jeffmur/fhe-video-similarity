@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'dart:convert';
 import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
+import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
 
 import 'seal.dart';
 import 'video.dart';
@@ -104,6 +105,7 @@ class ExportCiphertextVideoZip extends ExportArchive {
           correlationId: ctVideo.stats.id);
     });
 
+    // Bhattacharyya Distance (bhattacharyya_sqrt.enc)
     start = DateTime.now();
     final cipherSqrtX =
         session.encryptVecDouble(frames.map(math.sqrt).toList());
@@ -112,7 +114,6 @@ class ExportCiphertextVideoZip extends ExportArchive {
         '🔒 Encrypted ${frames.length} sqrt frames in ${nonZeroDuration(encryptSqrtTime)}',
         correlationId: ctVideo.stats.id);
 
-    // Bhattacharyya Distance (bhattacharyya_sqrt.enc)
     start = DateTime.now();
     await serializeEncryptedFrames(
             cipherSqrtX, tempDir, 'bhattacharyya_sqrt.enc')
@@ -128,13 +129,21 @@ class ExportCiphertextVideoZip extends ExportArchive {
 
     // Cramer's Distance (cramer.enc)
     start = DateTime.now();
-    await serializeEncryptedFrames(cipherX, tempDir, 'cramer.enc').then((file) {
+    final cipherCumulativeX = session.encryptVecDouble(cumulativeSum(frames));
+    Duration encryptCumulativeTime = DateTime.now().difference(start);
+    log.metric(
+        '🔒 Encrypted ${frames.length} cumulativeSum of frames in ${nonZeroDuration(encryptCumulativeTime)}',
+        correlationId: ctVideo.stats.id);
+
+    start = DateTime.now();
+    await serializeEncryptedFrames(cipherCumulativeX, tempDir, 'cramer.enc')
+        .then((file) {
       super.addFile(file);
       Duration cramerTime = DateTime.now().difference(start);
-      Duration cramerTotal = cramerTime + encryptTime;
+      Duration cramerTotal = cramerTime + encryptCumulativeTime;
       log.metric(
           '📄 Added cramer.enc in ${nonZeroDuration(cramerTotal)} '
-          '(${nonZeroDuration(cramerTime)} + ${nonZeroDuration(encryptTime)})',
+          '(${nonZeroDuration(cramerTime)} + ${nonZeroDuration(encryptCumulativeTime)})',
           correlationId: ctVideo.stats.id);
     });
 
