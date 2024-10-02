@@ -1,0 +1,15 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-09-27T11:36:13.426Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=250;
+2024-09-27T11:36:13.480Z;INFO;Loaded Video in 110ms {name: Black_720p.mp4, extension: mp4, created: 2024-09-27T11:36:06.000, modified: 2024-09-27T11:36:13.378499, path: /home/jeffmur/Videos/BlackAndWhite/720p/Black_720p.mp4, codec: h264, fps: 25, totalFrames: 250, sha256: 822e3a31, durationSeconds: 10, startFrame: 0, endFrame: 250, encryptionStatus: plain};822e3a31-1727462166000
+2024-09-27T11:36:14.103Z;INFO;Cached Video in 625ms;822e3a31-1727462166000
+2024-09-27T11:36:21.673Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=250;
+2024-09-27T11:36:21.724Z;INFO;Loaded Video in 54ms {name: White_720p.mp4, extension: mp4, created: 2024-09-27T11:36:14.000, modified: 2024-09-27T11:36:21.669581, path: /home/jeffmur/Videos/BlackAndWhite/720p/White_720p.mp4, codec: h264, fps: 25, totalFrames: 250, sha256: 690b027f, durationSeconds: 10, startFrame: 0, endFrame: 250, encryptionStatus: plain};690b027f-1727462174000
+2024-09-27T11:36:22.320Z;INFO;Cached Video in 596ms;690b027f-1727462174000
+2024-09-27T11:36:30.534Z;METRIC;⚙️ Processed in 1s {type: sso, frameCount: all, durationSeconds: 10, frameRange: 0 - 250 };690b027f-1727462174000
+2024-09-27T11:36:34.069Z;METRIC;⚙️ Processed in 1s {type: sso, frameCount: all, durationSeconds: 10, frameRange: 0 - 250 };822e3a31-1727462166000
+2024-09-27T11:36:35.545Z;METRIC;📊 KLD => 0.0 Plaintext Score took 333µs;
+2024-09-27T11:36:35.546Z;METRIC;📊 Bhattacharyya => 1.0000000000000002 Plaintext Score took 86µs;
+2024-09-27T11:36:35.546Z;METRIC;📊 Cramer => 0.0 Plaintext Score took 193µs;
+2024-09-27T11:36:36.261Z;METRIC;📊 KLD => 8.083131122610207e-11 Ciphertext Score in total: 34ms, encryptX: 13ms, encryptLogX: 12ms, computeScore: 9ms;
+2024-09-27T11:36:36.291Z;METRIC;📊 Bhattacharyya => 1.0000000006884022 Ciphertext Score in total: 30ms, encryptX: 12ms, encryptSqrtX: 12ms, computeScore: 5ms;
+2024-09-27T11:36:36.323Z;METRIC;📊 Cramer => 9.917588966739958e-10 Ciphertext Score in total: 31ms, encryptCumulativeSumX: 11ms, computeScore: 19ms;

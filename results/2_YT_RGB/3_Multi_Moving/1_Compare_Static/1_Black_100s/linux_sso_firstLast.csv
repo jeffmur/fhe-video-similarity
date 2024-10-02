@@ -1,0 +1,25 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-10-01T21:54:14.343Z;WARNING;Manifest not found;
+2024-10-01T21:54:26.283Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=7170;
+2024-10-01T21:54:26.342Z;INFO;Loaded Video in 1s {name: 1DC4tbx9YgYVg-7Ttfq5rKSRZF_N5DyYh, extension: com,user=jeffreymurray2000/0AHlEZwblUPTNUk9PVA/1IMQgAv_z54XS66kKXcwCfKGXhzat4RMS/1cKUFlp1QIKA9-j6dCw2slffzCrMWUOT4/1DC4tbx9YgYVg-7Ttfq5rKSRZF_N5DyYh, created: 2024-10-01T21:54:18.000, modified: 2024-10-01T21:54:25.319330, path: /run/user/1000/gvfs/google-drive:host=gmail.com,user=jeffreymurray2000/0AHlEZwblUPTNUk9PVA/1IMQgAv_z54XS66kKXcwCfKGXhzat4RMS/1cKUFlp1QIKA9-j6dCw2slffzCrMWUOT4/1DC4tbx9YgYVg-7Ttfq5rKSRZF_N5DyYh, codec: h264, fps: 30, totalFrames: 7179, sha256: fa6234a0, durationSeconds: 239, startFrame: 0, endFrame: 7170, encryptionStatus: plain};fa6234a0-1727844858000
+2024-10-01T21:54:28.385Z;INFO;Cached Video in 2s;fa6234a0-1727844858000
+2024-10-01T21:54:37.227Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=2500;
+2024-10-01T21:54:37.281Z;INFO;Loaded Video in 56ms {name: White_720p_100s.mp4, extension: mp4, created: 2024-10-01T21:54:29.000, modified: 2024-10-01T21:54:37.224802, path: /home/jeffmur/Videos/StaticColors/720p/White_720p_100s.mp4, codec: h264, fps: 25, totalFrames: 2500, sha256: 690b027f, durationSeconds: 100, startFrame: 0, endFrame: 2500, encryptionStatus: plain};690b027f-1727844869000
+2024-10-01T21:54:37.521Z;INFO;Cached Video in 240ms;690b027f-1727844869000
+2024-10-01T21:54:43.954Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=2500;
+2024-10-01T21:54:44.007Z;INFO;Loaded Video in 55ms {name: Black_720p_100s.mp4, extension: mp4, created: 2024-10-01T21:54:38.000, modified: 2024-10-01T21:54:43.951832, path: /home/jeffmur/Videos/StaticColors/720p/Black_720p_100s.mp4, codec: h264, fps: 25, totalFrames: 2500, sha256: 822e3a31, durationSeconds: 100, startFrame: 0, endFrame: 2500, encryptionStatus: plain};822e3a31-1727844878000
+2024-10-01T21:54:44.269Z;INFO;Cached Video in 262ms;822e3a31-1727844878000
+2024-10-01T21:54:50.100Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=9240;
+2024-10-01T21:54:50.149Z;INFO;Loaded Video in 54ms {name: RGB_720p_Fade_Single.mp4, extension: mp4, created: 2024-10-01T21:54:45.000, modified: 2024-10-01T21:54:50.095086, path: /home/jeffmur/Videos/RGB/720p/RGB_720p_Fade_Single.mp4, codec: h264, fps: 30, totalFrames: 9263, sha256: 72d33436, durationSeconds: 308, startFrame: 0, endFrame: 9240, encryptionStatus: plain};72d33436-1727844885000
+2024-10-01T21:54:50.532Z;INFO;Cached Video in 382ms;72d33436-1727844885000
+2024-10-01T21:56:26.301Z;DEBUG;Trimming 0:02:19.000000 from the end;
+2024-10-01T21:56:26.301Z;DEBUG;Trimming 4170 frames from the end (7170 => 3000);
+2024-10-01T21:56:26.301Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=3000;
+2024-10-01T21:58:20.030Z;METRIC;⚙️ Processed in 108s {type: sso, frameCount: firstLast, durationSeconds: 100, frameRange: 0 - 3000 };fa6234a0-1727844858000
+2024-10-01T21:58:42.736Z;METRIC;⚙️ Processed in 16s {type: sso, frameCount: firstLast, durationSeconds: 100, frameRange: 0 - 2500 };822e3a31-1727844878000
+2024-10-01T21:58:43.744Z;METRIC;📊 KLD => 0.001893461802831019 Plaintext Score took 910µs;
+2024-10-01T21:58:43.746Z;METRIC;📊 Bhattacharyya => 0.9994776554590584 Plaintext Score took 145µs;
+2024-10-01T21:58:43.746Z;METRIC;📊 Cramer => 0.023334838714667554 Plaintext Score took 346µs;
+2024-10-01T21:58:46.625Z;METRIC;📊 KLD => 0.001893461469505787 Ciphertext Score in total: 344ms, encryptX: 134ms, encryptLogX: 126ms, computeScore: 83ms;
+2024-10-01T21:58:46.925Z;METRIC;📊 Bhattacharyya => 0.9994776550292915 Ciphertext Score in total: 299ms, encryptX: 123ms, encryptSqrtX: 123ms, computeScore: 52ms;
+2024-10-01T21:58:47.241Z;METRIC;📊 Cramer => 0.02333483910611259 Ciphertext Score in total: 316ms, encryptCumulativeSumX: 122ms, computeScore: 194ms;
