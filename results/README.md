@@ -12,4 +12,8 @@ poetry config virtualenvs.in-project true
 
 ## Results
 
-Can be found in [experiments.ipynb](./experiments.ipynb)
+Using Jupiter Notebook, the results are available in the following files:
+
+* [accuracy.ipynb](./accuracy.ipynb)
+* [performance.ipynb](./performance.ipynb)
+
