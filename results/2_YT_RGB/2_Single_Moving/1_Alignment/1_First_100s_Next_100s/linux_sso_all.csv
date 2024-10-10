@@ -1,0 +1,9 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-10-01T20:34:38.364Z;METRIC;⚙️ Processed in 37s {type: sso, frameCount: all, durationSeconds: 100, frameRange: 0 - 3000 };822e3a31-1727839868000
+2024-10-01T20:35:51.365Z;METRIC;⚙️ Processed in 71s {type: sso, frameCount: all, durationSeconds: 100, frameRange: 3000 - 6000 };822e3a31-1727839879000
+2024-10-01T20:36:02.415Z;METRIC;📊 KLD => 0.2848804530802807 Plaintext Score took 23µs;
+2024-10-01T20:36:02.415Z;METRIC;📊 Bhattacharyya => 0.9292650500874345 Plaintext Score took 11µs;
+2024-10-01T20:36:02.415Z;METRIC;📊 Cramer => 0.8190450282725842 Plaintext Score took 31µs;
+2024-10-01T20:36:03.805Z;METRIC;📊 KLD => 0.28488047562365804 Ciphertext Score in total: 309ms, encryptX: 119ms, encryptLogX: 118ms, computeScore: 71ms;
+2024-10-01T20:36:04.093Z;METRIC;📊 Bhattacharyya => 0.9292650524117285 Ciphertext Score in total: 287ms, encryptX: 119ms, encryptSqrtX: 119ms, computeScore: 47ms;
+2024-10-01T20:36:04.400Z;METRIC;📊 Cramer => 0.8190450282072514 Ciphertext Score in total: 305ms, encryptCumulativeSumX: 119ms, computeScore: 186ms;
