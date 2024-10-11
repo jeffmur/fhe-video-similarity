@@ -150,6 +150,14 @@ class LogParser:
             if isinstance(i, classType):
                 yield i
 
+    def filter_by_frameCount(self, frameCount: str, classType=ProcessedMetric):
+        """
+        Used to aggregate logs of the same frame type.
+        """
+        for i in list(self.all()):
+            if isinstance(i, classType) and frameCount == i.params['frameCount']:
+                yield i
+
     def filter_by_similarity_algorithm(self, algorithm: str, classType=SimilarityScoreMetric):
         """
         Used to aggregate metrics of the same algorithm.
@@ -194,6 +202,13 @@ class ImportSimilarityScores():
         print(f" - ({len(self.cramer_ciphertext_similarity_scores)}) Cramer")
         print('------------------------------')
 
+    def avg_scores(self, algorithm:str) -> float:
+        """
+        Returns the sum of the similarity scores for a given algorithm.
+        """
+        scores = list(self.parser.filter_by_similarity_algorithm(algorithm, SimilarityScoreMetric))
+        return sum([i.score for i in scores]) / len(scores)
+
     def score_diff(self, algorithm: str) -> float:
         """
         Compare the similarity scores of the baseline and ciphertext for a given algorithm.
@@ -210,8 +225,48 @@ class ImportSimilarityScores():
           print(f"Ciphertext scores: {[i.score for i in ciphertext]}")
 
         return abs(sum([i.score for i in baseline]) - sum([i.score for i in ciphertext]))
+    
+    def pp_duration_s(self, frameCount:str) -> float:
+        """
+        Returns the pre-processing duration for a given algorithm.
+        """
+        scores = list(self.parser.filter_by_frameCount(frameCount))
+        return sum([i.duration.total_seconds() for i in scores])
+    
+    def encryption_duration_ms(self, algorithm:str) -> float:
+        """
+        Returns the encryption duration for a given algorithm.
+        """
+        scores = list(self.parser.filter_by_similarity_algorithm(algorithm, CiphertextSimilarityScoreMetric))
+        algorithm_encrypt_total_durations_ms = []
+        for score in scores:
+            ct_keys = [key for key in score.ciphertext_duration.keys() if 'encrypt' in key]
+            encrypt_ms = sum([score.ciphertext_duration[key].total_seconds() * 1000 for key in ct_keys])
+            algorithm_encrypt_total_durations_ms.append(encrypt_ms)
+        
+        return sum(algorithm_encrypt_total_durations_ms)
+    
+    def fhe_compute_score_ms(self, algorithm:str) -> float:
+        """
+        Returns the FHE compute score for a given algorithm.
+        """
+        scores = list(self.parser.filter_by_similarity_algorithm(algorithm, CiphertextSimilarityScoreMetric))
+        algorithm_fhe_compute_durations_ms = []
+        for score in scores:
+            fhe_compute = score.ciphertext_duration.get('computeScore')
+            if not fhe_compute: raise ValueError(f"Missing computeScore in {score.message}")
+            algorithm_fhe_compute_durations_ms.append(fhe_compute.total_seconds() * 1000)
 
-    def duration_diff_µs(self, algorithm: str) -> float:
+        return sum(algorithm_fhe_compute_durations_ms)
+    
+    def pt_compute_score_ms(self, algorithm:str) -> float:
+        """
+        Returns the plaintext compute score for a given algorithm.
+        """
+        scores = list(self.parser.filter_by_similarity_algorithm(algorithm, BaselineSimilarityScoreMetric))
+        return sum([score.duration.total_seconds() * 1000 for score in scores])
+
+    def duration_diff_s(self, algorithm: str) -> float:
         """
         Compare the encryption times of the baseline and ciphertext for a given algorithm.
         """
@@ -226,5 +281,4 @@ class ImportSimilarityScores():
           print(f"Baseline durations: {[i.duration for i in baseline]}")
           print(f"Ciphertext durations: {[i.duration for i in ciphertext]}")
 
-        return abs(sum([i.duration.microseconds for i in baseline]) - sum([i.duration.microseconds for i in ciphertext]))
-
+        return abs(sum([i.duration.total_seconds() for i in baseline]) - sum([i.duration.total_seconds() for i in ciphertext]))
