@@ -40,9 +40,9 @@ def verbose_md_table(pathToAssertion:str) -> Markdown:
         kld_diff, bhattacharyya_diff, cramer_diff = compute_diff_dict(**_params).values()
         kld_diff_perc, bhattacharyya_diff_perc, cramer_diff_perc = compute_growth_percentage_dict(**_params).values()
 
-        rows.append(f"KLD ({frameCount}) | {kld:.2e} ({kld_perc:.2f}%) | {kld_err:.2e} | {pp:.2f} | {kld_enc:.2f} | {kld_fhe:.2f} | {kld_pt:.2f} | {kld_diff:.2f} [{kld_diff_perc:.2f}%]")
-        rows.append(f"Cramer ({frameCount}) | {cramer:.2e} ({cramer_perc:.2f}%)| {cramer_err:.2e} | {pp:.2f} | {cramer_enc:.2f} | {cramer_fhe:.2f} | {cramer_pt:.2f} | {cramer_diff:.2f} [{cramer_diff_perc:.2f}%]")
-        rows.append(f"BC ({frameCount}) | {bhattacharyya:.2e} ({bhattacharyya_perc:.2f}%) | {bhattacharyya_err:.2e} | {pp:.2f} | {bhattacharyya_enc:.2f} | {bhattacharyya_fhe:.2f} | {bhattacharyya_pt:.2f} | {bhattacharyya_diff:.2f} [{bhattacharyya_diff_perc:.2f}%]")
+        rows.append(f"KLD ({frameCount}) | {kld:.2e} [{kld_perc:.2f}%] | {kld_err:.2e} | {pp:.2f} | {kld_enc:.2f} | {kld_fhe:.2f} | {kld_pt:.2f} | {kld_diff:.2f} [{kld_diff_perc:.2f}%]")
+        rows.append(f"Cramer ({frameCount}) | {cramer:.2e} [{cramer_perc:.2f}%| {cramer_err:.2e} | {pp:.2f} | {cramer_enc:.2f} | {cramer_fhe:.2f} | {cramer_pt:.2f} | {cramer_diff:.2f} [{cramer_diff_perc:.2f}%]")
+        rows.append(f"BC ({frameCount}) | {bhattacharyya:.2e} [{bhattacharyya_perc:.2f}%] | {bhattacharyya_err:.2e} | {pp:.2f} | {bhattacharyya_enc:.2f} | {bhattacharyya_fhe:.2f} | {bhattacharyya_pt:.2f} | {bhattacharyya_diff:.2f} [{bhattacharyya_diff_perc:.2f}%]")
 
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
@@ -69,8 +69,8 @@ def mean_md_table(pathToAssertion:str) -> Markdown:
     return Markdown(textwrap.dedent(f"""
         Similarity | Mean Score [%] | Mean FHE Mean Absolute Error | Mean Pre-processing (s) | Mean Encryption (ms) | Mean FHE/Plain Compute Growth (ms) [%]
         ---|---|---|---|---|---
-        KLD | {kld:.2e} ({kld_perc:.2f}%) | {kld_err:.2e} | {pp:.2f} | {kld_enc:.2f} | {kld_diff:.2f} [{kld_diff_perc:.2f}%]
-        Cramer | {cramer:.2e} ({cramer_perc:.2f}%) | {cramer_err:.2e} | {pp:.2f} | {cramer_enc:.2f} | {cramer_diff:.2f} [{cramer_diff_perc:.2f}%]
-        BC | {bhattacharyya:.2e} ({bhattacharyya_perc:.2f}%) | {bhattacharyya_err:.2e} | {pp:.2f} | {bhattacharyya_enc:.2f} | {bhattacharyya_diff:.2f} [{bhattacharyya_diff_perc:.2f}%]
+        KLD | {kld:.2e} [{kld_perc:.2f}%] | {kld_err:.2e} | {pp:.2f} | {kld_enc:.2f} | {kld_diff:.2f} [{kld_diff_perc:.2f}%]
+        Cramer | {cramer:.2e} [{cramer_perc:.2f}%] | {cramer_err:.2e} | {pp:.2f} | {cramer_enc:.2f} | {cramer_diff:.2f} [{cramer_diff_perc:.2f}%]
+        BC | {bhattacharyya:.2e} [{bhattacharyya_perc:.2f}%] | {bhattacharyya_err:.2e} | {pp:.2f} | {bhattacharyya_enc:.2f} | {bhattacharyya_diff:.2f} [{bhattacharyya_diff_perc:.2f}%]
     """))  
 
