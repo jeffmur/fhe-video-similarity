@@ -1,6 +1,6 @@
 from utils.log import ImportSimilarityScores
 
-def mean_scores(pathToAssertion:str, os=['linux'], frameCounts=['all', 'firstLast', 'randomHalf']) -> dict:
+def mean_scores(pathToAssertion:str, os, frameCounts) -> dict:
     """
     Returns the average of the similarity scores for each similarity score metric for the linux_sso logs.
     """
@@ -29,7 +29,7 @@ def scores_as_normalized_percentage(kld:float, bhattacharyya:float, cramer:float
         'bhattacharyya': bhattacharyya * 100,
     }
 
-def mean_abs_errors(pathToAssertion:str, os=['linux'], frameCounts=['all', 'firstLast', 'randomHalf']) -> dict:
+def mean_abs_errors(pathToAssertion:str, os, frameCounts) -> dict:
     """
     Returns the mean error for each similarity score metric for the linux_sso logs.
     """

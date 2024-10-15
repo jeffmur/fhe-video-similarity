@@ -228,10 +228,10 @@ class ImportSimilarityScores():
     
     def pp_duration_s(self, frameCount:str) -> float:
         """
-        Returns the pre-processing duration for a given algorithm.
+        Returns the avg. pre-processing duration for a given algorithm
         """
         scores = list(self.parser.filter_by_frameCount(frameCount))
-        return sum([i.duration.total_seconds() for i in scores])
+        return sum([i.duration.total_seconds() for i in scores]) / len(scores)
     
     def encryption_duration_ms(self, algorithm:str) -> float:
         """

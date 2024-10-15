@@ -1,6 +1,7 @@
 from utils.log import ImportSimilarityScores
+from utils import TARGET_SYS, FRAME_COUNTS
 
-def mean_pp_duration_s(pathToAssertion:str, os=['linux'], frameCounts=['all', 'firstLast', 'randomHalf']) -> float:
+def mean_pp_duration_s(pathToAssertion:str, os, frameCounts) -> float:
     """
     Returns the average of the duration, in seconds, for each similarity score metric for the linux_sso logs.
     """
@@ -13,7 +14,7 @@ def mean_pp_duration_s(pathToAssertion:str, os=['linux'], frameCounts=['all', 'f
     
     return pre_processing_avg / (len(frameCounts) * len(os))
 
-def mean_encryption_duration_ms(pathToAssertion:str, os=['linux'], frameCounts=['all', 'firstLast', 'randomHalf']) -> dict:
+def mean_encryption_duration_ms(pathToAssertion:str, os, frameCounts) -> dict:
     """
     Returns the average of the duration, in milliseconds, for each similarity score metric for the linux_sso logs.
     """
@@ -33,7 +34,7 @@ def mean_encryption_duration_ms(pathToAssertion:str, os=['linux'], frameCounts=[
     }
 
 
-def mean_fhe_compute_score_ms(pathToAssertion:str, os=['linux'], frameCounts=['all', 'firstLast', 'randomHalf']):
+def mean_fhe_compute_score_ms(pathToAssertion:str, os, frameCounts):
     """
     Returns the average of the duration, in milliseconds, for each similarity score metric for the linux_sso logs.
     """
@@ -52,7 +53,7 @@ def mean_fhe_compute_score_ms(pathToAssertion:str, os=['linux'], frameCounts=['a
         'cramer_fhe': cramer_fhe / (len(frameCounts) * len(os))
     }
 
-def mean_pt_compute_score_ms(pathToAssertion:str, os=['linux'], frameCounts=['all', 'firstLast', 'randomHalf']):
+def mean_pt_compute_score_ms(pathToAssertion:str, os, frameCounts):
     """
     Returns the average of the duration, in milliseconds, for each similarity score metric for the linux_sso logs.
     """
