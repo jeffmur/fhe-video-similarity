@@ -1,0 +1,17 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-10-14T21:42:38.696Z;ERROR;Error in ShareFileTrigger: PathNotFoundException: Cannot open file, path = '/home/jeffmur/Documents/0b150fd3/0-250-1728701013000/sso-firstLast.csv' (OS Error: No such file or directory, errno = 2);
+2024-10-14T21:42:40.618Z;WARNING;Manifest not found;
+2024-10-14T21:42:56.190Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
+2024-10-14T21:42:56.249Z;INFO;Loaded Video in 62ms {name: White_720p_60s.mp4, extension: mp4, created: 2024-10-14T21:42:42.000, modified: 2024-10-14T21:42:56.187133, path: /home/jeffmur/Videos/StaticColors/720p/White_720p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 690b027f, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};690b027f-1728967362000
+2024-10-14T21:42:56.549Z;INFO;Cached Video in 301ms;690b027f-1728967362000
+2024-10-14T21:43:05.502Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
+2024-10-14T21:43:05.557Z;INFO;Loaded Video in 57ms {name: Black_720p_60s.mp4, extension: mp4, created: 2024-10-14T21:42:57.000, modified: 2024-10-14T21:43:05.500001, path: /home/jeffmur/Videos/StaticColors/720p/Black_720p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 822e3a31, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};822e3a31-1728967377000
+2024-10-14T21:43:05.816Z;INFO;Cached Video in 258ms;822e3a31-1728967377000
+2024-10-14T21:43:17.417Z;METRIC;⚙️ Processed in 6s {type: sso, frameCount: firstLast, durationSeconds: 60, frameRange: 0 - 1500 };822e3a31-1728967377000
+2024-10-14T21:43:24.346Z;METRIC;⚙️ Processed in 6s {type: sso, frameCount: firstLast, durationSeconds: 60, frameRange: 0 - 1500 };690b027f-1728967362000
+2024-10-14T21:43:25.017Z;METRIC;📊 KLD => 0.0 Plaintext Score took 525µs;
+2024-10-14T21:43:25.018Z;METRIC;📊 Bhattacharyya => 1.0000000000000016 Plaintext Score took 130µs;
+2024-10-14T21:43:25.018Z;METRIC;📊 Cramer => 0.0 Plaintext Score took 262µs;
+2024-10-14T21:43:26.104Z;METRIC;📊 KLD => 7.814572502656809e-11 Ciphertext Score in total: 208ms, encryptX: 83ms, encryptLogX: 74ms, computeScore: 50ms;
+2024-10-14T21:43:26.282Z;METRIC;📊 Bhattacharyya => 1.0000000000160687 Ciphertext Score in total: 178ms, encryptX: 73ms, encryptSqrtX: 73ms, computeScore: 31ms;
+2024-10-14T21:43:26.473Z;METRIC;📊 Cramer => 8.849197606595663e-10 Ciphertext Score in total: 190ms, encryptCumulativeSumX: 72ms, computeScore: 117ms;

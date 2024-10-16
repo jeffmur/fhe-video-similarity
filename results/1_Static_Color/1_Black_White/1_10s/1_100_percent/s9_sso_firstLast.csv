@@ -1,0 +1,45 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-10-14T19:22:05.714Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=250;
+2024-10-14T19:22:05.990Z;INFO;Loaded Video in 2s {name: Black_720p.mp4, extension: mp4, created: 2024-10-14T19:21:41.000, modified: 2024-10-14T19:22:03.639354, path: /data/user/0/com.example.flutter_fhe_video_similarity/cache/e7469db8-e8ed-4e0d-8f89-704dd09566db/Black_720p.mp4, codec: null, fps: 25, totalFrames: 251, sha256: 822e3a31, durationSeconds: 10, startFrame: 0, endFrame: 250, encryptionStatus: plain};822e3a31-1728958901000
+2024-10-14T19:22:06.462Z;INFO;Cached Video in 492ms;822e3a31-1728958901000
+2024-10-14T19:22:27.468Z;METRIC;⚙️ Processed in 6s {type: sso, frameCount: firstLast, durationSeconds: 10, frameRange: 0 - 250 };822e3a31-1728958901000
+2024-10-14T19:22:27.702Z;METRIC;🔒 Encrypted 10 frames in 93ms;822e3a31-1728958901000
+2024-10-14T19:22:28.882Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/822e3a31/0-250-1728958901000/tmp/kld.enc in 1s;
+2024-10-14T19:22:28.892Z;METRIC;📄 Added kld.enc in 1s (1s + 93ms);822e3a31-1728958901000
+2024-10-14T19:22:28.975Z;METRIC;🔒 Encrypted 10 log frames in 77ms;822e3a31-1728958901000
+2024-10-14T19:22:29.830Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/822e3a31/0-250-1728958901000/tmp/kld_log.enc in 735ms;
+2024-10-14T19:22:29.846Z;METRIC;📄 Added kld_log.enc in 943ms (866ms + 77ms);822e3a31-1728958901000
+2024-10-14T19:22:29.924Z;METRIC;🔒 Encrypted 10 sqrt frames in 74ms;822e3a31-1728958901000
+2024-10-14T19:22:30.836Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/822e3a31/0-250-1728958901000/tmp/bhattacharyya_sqrt.enc in 751ms;
+2024-10-14T19:22:30.845Z;METRIC;📄 Added bhattacharyya_sqrt.enc in 990ms (916ms + 74ms);822e3a31-1728958901000
+2024-10-14T19:22:30.918Z;METRIC;🔒 Encrypted 10 cumulativeSum of frames in 69ms;822e3a31-1728958901000
+2024-10-14T19:22:31.699Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/822e3a31/0-250-1728958901000/tmp/cramer.enc in 740ms;
+2024-10-14T19:22:31.710Z;METRIC;📄 Added cramer.enc in 858ms (788ms + 69ms);822e3a31-1728958901000
+2024-10-14T19:22:31.773Z;INFO;📄 Added meta.json in 60ms;822e3a31-1728958901000
+2024-10-14T19:22:33.132Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/822e3a31/0-250-1728958901000/sso-firstLast.zip in 1s;
+2024-10-14T19:22:33.135Z;METRIC;📦 Packaged encrypted archive in 5s;822e3a31-1728958901000
+2024-10-14T19:22:36.740Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=250;
+2024-10-14T19:22:36.989Z;INFO;Loaded Video in 1s {name: White_720p.mp4, extension: mp4, created: 2024-10-14T19:22:29.000, modified: 2024-10-14T19:22:35.621882, path: /data/user/0/com.example.flutter_fhe_video_similarity/cache/dc9ab28b-31f3-4193-bf4b-a19771a47ab6/White_720p.mp4, codec: null, fps: 25, totalFrames: 251, sha256: 690b027f, durationSeconds: 10, startFrame: 0, endFrame: 250, encryptionStatus: plain};690b027f-1728958949000
+2024-10-14T19:22:37.389Z;INFO;Cached Video in 399ms;690b027f-1728958949000
+2024-10-14T19:22:46.146Z;METRIC;⚙️ Processed in 5s {type: sso, frameCount: firstLast, durationSeconds: 10, frameRange: 0 - 250 };690b027f-1728958949000
+2024-10-14T19:22:46.327Z;METRIC;🔒 Encrypted 10 frames in 125ms;690b027f-1728958949000
+2024-10-14T19:22:47.616Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/690b027f/0-250-1728958949000/tmp/kld.enc in 1s;
+2024-10-14T19:22:47.620Z;METRIC;📄 Added kld.enc in 1s (1s + 125ms);690b027f-1728958949000
+2024-10-14T19:22:47.716Z;METRIC;🔒 Encrypted 10 log frames in 94ms;690b027f-1728958949000
+2024-10-14T19:22:48.916Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/690b027f/0-250-1728958949000/tmp/kld_log.enc in 1s;
+2024-10-14T19:22:48.923Z;METRIC;📄 Added kld_log.enc in 1s (1s + 94ms);690b027f-1728958949000
+2024-10-14T19:22:49.061Z;METRIC;🔒 Encrypted 10 sqrt frames in 133ms;690b027f-1728958949000
+2024-10-14T19:22:50.257Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/690b027f/0-250-1728958949000/tmp/bhattacharyya_sqrt.enc in 1s;
+2024-10-14T19:22:50.262Z;METRIC;📄 Added bhattacharyya_sqrt.enc in 1s (1s + 133ms);690b027f-1728958949000
+2024-10-14T19:22:50.398Z;METRIC;🔒 Encrypted 10 cumulativeSum of frames in 133ms;690b027f-1728958949000
+2024-10-14T19:22:51.703Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/690b027f/0-250-1728958949000/tmp/cramer.enc in 1s;
+2024-10-14T19:22:51.709Z;METRIC;📄 Added cramer.enc in 1s (1s + 133ms);690b027f-1728958949000
+2024-10-14T19:22:52.178Z;INFO;📄 Added meta.json in 467ms;690b027f-1728958949000
+2024-10-14T19:22:54.448Z;DEBUG;Wrote archive to /data/user/0/com.example.flutter_fhe_video_similarity/app_flutter/690b027f/0-250-1728958949000/sso-firstLast.zip in 2s;
+2024-10-14T19:22:54.452Z;METRIC;📦 Packaged encrypted archive in 8s;690b027f-1728958949000
+2024-10-14T19:22:58.175Z;METRIC;📊 KLD => 0.0 Plaintext Score took 732µs;
+2024-10-14T19:22:58.182Z;METRIC;📊 Bhattacharyya => 1.0 Plaintext Score took 243µs;
+2024-10-14T19:22:58.184Z;METRIC;📊 Cramer => 0.0 Plaintext Score took 438µs;
+2024-10-14T19:23:00.444Z;METRIC;📊 KLD => 4.273470174075837e-11 Ciphertext Score in total: 147ms, encryptX: 52ms, encryptLogX: 52ms, computeScore: 42ms;
+2024-10-14T19:23:00.823Z;METRIC;📊 Bhattacharyya => 1.0000000000097204 Ciphertext Score in total: 126ms, encryptX: 51ms, encryptSqrtX: 52ms, computeScore: 22ms;
+2024-10-14T19:23:00.971Z;METRIC;📊 Cramer => 3.8633033492831487e-10 Ciphertext Score in total: 138ms, encryptCumulativeSumX: 52ms, computeScore: 85ms;
