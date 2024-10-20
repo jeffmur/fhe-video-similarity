@@ -24,22 +24,55 @@ double average(List<double> list) {
   return list.reduce((a, b) => a + b) / list.length;
 }
 
+void compareBaselineSimilarityScoresFromCSV(String filename) {
+  final scores = ScoreData(filename);
+  print('--- Averages ---');
+  print('KLD-dart: ${average(scores.kldDart)}');
+  print('KLD-SSO : ${average(scores.kldSSO)}');
+  print('Cramer-dart: ${average(scores.cramerDart)}');
+  print('Cramer-SSO : ${average(scores.cramerSSO)}');
+  print('--- Standard Deviation ---');
+  print('KLD-dart: ${scores.standardDeviation(scores.kldDart)}');
+  print('KLD-SSO : ${scores.standardDeviation(scores.kldSSO)}');
+  print('Cramer-dart: ${scores.standardDeviation(scores.cramerDart)}');
+  print('Cramer-SSO : ${scores.standardDeviation(scores.cramerSSO)}');
+  print('--- Jaccard ---');
+  print('KLD Jaccard   : ${scores.jaccord(scores.kldDart.toSet(), scores.kldSSO.toSet())}');
+  print('Cramer Jaccard: ${scores.jaccord(scores.cramerDart.toSet(), scores.cramerSSO.toSet())}');
+  print('--- Cosine ---');
+  print('KLD Cosine   : ${scores.cosine(scores.kldDart, scores.kldSSO)}');
+  print('Cramer Cosine: ${scores.cosine(scores.cramerDart, scores.cramerSSO)}');
+}
+
+void compareBaselineSimilarityScoresFromDirectory(String directory) {
+  final files = Directory(directory).listSync();
+  for (var file in files) {
+    if (file.path.endsWith('.csv')) {
+      print('--- ${file.path} ---');
+      compareBaselineSimilarityScoresFromCSV(file.path);
+    }
+  }
+}
+
 
 /* Supported Use Cases:
   1. In-place comparison of each Video to complementary Pcap (same csv)
     * Compare distance measure implementation vs. SSO
-    * KLD, Bhattacharyya, Cramer
+    * KLD, Cramer
 
-  2. Exhaustive comparison of each row to every other row in another csv (used for ANN training)
+  2. Standard deviation of dart vs. SSO
+    * Calculate standard deviation of each row pair
+    * KLD, Cramer
 
 */
 void main(List<String> args) {
   final parser = ArgParser()
     ..addOption('csv', abbr: 'f', help: 'CSV File to compare')
+    ..addOption('dir', abbr: 'd', help: 'Directory of CSV files') // Cannot be used with csv
     ..addOption('versus', abbr: 'v', help: 'Compare against another CSV file')
     ..addOption('output', abbr: 'o', help: 'Output file for results')
     ..addFlag('pcap', abbr: 'p', help: 'Compare Video to Pcap', negatable: false)
-    ..addFlag('exhaustive', abbr: 'e', help: 'Exhaustive comparison of each row to every other row', negatable: false)
+    ..addFlag('scores', abbr: 's', help: 'Calculate variance of scores', negatable: false)
     ..addFlag('help', abbr: 'h', help: 'Show help', negatable: false);
 
   final results = parser.parse(args);
@@ -57,7 +90,7 @@ void main(List<String> args) {
            --pcap --output results/1_baseline/raw_data/1080p-0_degree.csv
   */
   if(results['versus'] == null && results['pcap']) {
-    final data = OriginalData(File(results['csv']).readAsStringSync());
+    final data = OriginalData(results['csv']);
     List<double> kld = [];
     List<double> cramer = [];
 
@@ -87,7 +120,14 @@ void main(List<String> args) {
         print("${kld[i]}, ${cramer[i]}");
       }
     }
-    
+  }
+
+  if(results['versus'] == null && results['scores']) {
+    if (results['csv'] != null) {
+      compareBaselineSimilarityScoresFromCSV(results['csv']);
+    } else if (results['dir'] != null) {
+      compareBaselineSimilarityScoresFromDirectory(results['dir']);
+    }
   }
   
 }
