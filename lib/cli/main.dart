@@ -20,57 +20,6 @@ import 'package:args/args.dart';
 import 'csv.dart';
 import '../similarity.dart';
 
-double average(List<double> list) {
-  return list.reduce((a, b) => a + b) / list.length;
-}
-
-Map<String, double> compareBaselineSimilarityScoresFromCSV(String filename) {
-  final scores = ScoreData(filename);
-
-  return {
-    'avgKLDDart': average(scores.kldDart),
-    'avgKLDSSO': average(scores.kldSSO),
-    'avgCramerDart': average(scores.cramerDart),
-    'avgCramerSSO': average(scores.cramerSSO),
-    'stdKLDDart': scores.standardDeviation(scores.kldDart),
-    'stdKLDSSO': scores.standardDeviation(scores.kldSSO),
-    'stdCramerDart': scores.standardDeviation(scores.cramerDart),
-    'stdCramerSSO': scores.standardDeviation(scores.cramerSSO),
-    'jaccardKLD': scores.jaccord(scores.kldDart.toSet(), scores.kldSSO.toSet()),
-    'jaccardCramer': scores.jaccord(scores.cramerDart.toSet(), scores.cramerSSO.toSet()),
-    'cosineKLD': scores.cosine(scores.kldDart, scores.kldSSO),
-    'cosineCramer': scores.cosine(scores.cramerDart, scores.cramerSSO),
-  };
-}
-
-void compareBaselineSimilarityScoresFromDirectory(String directory, {String? outputFilename}) {
-  final files = Directory(directory).listSync();
-  Map<String, Map<String, double>> resultsByFile = {};
-  for (var file in files) {
-    if (file.path.endsWith('.csv')) {
-      String filename = file.path.split('/').last;
-      resultsByFile.putIfAbsent(filename, () => compareBaselineSimilarityScoresFromCSV(file.path));
-    }
-  }
-
-  if (outputFilename != null) {
-    final output = File(outputFilename);
-    output.createSync(recursive: true); // if it doesn't exist
-
-    // Create a list of CSV rows to write
-    List<String> writeRows = ['Filename, avgKLDDart, avgKLDSSO, avgCramerDart, avgCramerSSO, stdKLDDart, stdKLDSSO, stdCramerDart, stdCramerSSO, jaccardKLD, jaccardCramer, cosineKLD, cosineCramer'];
-    for (var entry in resultsByFile.entries) {
-      writeRows.add("${entry.key}, ${entry.value['avgKLDDart']}, ${entry.value['avgKLDSSO']}, ${entry.value['avgCramerDart']}, ${entry.value['avgCramerSSO']}, ${entry.value['stdKLDDart']}, ${entry.value['stdKLDSSO']}, ${entry.value['stdCramerDart']}, ${entry.value['stdCramerSSO']}, ${entry.value['jaccardKLD']}, ${entry.value['jaccardCramer']}, ${entry.value['cosineKLD']}, ${entry.value['cosineCramer']}");
-    }
-    output.writeAsStringSync(writeRows.join("\n"));
-  } else {
-    print('Filename, avgKLDDart, avgKLDSSO, avgCramerDart, avgCramerSSO, stdKLDDart, stdKLDSSO, stdCramerDart, stdCramerSSO, jaccardKLD, jaccardCramer, cosineKLD, cosineCramer');
-    for (var entry in resultsByFile.entries) {
-      print("${entry.key}, ${entry.value['avgKLDDart']}, ${entry.value['avgKLDSSO']}, ${entry.value['avgCramerDart']}, ${entry.value['avgCramerSSO']}, ${entry.value['stdKLDDart']}, ${entry.value['stdKLDSSO']}, ${entry.value['stdCramerDart']}, ${entry.value['stdCramerSSO']}, ${entry.value['jaccardKLD']}, ${entry.value['jaccardCramer']}, ${entry.value['cosineKLD']}, ${entry.value['cosineCramer']}");
-    }
-  }
-}
-
 /* Supported Use Cases:
   1. In-place (--pcap) comparison of each Video to complementary Pcap (same csv)
     * Compare distance measure implementation vs. SSO
@@ -117,7 +66,8 @@ void main(List<String> args) {
       cramer.add(Similarity(SimilarityType.cramer).score(v, p));
     }
 
-    // Check if output file is specified
+    // Check if output file is specified,
+    // requires copy-paste of sso values for comparison
     if (results['output'] != null) {
       final output = File(results['output']);
       output.createSync(recursive: true); // if it doesn't exist
@@ -135,14 +85,6 @@ void main(List<String> args) {
       for (var i = 0; i < kld.length; i++) {
         print("${kld[i]}, ${cramer[i]}");
       }
-    }
-  }
-
-  if(results['versus'] == null && results['scores']) {
-    if (results['csv'] != null) {
-      compareBaselineSimilarityScoresFromCSV(results['csv']);
-    } else if (results['dir'] != null) {
-      compareBaselineSimilarityScoresFromDirectory(results['dir'], outputFilename: results['output']);
     }
   }
   
