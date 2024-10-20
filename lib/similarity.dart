@@ -2,8 +2,19 @@ import 'dart:math' as math;
 import 'package:fhe_similarity_score/kld.dart' as kld;
 import 'package:fhe_similarity_score/bhattacharyya.dart' as bhattacharyya;
 import 'package:fhe_similarity_score/cramer.dart' as cramer;
-import 'package:flutter_fhe_video_similarity/similarity.dart';
-import '../seal.dart';
+import 'seal.dart';
+
+/// Used for preprocessing byte array for Cramer
+///
+List<double> cumulativeSum(List<double> list) {
+  List<double> result = [];
+  double sum = 0;
+  for (var i = 0; i < list.length; i++) {
+    sum += list[i];
+    result.add(sum);
+  }
+  return result;
+}
 
 enum SimilarityType { kld, bhattacharyya, cramer }
 
@@ -36,7 +47,7 @@ class Similarity {
       case SimilarityType.bhattacharyya:
         return bhattacharyya.coefficient(v1, v2);
       case SimilarityType.cramer:
-        return cramer.distance(cumulativeSum(v1), cumulativeSum(v2));
+        return cramer.distance(v1, v2);
     }
   }
 
@@ -62,8 +73,7 @@ class CiphertextKLD {
   double score(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
     return ciphertextHandler
         .decryptedSumOfDoubles(kld.divergenceOfCiphertextVecDouble(
-            plaintextEncoder.seal, x, logX, y))
-        .abs();
+            plaintextEncoder.seal, x, logX, y));
   }
 
   List<Ciphertext> homomorphicScore(
@@ -89,8 +99,7 @@ class CiphertextBhattacharyya {
   double score(List<Ciphertext> sqrtX, List<double> sqrtY) {
     return ciphertextHandler
         .decryptedSumOfDoubles(bhattacharyya.coefficientOfCiphertextVecDouble(
-            plaintextEncoder.seal, sqrtX, sqrtY))
-        .abs();
+            plaintextEncoder.seal, sqrtX, sqrtY));
   }
 
   List<Ciphertext> homomorphicScore(
@@ -113,8 +122,7 @@ class CiphertextCramer {
   double score(List<Ciphertext> cumulativeSumX, List<double> cumulativeSumY) {
     return math.sqrt(ciphertextHandler
         .decryptedSumOfDoubles(cramer.distanceOfCiphertextVecDouble(
-            plaintextEncoder.seal, cumulativeSumX, cumulativeSumY))
-        .abs());
+            plaintextEncoder.seal, cumulativeSumX, cumulativeSumY)));
   }
 
   List<Ciphertext> homomorphicScore(List<Ciphertext> x, List<double> y) {
