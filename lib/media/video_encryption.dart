@@ -9,7 +9,7 @@ import 'image.dart';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
 
-import 'seal.dart';
+import '../seal.dart';
 import 'video.dart';
 export 'dart:io' show File;
 

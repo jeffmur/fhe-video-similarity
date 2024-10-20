@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
-import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/seal.dart';
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'uploader.dart';
 import 'dart:convert';

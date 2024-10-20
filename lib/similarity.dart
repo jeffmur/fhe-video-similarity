@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:fhe_similarity_score/kld.dart' as kld;
 import 'package:fhe_similarity_score/bhattacharyya.dart' as bhattacharyya;
 import 'package:fhe_similarity_score/cramer.dart' as cramer;
-import '../media/seal.dart';
+import 'seal.dart';
 
 /// Used for preprocessing byte array for Cramer
 ///

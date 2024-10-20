@@ -18,7 +18,7 @@ Attributes:
 import 'dart:io';
 import 'package:args/args.dart';
 import 'csv.dart';
-import 'similarity.dart';
+import '../similarity.dart';
 
 double average(List<double> list) {
   return list.reduce((a, b) => a + b) / list.length;
@@ -50,9 +50,11 @@ void main(List<String> args) {
   }
 
   /*
-    Exhausitve one-file distance measure of each row to every other row.
-
+    Distance measure of each Video vs. Pcap row pair
     SSO vs. Dart implementation of KLD, Cramer
+
+    Usage: dart run lib/cli/main.dart --csv results/1_baseline/raw_data/1080p-original_data.csv
+           --pcap --output results/1_baseline/raw_data/1080p-0_degree.csv
   */
   if(results['versus'] == null && results['pcap']) {
     final data = OriginalData(File(results['csv']).readAsStringSync());

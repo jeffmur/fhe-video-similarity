@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/logging.dart';
-import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/seal.dart';
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
-import 'package:flutter_fhe_video_similarity/media/similarity.dart';
+import 'package:flutter_fhe_video_similarity/similarity.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
 import 'package:flutter_fhe_video_similarity/page/share_button.dart';
 
