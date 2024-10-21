@@ -7,24 +7,22 @@ def verbose_kld_cramer(pathToDir:str):
     "Compare the KLD and Cramer scores for Dart and SSO for broken down for each csv file"
     s = CompareAllScores(pathToDir)
     rows = []
-    rows.append("File | KLD SSO σ | KLD Dart σ | KLD ± σ | KLD JC | KLD CS | Cramer SSO σ | Cramer Dart σ | Cramer ± σ | Cramer JC | Cramer CS")
-    rows.append("---|---|---|---|---|---|---|---|---|---|---")
+    rows.append("File | KLD SSO σ | KLD Dart σ | KLD ± σ | KLD JC | Cramer SSO σ | Cramer Dart σ | Cramer ± σ | Cramer JC")
+    rows.append("---|---|---|---|---|---|---|---|---")
     for file in s.scores.keys():
         ss = s.scores[file]
         kldDart_stdev = ss.standard_deviation(ss.kldDart)
         kldSSO_stdev = ss.standard_deviation(ss.kldSSO)
         abs_diff_kld = abs(kldDart_stdev - kldSSO_stdev)
         kld_jaccard = ss.jaccard_coefficent(ss.kldDart, ss.kldSSO)
-        kld_cosine = ss.cosine_similarity(ss.kldDart, ss.kldSSO)
 
         cramerDart_stdev = ss.standard_deviation(ss.cramerDart)
         cramerSSO_stdev = ss.standard_deviation(ss.cramerSSO)
         abs_diff_cramer = abs(cramerDart_stdev - cramerSSO_stdev)
         cramer_jaccard = ss.jaccard_coefficent(ss.cramerDart, ss.cramerSSO)
-        cramer_cosine = ss.cosine_similarity(ss.cramerDart, ss.cramerSSO)
 
-        rows.append(f"{file} | {kldSSO_stdev:.6f} | {kldDart_stdev:.6f} | {abs_diff_kld:.6f} | {kld_jaccard:.2f} | {kld_cosine:.2f}"
-                    f"| {cramerSSO_stdev:.6f} | {cramerDart_stdev:.6f} | {abs_diff_cramer:.6f} | {cramer_jaccard:.2f} | {cramer_cosine:.2f}")
+        rows.append(f"{file} | {kldSSO_stdev:.6f} | {kldDart_stdev:.6f} | {abs_diff_kld:.6f} | {kld_jaccard:.2f}"
+                    f"| {cramerSSO_stdev:.6f} | {cramerDart_stdev:.6f} | {abs_diff_cramer:.6f} | {cramer_jaccard:.2f}")
 
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
@@ -35,10 +33,10 @@ def summary_kld_cramer(pathToDir:str):
     kld_jaccard, sso_jaccard = s.avg_jaccard_coefficent().values()
     kld_cosine, cramer_cosine = s.avg_cosine_similarity().values()
     rows = []
-    rows.append("Algorithm | Dart σ | SSO σ | Avg. Jaccard Coefficient | Avg. Cosine Similarity")
-    rows.append("---|---|---|---|---")
-    rows.append(f"KLD | {kldDart_stdev:.6f} | {kldSSO_stdev:.6f} | {kld_jaccard:.2f} | {kld_cosine:.2f}")
-    rows.append(f"Cramer | {cramerDart_stdev:.6f} | {cramerSSO_stdev:.6f} | {sso_jaccard:.2f} | {cramer_cosine:.2f}")
+    rows.append("Algorithm | Dart σ | SSO σ | Avg. Jaccard Coefficient")
+    rows.append("---|---|---|---")
+    rows.append(f"KLD | {kldDart_stdev:.6f} | {kldSSO_stdev:.6f} | {kld_jaccard:.2f}")
+    rows.append(f"Cramer | {cramerDart_stdev:.6f} | {cramerSSO_stdev:.6f} | {sso_jaccard:.2f}")
 
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
