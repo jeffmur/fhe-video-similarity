@@ -8,18 +8,6 @@ import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/load_button.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/encrypt.dart';
 
-/// Used for preprocessing byte array for Cramer
-///
-List<double> cumulativeSum(List<double> list) {
-  List<double> result = [];
-  double sum = 0;
-  for (var i = 0; i < list.length; i++) {
-    sum += list[i];
-    result.add(sum);
-  }
-  return result;
-}
-
 class Config {
   PreprocessType type;
   FrameCount frameCount;
