@@ -31,12 +31,14 @@ class CompareScores:
         variance = sum((x - mean) ** 2 for x in data) / len(data)
         return math.sqrt(variance)
 
-    def jaccard(self, dart: Set, sso: Set) -> float:
-        intersection = len(dart.intersection(sso))
-        union = len(dart.union(sso))
+    def jaccard_coefficent(self, dart: List[float], sso: List[float]) -> float:
+        s_dart = set(dart)
+        s_sso = set(sso)
+        intersection = len(s_dart.intersection(s_sso))
+        union = len(s_dart.union(s_sso))
         return intersection / union if union != 0 else 0.0
 
-    def cosine(self, v1: List[float], v2: List[float]) -> float:
+    def cosine_similarity(self, v1: List[float], v2: List[float]) -> float:
         dot_product = sum(a * b for a, b in zip(v1, v2))
         magnitude_a = math.sqrt(sum(a ** 2 for a in v1))
         magnitude_b = math.sqrt(sum(b ** 2 for b in v2))
@@ -49,22 +51,31 @@ class CompareScores:
 class CompareAllScores:
     def __init__(self, directory: str):
         self._directory = directory
-        self._scores: Set[CompareScores] = set()
-        self._files = []
+        self.scores: dict[str, CompareScores] = {}
         for file in os.listdir(directory):
             if file.endswith('.csv'):
-                self._files.append(file)
-                self._scores.add(CompareScores(os.path.join(directory, file)))
-
-    @property
-    def scores(self) -> dict[str, CompareScores]:
-        return {file: score for file, score in sorted(zip(self._files, self._scores), key=lambda x: x[0])}
+                self.scores[file] = CompareScores(os.path.join(directory, file))
 
     def avg_standard_deviation(self) -> dict[str, float]:
+        scores = self.scores.values()
         return {
-            'kldDart_stdev': sum(score.standard_deviation(score.kldDart) for score in self._scores) / len(self._scores),
-            'kldSSO_stdev': sum(score.standard_deviation(score.kldSSO) for score in self._scores) / len(self._scores),
-            'cramerDart_stdev': sum(score.standard_deviation(score.cramerDart) for score in self._scores) / len(self._scores),
-            'cramerSSO_stdev': sum(score.standard_deviation(score.cramerSSO) for score in self._scores) / len(self._scores)
+            'kldDart_stdev': sum(score.standard_deviation(score.kldDart) for score in scores) / len(scores),
+            'kldSSO_stdev': sum(score.standard_deviation(score.kldSSO) for score in scores) / len(scores),
+            'cramerDart_stdev': sum(score.standard_deviation(score.cramerDart) for score in scores) / len(scores),
+            'cramerSSO_stdev': sum(score.standard_deviation(score.cramerSSO) for score in scores) / len(scores)
+        }
+
+    def avg_jaccard_coefficent(self) -> dict[str, float]:
+        scores = self.scores.values()
+        return {
+            'kld_jaccard': sum(score.jaccard_coefficent(score.kldDart, score.kldSSO) for score in scores) / len(scores),
+            'cramer_jaccard': sum(score.jaccard_coefficent(score.cramerDart, score.cramerSSO) for score in scores) / len(scores)
+        }
+    
+    def avg_cosine_similarity(self) -> dict[str, float]:
+        scores = self.scores.values()
+        return {
+            'kld_cosine': sum(score.cosine_similarity(score.kldDart, score.kldSSO) for score in scores) / len(scores),
+            'cramer_cosine': sum(score.cosine_similarity(score.cramerDart, score.cramerSSO) for score in scores) / len(scores)
         }
 
