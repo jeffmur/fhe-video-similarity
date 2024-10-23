@@ -16,6 +16,7 @@ Attributes:
 */
 
 import 'dart:io';
+import 'dart:math';
 import 'package:args/args.dart';
 import 'csv.dart';
 import '../similarity.dart';
@@ -34,6 +35,8 @@ import 'package:opencv_dart/opencv_dart.dart' as cv;
   3. Pre-process (--video) into 1 minute segments
     * Normalize each segment
 
+  4. Compare (--versus) two CSV files
+
 */
 void main(List<String> args) async {
   final parser = ArgParser()
@@ -43,6 +46,7 @@ void main(List<String> args) async {
     ..addOption('versus', help: 'Compare against another CSV file')
     ..addOption('output', abbr: 'o', help: 'Output file for results')
     ..addFlag('pcap', help: 'Compare Video to Pcap', negatable: false)
+    ..addFlag('normalized', help: 'Extract "Normalized" rows from csv', negatable: false)
     ..addFlag('scores', help: 'Calculate variance of scores', negatable: false)
     ..addFlag('help', abbr: 'h', help: 'Show help', negatable: false);
 
@@ -142,8 +146,8 @@ void main(List<String> args) async {
 
       // Write two rows for 'Video' (bytes) and 'Normalized' (sum of segments)
       //
-      rows.add("Video ($fps fps - $codec - ${duration.inSeconds}s), ${perSecond['bytes'].map((e) => e.join(',')).join(',')}");
-      rows.add("Normalized, ${perSecond['normalized'].join(',')}");
+      rows.add("Video ($fps fps - $codec - ${duration.inSeconds}s),${perSecond['bytes'].map((e) => e.join(',')).join(',')}");
+      rows.add("Normalized,${perSecond['normalized'].join(',')}");
       output.writeAsStringSync("${rows.join("\n")}\n", mode: FileMode.append);
     }
     else {
@@ -152,4 +156,63 @@ void main(List<String> args) async {
       print('Normalized: ${perSecond['normalized']}');
     }
   }
+
+  /*
+    Extract "Normalized" rows from a CSV file to generate supervised training data
+
+    Note: To accommodate varying sizes of each row, we will pad with 0s smaller than the largest row
+
+    Supports --versus for comparison of two CSV files
+
+    Usage: dart run lib/cli/main.dart --normalized --csv results/1_baseline/raw_data/1080p-original_data.csv
+        --output results/1_baseline/raw_data/1080p-similarity.csv
+
+    Same?, KLD, Cramer, Bhattacharyya
+    1, 0.1, 0.2, 0.3
+    0, 0.4, 0.5, 0.6
+    ...
+  */
+  else if(results['csv'] != null && results['normalized']) {
+    final data = OriginalData(results['csv']);
+
+    // Support comparison of one or two CSV files
+    final versus = results['versus'] != null ? OriginalData(results['versus']) : data;
+    final isSameCSV = results['versus'] == null;
+
+    // Find the largest row, pad other
+    final maxFrameSize = data.normalized.fold(0, (prev, e) => e.frames.length > prev ? e.frames.length : prev);
+
+    // Find the minimum number of rows to compare (used for exhaustive comparison)
+    final minRows = data.normalized.length < versus.normalized.length ? data.normalized.length : versus.normalized.length;
+
+    // Similarity Scores are generated between two rows
+    // When comparing one CSV file, when i == j is an exact match (1)
+    print('Same?, KLD, Cramer, Bhattacharyya');
+    for (var i = 0; i < minRows; i++) {
+      for (var j = 0; j < minRows; j++) {
+        List<double> p = sanitize(data.normalized[i].frames, maxFrameSize);
+        List<double> q = sanitize(versus.normalized[j].frames, maxFrameSize);
+        double kld = Similarity(SimilarityType.kld).score(p, q);
+        double cramer = Similarity(SimilarityType.cramer).score(p, q);
+        double bhattacharyya = Similarity(SimilarityType.bhattacharyya).score(p, q);
+        String scoreVector = "$kld, $cramer, $bhattacharyya";
+        if (isSameCSV && i == j) {
+          print('1, $scoreVector');
+        }
+        else {
+          print('0, $scoreVector');
+        }
+      }
+    }
+  }
+}
+
+/// Cast List<num> to List<double> pad with 0s, if necessary
+///
+List<double> sanitize(List<num> frames, int maxFrameSize) {
+  final sanitized = frames.map((e) => e.toDouble()).toList();
+  if (frames.length < maxFrameSize) {
+    sanitized.addAll(List.filled(maxFrameSize - frames.length, 0.0));
+  }
+  return sanitized;
 }
