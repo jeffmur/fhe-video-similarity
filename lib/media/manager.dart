@@ -7,7 +7,6 @@ import 'dart:convert';
 import 'storage.dart';
 import 'processor.dart';
 import 'cache.dart' as cache;
-import 'primatives.dart' show opencvInfo, resolveNestedValue;
 import 'video.dart' show Thumbnail, Video, VideoMeta, FrameCount;
 
 // Expose additional classes so caller doesn't have to import them separately
@@ -31,13 +30,6 @@ class Manager {
   Manager._internal();
 
   cache.Manifest get manifest => cache.manifest;
-
-  /// Backend library build information
-  String get backendInfo => opencvInfo;
-
-  /// Widget to display the backend library information
-  Widget get backendInfoWidget =>
-      Expanded(child: SingleChildScrollView(child: Text(backendInfo)));
 
   /// Select media from the gallery
   ///
@@ -115,7 +107,7 @@ class Manager {
   Future<XFileStorage> storeProcessedVideoCSV(
       Video video, PreprocessType type, FrameCount frameCount) async {
     final content =
-        await NormalizedByteArray(type).preprocess(video, frameCount);
+        await NormalizedByteArray(type).preprocess(video.stats, frameCount);
 
     final List<List<int>> bytes = content['bytes'];
     final List<double> normalized = content['normalized'];

@@ -19,6 +19,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'csv.dart';
 import '../similarity.dart';
+import '../media/processor.dart';
+import 'package:opencv_dart/opencv_dart.dart' as cv;
 
 /* Supported Use Cases:
   1. In-place (--pcap) comparison of each Video to complementary Pcap (same csv)
@@ -29,15 +31,19 @@ import '../similarity.dart';
     * Calculate standard deviation of each row pair
     * KLD, Cramer
 
+  3. Pre-process (--video) into 1 minute segments
+    * Normalize each segment
+
 */
-void main(List<String> args) {
+void main(List<String> args) async {
   final parser = ArgParser()
-    ..addOption('csv', abbr: 'f', help: 'CSV File to compare')
-    ..addOption('dir', abbr: 'd', help: 'Directory of CSV files') // Cannot be used with csv
-    ..addOption('versus', abbr: 'v', help: 'Compare against another CSV file')
+    ..addOption('video', help: 'Video file to process')
+    ..addOption('csv', help: 'CSV File to compare')
+    ..addOption('dir', help: 'Directory of CSV files') // Cannot be used with csv
+    ..addOption('versus', help: 'Compare against another CSV file')
     ..addOption('output', abbr: 'o', help: 'Output file for results')
-    ..addFlag('pcap', abbr: 'p', help: 'Compare Video to Pcap', negatable: false)
-    ..addFlag('scores', abbr: 's', help: 'Calculate variance of scores', negatable: false)
+    ..addFlag('pcap', help: 'Compare Video to Pcap', negatable: false)
+    ..addFlag('scores', help: 'Calculate variance of scores', negatable: false)
     ..addFlag('help', abbr: 'h', help: 'Show help', negatable: false);
 
   final results = parser.parse(args);
@@ -87,5 +93,63 @@ void main(List<String> args) {
       }
     }
   }
-  
+
+  /*
+    Slice each Video into 1 minute segments, extract byte counts, normalize each segment
+
+    Usage: dart run lib/cli/main.dart --video results/2_fov/raw/1080p-original.mp4
+
+    Requires: export OPENCV_DART_LIB_PATH="/path/to/libopencv_dart.so"
+  */
+  else if(results['video'] != null) {
+    String videoPath = results['video'];
+    if (!File(videoPath).existsSync()) {
+      print('FATAL: Cannot find --video $videoPath');
+      exit(1);
+    }
+    print('Processing video: $videoPath');
+    final video = cv.VideoCapture.fromFile(videoPath, apiPreference: cvApiPreference);
+    final totalFrames = frameCount(videoPath);
+    final fps = video.get(cv.CAP_PROP_FPS).toInt();
+    final codec = video.codec;
+    final duration = Duration(seconds: totalFrames ~/ fps);
+
+    final meta = VideoMeta(
+      name: videoPath.split('/').last,
+      path: videoPath,
+      extension: videoPath.split('.').last,
+      codec: codec,
+      fps: fps,
+      totalFrames: totalFrames,
+      duration: duration,
+      sha256: sha256ofBytes(video.read().$2.data, 8),
+      startFrame: 0,
+      endFrame: totalFrames,
+      encryptionStatus: 'plain',
+      created: DateTime.now(),
+      modified: DateTime.now()
+    );
+
+    // Normalize every frame within each 1 second segment of the video
+    final perSecond = await NormalizedByteArray(PreprocessType.sso)
+      .preprocess(meta, FrameCount.all, segment: const Duration(seconds: 1), maxConcurrency: 2);
+
+    // Write / Append to a CSV file
+    if(results['output'] != null) {
+      final output = File(results['output']);
+      output.createSync(recursive: true); // if it doesn't exist
+      final rows = [];
+
+      // Write two rows for 'Video' (bytes) and 'Normalized' (sum of segments)
+      //
+      rows.add("Video ($fps fps - $codec - ${duration.inSeconds}s), ${perSecond['bytes'].map((e) => e.join(',')).join(',')}");
+      rows.add("Normalized, ${perSecond['normalized'].join(',')}");
+      output.writeAsStringSync("${rows.join("\n")}\n", mode: FileMode.append);
+    }
+    else {
+      print('Duration (seconds): ${perSecond['bytes'].length}');
+      print('FPS: ${perSecond['bytes'][0].length}');
+      print('Normalized: ${perSecond['normalized']}');
+    }
+  }
 }

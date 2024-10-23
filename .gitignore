@@ -47,4 +47,6 @@ app.*.map.json
 /android/app/release
 
 # Experiments
-.mp4
+*.mp4
+*.so
+*.sh
