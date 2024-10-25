@@ -23,6 +23,17 @@ import '../similarity.dart';
 import '../media/processor.dart';
 import 'package:opencv_dart/opencv_dart.dart' as cv;
 
+void printOutput(String message, {String? outFile, bool append = true}) {
+  if (outFile != null) {
+    final output = File(outFile);
+    output.createSync(recursive: true); // if it doesn't exist
+    output.writeAsStringSync('$message\n', mode: append ? FileMode.append : FileMode.write);
+  }
+  else {
+    print(message);
+  }
+}
+
 /* Supported Use Cases:
   1. In-place (--pcap) comparison of each Video to complementary Pcap (same csv)
     * Compare distance measure implementation vs. SSO
@@ -180,14 +191,16 @@ void main(List<String> args) async {
     final isSameCSV = results['versus'] == null;
 
     // Find the largest row, pad other
-    final maxFrameSize = data.normalized.fold(0, (prev, e) => e.frames.length > prev ? e.frames.length : prev);
+    final dataMaxFrameSize = data.normalized.fold(0, (prev, e) => e.frames.length > prev ? e.frames.length : prev);
+    final versusMaxFrameSize = versus.normalized.fold(0, (prev, e) => e.frames.length > prev ? e.frames.length : prev);
+    final maxFrameSize = max(dataMaxFrameSize, versusMaxFrameSize);
 
     // Find the minimum number of rows to compare (used for exhaustive comparison)
     final minRows = data.normalized.length < versus.normalized.length ? data.normalized.length : versus.normalized.length;
 
     // Similarity Scores are generated between two rows
     // When comparing one CSV file, when i == j is an exact match (1)
-    print('Same?, KLD, Cramer, Bhattacharyya');
+    printOutput('Same?, KLD, Cramer, Bhattacharyya', outFile: results['output']);
     for (var i = 0; i < minRows; i++) {
       for (var j = 0; j < minRows; j++) {
         List<double> p = sanitize(data.normalized[i].frames, maxFrameSize);
@@ -197,10 +210,10 @@ void main(List<String> args) async {
         double bhattacharyya = Similarity(SimilarityType.bhattacharyya).score(p, q);
         String scoreVector = "$kld, $cramer, $bhattacharyya";
         if (isSameCSV && i == j) {
-          print('1, $scoreVector');
+          printOutput('1, $scoreVector', outFile: results['output']);
         }
         else {
-          print('0, $scoreVector');
+          printOutput('0, $scoreVector', outFile: results['output']);
         }
       }
     }
