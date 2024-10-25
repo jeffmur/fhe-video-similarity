@@ -1,4 +1,4 @@
-from utils.csv import CompareAllScores
+from results.utils.csvs import CompareAllScores
 import textwrap, matplotlib.pyplot as plt
 from IPython.display import Markdown
 import numpy as np

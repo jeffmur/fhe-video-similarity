@@ -1,4 +1,4 @@
-import csv, re
+import re
 from datetime import timedelta
 
 def dict_from_str(text: str) -> dict[str, str]:
