@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_fhe_video_similarity/logging.dart';
-import 'package:flutter_fhe_video_similarity/media/primatives.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:opencv_dart/opencv_dart.dart';
 
@@ -9,7 +8,7 @@ import 'image.dart';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
 
-import 'seal.dart';
+import '../seal.dart';
 import 'video.dart';
 export 'dart:io' show File;
 

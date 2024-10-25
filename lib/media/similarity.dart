@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'package:fhe_similarity_score/kld.dart' as kld;
 import 'package:fhe_similarity_score/bhattacharyya.dart' as bhattacharyya;
 import 'package:fhe_similarity_score/cramer.dart' as cramer;
-import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
-import 'seal.dart';
+import 'package:flutter_fhe_video_similarity/similarity.dart';
+import '../seal.dart';
 
 enum SimilarityType { kld, bhattacharyya, cramer }
 

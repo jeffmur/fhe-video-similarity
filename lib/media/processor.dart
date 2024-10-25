@@ -1,9 +1,11 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:pool/pool.dart';
-import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
-import 'video.dart';
+import 'video_meta.dart';
+import 'video_opencv.dart';
+
+export 'video_meta.dart';
+export 'video_opencv.dart';
 
 String sha256ofBytes(Uint8List bytes, int chars) =>
     sha256.convert(bytes).toString().substring(0, chars);
@@ -21,15 +23,14 @@ class NormalizedByteArray {
   ///
   /// Returns a map of startFrame to normalized byte arrays
   ///
-  Future<Map> preprocess(Video video, FrameCount frameCount,
-      {Duration segment = const Duration(seconds: 1)}) async {
-    // Tradeoff: Higher concurrency leads to more memory usage
-    // Findings: Multi-threading unstable on mobile, high failure rate
-    final maxConcurrency = (Platform.isAndroid || Platform.isIOS) ? 1 : 1;
+  Future<Map> preprocess(VideoMeta meta, FrameCount frameCount,
+      {Duration segment = const Duration(seconds: 1),
+       int maxConcurrency = 1}) async {
+
     switch (type) {
       case PreprocessType.sso:
         List<List<int>> bytes = await countBytesInVideoSegment(
-            video, segment, frameCount,
+            meta, segment, frameCount,
             maxConcurrency: maxConcurrency);
 
         // For this algorithm, first calculate the sum of each segment
@@ -40,10 +41,11 @@ class NormalizedByteArray {
         final normalized = normalizeSumOfElements(sumOfFrameSegments);
 
         // Align each segment with timestamp
-        final timestamps = timestampsFromSegment(video.stats, segment);
+        final timestamps = timestampsFromSegment(meta, segment);
 
         return {
           'bytes': bytes,
+          'sumOfSegments': sumOfFrameSegments,
           'normalized': normalized,
           'timestamps': timestamps,
         };
@@ -82,19 +84,18 @@ List<double> normalizeSumOfElements(List<int> values) {
 /// Count the number of bytes within each video segment with limited concurrency
 ///
 Future<List<List<int>>> countBytesInVideoSegment(
-    Video video, Duration segment, FrameCount frameCount,
+    VideoMeta meta, Duration segment, FrameCount frameCount,
     {int maxConcurrency = 2}) async {
   var frameRangesFromSegment =
-      frameIndexFromSegment(video.stats, segment, frameCount);
+      frameIndexFromSegment(meta, segment, frameCount);
 
   // Create a pool to limit concurrency
   final pool = Pool(maxConcurrency);
 
   // Create a list of futures, limiting concurrency using pool.withResource
-  List<Future<List<int>>> byteLengthFutures =
-      frameRangesFromSegment.map((range) async {
+  List<Future<List<int>>> byteLengthFutures = frameRangesFromSegment.map((range) async {
     return await pool.withResource(() async {
-      return await video.probeFrameSizes(frameIds: range);
+      return await probeFrameSizes(FrameIsolate(range, meta.path));
     });
   }).toList();
 

@@ -1,0 +1,14 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-10-01T20:52:38.086Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=2500;
+2024-10-01T20:52:38.135Z;INFO;Loaded Video in 51ms {name: White_720p_100s.mp4, extension: mp4, created: 2024-10-01T20:52:28.000, modified: 2024-10-01T20:52:38.083211, path: /home/jeffmur/Videos/StaticColors/720p/White_720p_100s.mp4, codec: h264, fps: 25, totalFrames: 2500, sha256: 690b027f, durationSeconds: 100, startFrame: 0, endFrame: 2500, encryptionStatus: plain};690b027f-1727841148000
+2024-10-01T20:52:38.740Z;INFO;Cached Video in 605ms;690b027f-1727841148000
+2024-10-01T20:53:04.364Z;DEBUG;Trimming 0:04:10.000000 from the end;
+2024-10-01T20:53:04.365Z;DEBUG;Trimming 7500 frames from the end (10500 => 3000);
+2024-10-01T20:53:04.365Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=3000;
+2024-10-01T20:53:27.745Z;METRIC;⚙️ Processed in 17s {type: sso, frameCount: firstLast, durationSeconds: 100, frameRange: 0 - 2500 };690b027f-1727841148000
+2024-10-01T20:53:38.160Z;METRIC;📊 KLD => 0.1293161666939467 Plaintext Score took 19µs;
+2024-10-01T20:53:38.160Z;METRIC;📊 Bhattacharyya => 0.966613153054562 Plaintext Score took 13µs;
+2024-10-01T20:53:38.161Z;METRIC;📊 Cramer => 0.46179450991352694 Plaintext Score took 22µs;
+2024-10-01T20:53:39.899Z;METRIC;📊 KLD => 0.12931616610639035 Ciphertext Score in total: 307ms, encryptX: 119ms, encryptLogX: 119ms, computeScore: 68ms;
+2024-10-01T20:53:40.200Z;METRIC;📊 Bhattacharyya => 0.9666131528468132 Ciphertext Score in total: 301ms, encryptX: 130ms, encryptSqrtX: 122ms, computeScore: 48ms;
+2024-10-01T20:53:40.508Z;METRIC;📊 Cramer => 0.4617945092160455 Ciphertext Score in total: 305ms, encryptCumulativeSumX: 119ms, computeScore: 185ms;

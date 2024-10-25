@@ -1,0 +1,20 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-10-01T19:35:29.947Z;WARNING;Manifest not found;
+2024-10-01T19:35:36.770Z;WARNING;Manifest not found;
+2024-10-01T19:35:43.419Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=9240;
+2024-10-01T19:35:43.482Z;INFO;Loaded Video in 164ms {name: RGB_720p_Fade_Single.mp4, extension: mp4, created: 2024-10-01T19:35:39.000, modified: 2024-10-01T19:35:43.317465, path: /home/jeffmur/Videos/RGB/720p/RGB_720p_Fade_Single.mp4, codec: h264, fps: 30, totalFrames: 9263, sha256: 72d33436, durationSeconds: 308, startFrame: 0, endFrame: 9240, encryptionStatus: plain};72d33436-1727836539000
+2024-10-01T19:35:43.850Z;INFO;Cached Video in 370ms;72d33436-1727836539000
+2024-10-01T19:35:49.542Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=250;
+2024-10-01T19:35:49.583Z;INFO;Loaded Video in 56ms {name: Black_720p.mp4, extension: mp4, created: 2024-10-01T19:35:45.000, modified: 2024-10-01T19:35:49.526121, path: /home/jeffmur/Downloads/Black_720p.mp4, codec: h264, fps: 25, totalFrames: 250, sha256: 822e3a31, durationSeconds: 10, startFrame: 0, endFrame: 250, encryptionStatus: plain};822e3a31-1727836545000
+2024-10-01T19:35:49.842Z;INFO;Cached Video in 258ms;822e3a31-1727836545000
+2024-10-01T19:36:05.657Z;DEBUG;Trimming 0:04:58.000000 from the end;
+2024-10-01T19:36:05.658Z;DEBUG;Trimming 8940 frames from the end (9240 => 300);
+2024-10-01T19:36:05.658Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=300;
+2024-10-01T19:36:06.913Z;METRIC;⚙️ Processed in 597ms {type: sso, frameCount: firstLast, durationSeconds: 10, frameRange: 0 - 300 };72d33436-1727836539000
+2024-10-01T19:36:08.142Z;METRIC;⚙️ Processed in 480ms {type: sso, frameCount: firstLast, durationSeconds: 10, frameRange: 0 - 250 };822e3a31-1727836545000
+2024-10-01T19:36:12.810Z;METRIC;📊 KLD => 0.04884456991603245 Plaintext Score took 810µs;
+2024-10-01T19:36:12.811Z;METRIC;📊 Bhattacharyya => 0.986550795884689 Plaintext Score took 132µs;
+2024-10-01T19:36:12.811Z;METRIC;📊 Cramer => 0.24870992037041412 Plaintext Score took 250µs;
+2024-10-01T19:36:14.696Z;METRIC;📊 KLD => 0.048844566159372625 Ciphertext Score in total: 42ms, encryptX: 18ms, encryptLogX: 12ms, computeScore: 10ms;
+2024-10-01T19:36:14.727Z;METRIC;📊 Bhattacharyya => 0.9865507964210607 Ciphertext Score in total: 30ms, encryptX: 12ms, encryptSqrtX: 12ms, computeScore: 6ms;
+2024-10-01T19:36:14.760Z;METRIC;📊 Cramer => 0.2487099203810865 Ciphertext Score in total: 33ms, encryptCumulativeSumX: 12ms, computeScore: 20ms;
