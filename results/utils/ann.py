@@ -60,8 +60,12 @@ def _score_model(clf: MLPClassifier, X_test, y_test) -> dict:
         'y_pred_proba': y_pred_proba,
     }
 
-def train_test_ann(data: pd.DataFrame) -> dict:
-    X_train, X_test, y_train, y_test = _split_train_test(data).values()
+def train_test_ann(train: pd.DataFrame, test=None) -> dict:
+    if test is None:
+        X_train, X_test, y_train, y_test = _split_train_test(train).values()
+    else:
+        X_train, y_train = train.iloc[:, 1:], train.iloc[:, 0]
+        X_test, y_test = test.iloc[:, 1:], test.iloc[:, 0]
 
     # Initialize and train the model
     # MLPClassifier is a simple feedforward artificial neural network (ANN)
@@ -74,8 +78,12 @@ def train_test_ann(data: pd.DataFrame) -> dict:
 # from sklearn.externals import joblib
 # joblib.dump(clf, 'best_model.pkl')
 
-def grid_search_ann(data: pd.DataFrame) -> dict:
-    X_train, X_test, y_train, y_test = _split_train_test(data).values()
+def grid_search_ann(train: pd.DataFrame, test=None) -> dict:
+    if test is None:
+        X_train, X_test, y_train, y_test = _split_train_test(train).values()
+    else:
+        X_train, y_train = train.iloc[:, 1:], train.iloc[:, 0]
+        X_test, y_test = test.iloc[:, 1:], test.iloc[:, 0]
 
     # MLPClassifier is a simple feedforward artificial neural network (ANN)
     clf = MLPClassifier(max_iter=1000, random_state=42)
