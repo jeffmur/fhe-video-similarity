@@ -81,13 +81,16 @@ class CompareAllScores:
         }
 
 class TrainSimilarityScores:
-    def __init__(self, include_pattern:str, exclude_pattern:str=None):
+    def __init__(self, include_pattern:str, exclude_pattern:str=None, exclude_patterns:List[str]=None):
         self.isSame: List[bool] = []
         self.kld: List[float] = []
         self.cramer: List[float] = []
         self.bhattacharyya: List[float] = []
 
         exclude_files = glob.glob(exclude_pattern) if exclude_pattern else []
+        if exclude_patterns:
+            for pattern in exclude_patterns:
+                exclude_files.extend(glob.glob(pattern))
 
         for filename in glob.glob(include_pattern):
             if filename in exclude_files:
