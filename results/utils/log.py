@@ -1,4 +1,4 @@
-import re
+import re, csv
 from datetime import timedelta
 
 def dict_from_str(text: str) -> dict[str, str]:
@@ -209,9 +209,9 @@ class ImportSimilarityScores():
         scores = list(self.parser.filter_by_similarity_algorithm(algorithm, SimilarityScoreMetric))
         return sum([i.score for i in scores]) / len(scores)
 
-    def score_diff(self, algorithm: str) -> float:
+    def score_mean_error(self, algorithm: str) -> float:
         """
-        Compare the similarity scores of the baseline and ciphertext for a given algorithm.
+        Calculate the mean absolute error between the baseline and ciphertext similarity scores for a given algorithm.
         """
         baseline = list(self.parser.filter_by_similarity_algorithm(algorithm, BaselineSimilarityScoreMetric))
         ciphertext = list(self.parser.filter_by_similarity_algorithm(algorithm, CiphertextSimilarityScoreMetric))
@@ -224,7 +224,8 @@ class ImportSimilarityScores():
           print(f"Baseline scores: {[i.score for i in baseline]}")
           print(f"Ciphertext scores: {[i.score for i in ciphertext]}")
 
-        return abs(sum([i.score for i in baseline]) - sum([i.score for i in ciphertext]))
+        error = [(abs(i.score - j.score)) for i, j in zip(baseline, ciphertext)]
+        return sum(error) / len(error)
     
     def pp_duration_s(self, frameCount:str) -> float:
         """

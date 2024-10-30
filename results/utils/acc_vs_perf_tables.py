@@ -43,6 +43,33 @@ def compute_metrics(pathToAssertion:str, os=TARGET_SYS, frameCounts=FRAME_COUNTS
         'cramer': {'score': cramer, 'score_perc': cramer_perc, 'err': cramer_err, 'pp': pp, 'enc': cramer_enc, 'fhe': cramer_fhe, 'pt': cramer_pt, 'diff': cramer_diff, 'diff_perc': cramer_diff_perc}
     }
 
+def mean_error(pathToAssertion:str, os=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
+    """
+    Returns the average of the absolute errors for each metric.
+    """
+    kld, bhattacharyya, cramer = compute_metrics(pathToAssertion, os, frameCounts).values()
+    return {
+        'kld': kld['err'],
+        'bhattacharyya': bhattacharyya['err'],
+        'cramer': cramer['err']
+    }
+
+def mean_error_md_table(kld_err:list, bhattacharyya_err:list, cramer_err:list) -> Markdown:
+    """
+    Returns a markdown table with the mean errors for each metric.
+    """
+    kld_m_err = sum(kld_err) / len(kld_err)
+    bhattacharyya_m_err = sum(bhattacharyya_err) / len(bhattacharyya_err)
+    cramer_m_err = sum(cramer_err) / len(cramer_err)
+    rows = []
+    rows.append("Function | Mean Error")
+    rows.append("---|---")
+    rows.append(f"KLD | {kld_m_err:.2e}")
+    rows.append(f"Cramer | {cramer_m_err:.2e}")
+    rows.append(f"BC | {bhattacharyya_m_err:.2e}")
+
+    return Markdown(textwrap.dedent('\n'.join(rows)))
+
 def _verbose_md_row(metric:str, os:str, frameCount:str, data:dict):
     return f"{metric} [{os}] [{frameCount}] | {data['score']:.2e} [{data['score_perc']:.2f}%] | {data['err']:.2e} | {data['pp']:.2f} | {data['enc']:.2f} | {data['fhe']:.2f} | {data['pt']:.2f} | {data['diff']:.2f} [{data['diff_perc']:.2f}%]"
 
@@ -51,7 +78,7 @@ def verbose_md_table(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUN
     Returns a markdown table with the similarity scores for each metric.
     """
     rows = []
-    rows.append("Similarity [sys] [frameCount] | Score [%] | Mean FHE Absolute Error | Pre-processing (s) | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms) | FHE/Plain Compute Growth (ms) [%]")
+    rows.append("Similarity [sys] [frameCount] | Score [%] | FHE Absolute Error | Pre-processing (s) | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms) | FHE/Plain Compute Growth (ms) [%]")
     rows.append("---|---|---|---|---|---|---|---")
     for s in sys:
         if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
@@ -71,7 +98,7 @@ def mean_md_table(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS)
     Returns a markdown table with the average of all assertions
     """
     rows = []
-    rows.append("Similarity [sys] | Score [%] | Mean Absolute Error | Pre-processing (s) | Encryption (ms) | FHE/Plain Compute Growth (ms) [%]")
+    rows.append("Similarity [sys] | Score [%] | Mean FHE Absolute Error | Pre-processing (s) | Encryption (ms) | FHE/Plain Compute Growth (ms) [%]")
     rows.append("---|---|---|---|---|---")
     for s in sys:
         if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
