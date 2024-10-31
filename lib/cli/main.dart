@@ -56,6 +56,7 @@ void main(List<String> args) async {
     ..addOption('dir', help: 'Directory of CSV files') // Cannot be used with csv
     ..addOption('versus', help: 'Compare against another CSV file')
     ..addOption('output', abbr: 'o', help: 'Output file for results')
+    ..addFlag('visual-similarity', help: 'Visually Similar videos')
     ..addFlag('pcap', help: 'Compare Video to Pcap', negatable: false)
     ..addFlag('normalized', help: 'Extract "Normalized" rows from csv', negatable: false)
     ..addFlag('scores', help: 'Calculate variance of scores', negatable: false)
@@ -189,6 +190,7 @@ void main(List<String> args) async {
     // Support comparison of one or two CSV files
     final versus = results['versus'] != null ? OriginalData(results['versus']) : data;
     final isSameCSV = results['versus'] == null;
+    final areSimilar = results['visual-similarity'] ?? false;
 
     // Find the largest row, pad other
     final dataMaxFrameSize = data.normalized.fold(0, (prev, e) => e.frames.length > prev ? e.frames.length : prev);
@@ -210,6 +212,12 @@ void main(List<String> args) async {
         double bhattacharyya = Similarity(SimilarityType.bhattacharyya).score(p, q);
         String scoreVector = "$kld, $cramer, $bhattacharyya";
         if (isSameCSV && i == j) {
+          printOutput('1, $scoreVector', outFile: results['output']);
+        }
+        // Brent's Flexible Label (--visual-similarity)
+        // 1 - Two different videos are visually aligned and were recorded at the same time and place
+        // 2 - Assigns 1 to the first pair of segments, 0 to the rest
+        else if (areSimilar && i == 0 && j == 0) {
           printOutput('1, $scoreVector', outFile: results['output']);
         }
         else {
