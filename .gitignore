@@ -49,4 +49,3 @@ app.*.map.json
 # Experiments
 *.mp4
 *.so
-*.sh
