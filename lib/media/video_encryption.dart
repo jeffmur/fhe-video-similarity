@@ -93,7 +93,6 @@ class CiphertextVideo extends UploadedMedia implements Video {
   @override
   Future<void> cache() async {} // [ctFrames] are already cached
 
-  @override
   int get frameCount => meta.totalFrames;
 
   @override
@@ -135,13 +134,11 @@ class CiphertextVideo extends UploadedMedia implements Video {
     return Image.fromBytes(Uint8List(0), DateTime.now(), meta.path, filename);
   }
 
-  @override
   Future<List<Uint8List>> probeFrames(
       {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
     throw UnsupportedError('CiphertextVideo does not support frames');
   }
 
-  @override
   Future<List<int>> probeFrameSizes(
       {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
     throw UnsupportedError('CiphertextVideo does not support frames');
