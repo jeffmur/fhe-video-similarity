@@ -26,7 +26,7 @@ class CompareScores:
             'cramerDart': self.cramerDart,
             'cramerSSO': self.cramerSSO
         }
-    
+
     def standard_deviation(self, data: List[float]) -> float:
         mean = sum(data) / len(data)
         variance = sum((x - mean) ** 2 for x in data) / len(data)
@@ -72,7 +72,7 @@ class CompareAllScores:
             'kld_jaccard': sum(score.jaccard_coefficent(score.kldDart, score.kldSSO) for score in scores) / len(scores),
             'cramer_jaccard': sum(score.jaccard_coefficent(score.cramerDart, score.cramerSSO) for score in scores) / len(scores)
         }
-    
+
     def avg_cosine_similarity(self) -> dict[str, float]:
         scores = self.scores.values()
         return {
@@ -82,10 +82,12 @@ class CompareAllScores:
 
 class TrainSimilarityScores:
     def __init__(self, include_pattern:str, exclude_pattern:str=None, exclude_patterns:List[str]=None):
-        self.isSame: List[bool] = []
-        self.kld: List[float] = []
-        self.cramer: List[float] = []
-        self.bhattacharyya: List[float] = []
+        self.kldSame: List[float] = []
+        self.cramerSame: List[float] = []
+        self.bhattacharyyaSame: List[float] = []
+        self.kldDiff: List[float] = []
+        self.cramerDiff: List[float] = []
+        self.bhattacharyyaDiff: List[float] = []
 
         exclude_files = glob.glob(exclude_pattern) if exclude_pattern else []
         if exclude_patterns:
@@ -100,60 +102,126 @@ class TrainSimilarityScores:
                 lines = file.readlines()
                 for line in lines[1:]: # Drop headers
                     parts = line.strip().split(',')
-                    self.isSame.append(parts[0] == '1')
-                    self.kld.append(float(parts[1]))
-                    self.cramer.append(float(parts[2]))
-                    self.bhattacharyya.append(float(parts[3]))
+                    isSame = parts[0] == '1'
+                    k, c, b = map(float, parts[1:])
+                    if isSame:
+                        self.kldSame.append(k)
+                        self.cramerSame.append(c)
+                        self.bhattacharyyaSame.append(b)
+                    else:
+                        self.kldDiff.append(k)
+                        self.cramerDiff.append(c)
+                        self.bhattacharyyaDiff.append(b)
 
-    def average_score(self) -> dict[str, float]:
+                # print(f"Processed {filename}")
+                # print(f"Same: {len(self.kldSame)}")
+                # print(f"Different: {len(self.kldDiff)}")
+
+
+    def average_score(self, same:bool) -> dict[str, float]:
+        kld = self.kldSame if same else self.kldDiff
+        cramer = self.cramerSame if same else self.cramerDiff
+        bhattacharyya = self.bhattacharyyaSame if same else self.bhattacharyyaDiff
         return {
-            'avg_kld': sum(self.kld) / len(self.kld),
-            'avg_cramer': sum(self.cramer) / len(self.cramer),
-            'avg_bhattacharyya': sum(self.bhattacharyya) / len(self.bhattacharyya)
+            'avg_kld': sum(kld) / len(kld),
+            'avg_cramer': sum(cramer) / len(cramer),
+            'avg_bhattacharyya': sum(bhattacharyya) / len(bhattacharyya)
         }
-    
-    def minimum_score(self) -> dict[str, float]:
+
+    def minimum_score(self, same:bool) -> dict[str, float]:
+        kld = self.kldSame if same else self.kldDiff
+        cramer = self.cramerSame if same else self.cramerDiff
+        bhattacharyya = self.bhattacharyyaSame if same else self.bhattacharyyaDiff
         return {
-            'min_kld': min(self.kld),
-            'min_cramer': min(self.cramer),
-            'min_bhattacharyya': min(self.bhattacharyya)
+            'min_kld': min(kld),
+            'min_cramer': min(cramer),
+            'min_bhattacharyya': min(bhattacharyya)
         }
-    
-    def maximum_score(self) -> dict[str, float]:
+
+    def maximum_score(self, same:bool) -> dict[str, float]:
+        kld = self.kldSame if same else self.kldDiff
+        cramer = self.cramerSame if same else self.cramerDiff
+        bhattacharyya = self.bhattacharyyaSame if same else self.bhattacharyyaDiff
         return {
-            'max_kld': max(self.kld),
-            'max_cramer': max(self.cramer),
-            'max_bhattacharyya': max(self.bhattacharyya)
+            'max_kld': max(kld),
+            'max_cramer': max(cramer),
+            'max_bhattacharyya': max(bhattacharyya)
         }
-    
+
     def _standard_deviation(self, data: List[float]) -> float:
         mean = sum(data) / len(data)
         variance = sum((x - mean) ** 2 for x in data) / len(data)
         return math.sqrt(variance)
 
-    def standard_deviation(self) -> dict[str, float]:
+    def standard_deviation(self, same:bool) -> dict[str, float]:
+        kld = self.kldSame if same else self.kldDiff
+        cramer = self.cramerSame if same else self.cramerDiff
+        bhattacharyya = self.bhattacharyyaSame if same else self.bhattacharyyaDiff
         return {
-            'stdev_kld': self._standard_deviation(self.kld),
-            'stdev_cramer': self._standard_deviation(self.cramer),
-            'stdev_bhattacharyya': self._standard_deviation(self.bhattacharyya)
+            'stdev_kld': self._standard_deviation(kld),
+            'stdev_cramer': self._standard_deviation(cramer),
+            'stdev_bhattacharyya': self._standard_deviation(bhattacharyya)
         }
-    
-    def standard_error(self) -> dict[str, float]:
+
+    def standard_error(self, same:bool) -> dict[str, float]:
+        kld = self.kldSame if same else self.kldDiff
+        cramer = self.cramerSame if same else self.cramerDiff
+        bhattacharyya = self.bhattacharyyaSame if same else self.bhattacharyyaDiff
+        stdev_kld = self._standard_deviation(kld)
+        stdev_cramer = self._standard_deviation(cramer)
+        stdev_bhattacharyya = self._standard_deviation(bhattacharyya)
         return {
-            'se_kld': self.standard_deviation()['stdev_kld'] / math.sqrt(len(self.kld)),
-            'se_cramer': self.standard_deviation()['stdev_cramer'] / math.sqrt(len(self.cramer)),
-            'se_bhattacharyya': self.standard_deviation()['stdev_bhattacharyya'] / math.sqrt(len(self.bhattacharyya))
+            'se_kld': stdev_kld / math.sqrt(len(kld)),
+            'se_cramer': stdev_cramer / math.sqrt(len(cramer)),
+            'se_bhattacharyya': stdev_bhattacharyya / math.sqrt(len(bhattacharyya))
         }
-    
-    def summary_table(self) -> Markdown:
-        rows = ["Metric | Average | Minimum | Maximum | St. Dev. | St. Error"]
+
+    def scene_metrics(self, include_same=True, include_different=True) -> dict:
+        metrics = {}
+        if include_same:
+            metrics['same'] = {
+                'average': self.average_score(True),
+                'minimum': self.minimum_score(True),
+                'maximum': self.maximum_score(True),
+                'standard_deviation': self.standard_deviation(True),
+                'standard_error': self.standard_error(True)
+            }
+        if include_different:
+            metrics['different'] = {
+                'average': self.average_score(False),
+                'minimum': self.minimum_score(False),
+                'maximum': self.maximum_score(False),
+                'standard_deviation': self.standard_deviation(False),
+                'standard_error': self.standard_error(False)
+            }
+        return metrics
+
+    def summary_table(self, include_same=True, include_different=True) -> Markdown:
+        rows = ["Metric [Scene] | Average | Minimum | Maximum | St. Dev. | St. Error"]
         rows.append("---|---|---|---|---|---")
-        min_kld, min_cramer, min_bhattacharyya = self.minimum_score().values()
-        max_kld, max_cramer, max_bhattacharyya = self.maximum_score().values()
-        avg_kld, avg_cramer, avg_bhattacharyya = self.average_score().values()
-        stdev_kld, stdev_cramer, stdev_bhattacharyya = self.standard_deviation().values()
-        se_kld, se_cramer, se_bhattacharyya = self.standard_error().values()
-        rows.append(f'KLD | {avg_kld:.9f} | {min_kld:.9f} | {max_kld:.9f} | {stdev_kld:.9f} | {se_kld:.9f}')
-        rows.append(f'Cramer | {avg_cramer:.9f} | {min_cramer:.9f} | {max_cramer:.9f} | {stdev_cramer:.9f} | {se_cramer:.9f}')
-        rows.append(f'Bhattacharyya | {avg_bhattacharyya:.9f} | {min_bhattacharyya:.9f} | {max_bhattacharyya:.9f} | {stdev_bhattacharyya:.9f} | {se_bhattacharyya:.9f}')
+        metrics = self.scene_metrics(include_same, include_different)
+        if include_same:
+            same = metrics['same']
+            same_avg_kld, same_avg_cramer, same_avg_bhattacharyya = same['average'].values()
+            same_min_kld, same_min_cramer, same_min_bhattacharyya = same['minimum'].values()
+            same_max_kld, same_max_cramer, same_max_bhattacharyya = same['maximum'].values()
+            same_stdev_kld, same_stdev_cramer, same_stdev_bhattacharyya = same['standard_deviation'].values()
+            same_se_kld, same_se_cramer, same_se_bhattacharyya = same['standard_error'].values()
+
+            rows.append(f"KLD [Same] | {same_avg_kld:.6f} | {same_min_kld:.6f} | {same_max_kld:.6f} | {same_stdev_kld:.6f} | {same_se_kld:.6f}")
+            rows.append(f"Cramer [Same] | {same_avg_cramer:.6f} | {same_min_cramer:.6f} | {same_max_cramer:.6f} | {same_stdev_cramer:.6f} | {same_se_cramer:.6f}")
+            rows.append(f"Bhattacharyya [Same] | {same_avg_bhattacharyya:.6f} | {same_min_bhattacharyya:.6f} | {same_max_bhattacharyya:.6f} | {same_stdev_bhattacharyya:.6f} | {same_se_bhattacharyya:.6f}")
+
+        if include_different:
+            different = metrics['different']
+            diff_avg_kld, diff_avg_cramer, diff_avg_bhattacharyya = different['average'].values()
+            diff_min_kld, diff_min_cramer, diff_min_bhattacharyya = different['minimum'].values()
+            diff_max_kld, diff_max_cramer, diff_max_bhattacharyya = different['maximum'].values()
+            diff_stdev_kld, diff_stdev_cramer, diff_stdev_bhattacharyya = different['standard_deviation'].values()
+            diff_se_kld, diff_se_cramer, diff_se_bhattacharyya = different['standard_error'].values()
+
+            rows.append(f"KLD [Different] | {diff_avg_kld:.6f} | {diff_min_kld:.6f} | {diff_max_kld:.6f} | {diff_stdev_kld:.6f} | {diff_se_kld:.6f}")
+            rows.append(f"Cramer [Different] | {diff_avg_cramer:.6f} | {diff_min_cramer:.6f} | {diff_max_cramer:.6f} | {diff_stdev_cramer:.6f} | {diff_se_cramer:.6f}")
+            rows.append(f"Bhattacharyya [Different] | {diff_avg_bhattacharyya:.6f} | {diff_min_bhattacharyya:.6f} | {diff_max_bhattacharyya:.6f} | {diff_stdev_bhattacharyya:.6f} | {diff_se_bhattacharyya:.6f}")
+
         return Markdown('\n'.join(rows))

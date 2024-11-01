@@ -1,4 +1,4 @@
-from results.utils.csvs import CompareAllScores
+from utils.csvs import CompareAllScores
 import textwrap, matplotlib.pyplot as plt
 from IPython.display import Markdown
 import numpy as np
@@ -61,16 +61,20 @@ def plot_kld_cramer_bar_chart(pathToDir:str):
     width = 0.35
 
     # Plotting the bars for Dart and SSO separately but next to each other
-    ax.bar(x - width/2, dart, width, label='Dart')
-    ax.bar(x + width/2, sso, width, label='SSO')
+    bars_dart = ax.bar(x - width/2, dart, width, label='Dart')
+    bars_sso = ax.bar(x + width/2, sso, width, label='SSO')
 
     # Adding some text for labels, title and axes ticks
     ax.set_xlabel('Algorithms')
-    ax.set_ylabel('Scores')
-    ax.set_title('Comparison of Similarity Metrics')
+    ax.set_ylabel('Standard Deviation')
+    ax.set_title('Comparison of Distance Measures')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
+
+    # Adding labels on top of each bar
+    ax.bar_label(bars_dart, fmt='%.2f')
+    ax.bar_label(bars_sso, fmt='%.2f')
 
     # Display the plot
     plt.show()
