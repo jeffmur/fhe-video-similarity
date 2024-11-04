@@ -1,6 +1,7 @@
 import glob
 import pandas as pd
 import matplotlib.pyplot as plt
+from IPython.display import Markdown
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import GridSearchCV
@@ -58,6 +59,12 @@ def _score_model(clf: MLPClassifier, X_test, y_test) -> dict:
         'y_test': y_test,
         'y_pred': y_pred,
         'y_pred_proba': y_pred_proba,
+        'results': {
+            'accuracy': accuracy,
+            'precision': precision,
+            'recall': recall,
+            'f1': f1
+        }
     }
 
 def train_test_ann(train: pd.DataFrame, test=None) -> dict:
@@ -134,3 +141,13 @@ def confusionMatrix(y_test, y_pred):
     plt.ylabel('True labels')
     plt.title('Confusion Matrix')
     plt.show()
+
+def train_test_md_table(results:list[dict]) -> Markdown:
+    rows = []
+    rows.append("Label | Accuracy | Precision | Recall | F1 Score")
+    rows.append("---|---|---|---|---")
+    for result in results:
+        for label, vals in result.items():
+            rows.append(f"{label} | {vals['accuracy'] * 100:.2f} | {vals['precision'] * 100:.2f} | {vals['recall'] * 100:.2f} | {vals['f1'] * 100:.2f}")
+
+    return Markdown('\n'.join(rows))
