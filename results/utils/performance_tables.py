@@ -83,6 +83,33 @@ def pre_processing_by_res_md_table(results:dict) -> Markdown:
         rows.append(f"{res} | {(sum(pp) / len(pp)):.2f} | {min(pp):.2f} | {max(pp):.2f}")
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
+def operations_by_sys(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
+    """
+    Returns the sum of alg duration of operations for each system.
+    """
+    results = {}
+    for s in sys:
+        if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
+        results[s] = {
+            'encryption': sum(mean_encryption_duration_ms(pathToAssertion, [s], frameCounts).values()),
+            'fhe_compute': sum(mean_fhe_compute_score_ms(pathToAssertion, [s], frameCounts).values()),
+            'pt_compute': sum(mean_pt_compute_score_ms(pathToAssertion, [s], frameCounts).values())
+        }
+    return results
+
+def operations_by_sys_md_table(results:dict) -> Markdown:
+    """
+    Returns a markdown table with the sum of alg duration of operations for each system.
+    """
+    rows = []
+    rows.append("System | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
+    rows.append("---|---|---|---")
+    for sys, ops in results.items():
+        enc = sum(ops['encryption']) / len(ops['encryption'])
+        fhe = sum(ops['fhe_compute']) / len(ops['fhe_compute'])
+        pt = sum(ops['pt_compute']) / len(ops['pt_compute'])
+        rows.append(f"{sys} | {enc:.2f} | {fhe:.2f} | {pt:.2f}")
+    return Markdown(textwrap.dedent('\n'.join(rows)))
 
 def mean_error(pathToAssertion:str, os=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
     """
