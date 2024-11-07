@@ -1,0 +1,60 @@
+Timestamp;LogLevel;Message;CorrelationId
+2024-11-05T17:36:24.351Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
+2024-11-05T17:36:24.722Z;INFO;Loaded Video in 452ms {name: Black_2160p_60s.mp4, extension: mp4, created: 2024-11-05T17:36:11.000, modified: 2024-11-05T17:36:24.275725, path: /home/jeffmur/Videos/Performance/Black_2160p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 5319c5a4, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};5319c5a4-1730856971000
+2024-11-05T17:36:25.295Z;INFO;Cached Video in 576ms;5319c5a4-1730856971000
+2024-11-05T17:36:46.434Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
+2024-11-05T17:36:46.757Z;INFO;Loaded Video in 344ms {name: Black_2160p_60s.mp4, extension: mp4, created: 2024-11-05T17:36:38.000, modified: 2024-11-05T17:36:46.412988, path: /home/jeffmur/Videos/Performance/Black_2160p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 5319c5a4, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};5319c5a4-1730856998000
+2024-11-05T17:36:47.423Z;INFO;Cached Video in 665ms;5319c5a4-1730856998000
+2024-11-05T17:39:35.640Z;METRIC;⚙️ Processed in 159s {type: sso, frameCount: all, durationSeconds: 60, frameRange: 0 - 1500 };5319c5a4-1730856971000
+2024-11-05T17:39:35.846Z;METRIC;🔒 Encrypted 60 frames in 77ms;5319c5a4-1730856971000
+2024-11-05T17:39:37.133Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856971000/tmp/kld.enc in 1s;
+2024-11-05T17:39:37.134Z;METRIC;📄 Added kld.enc in 1s (1s + 77ms);5319c5a4-1730856971000
+2024-11-05T17:39:37.210Z;METRIC;🔒 Encrypted 60 log frames in 76ms;5319c5a4-1730856971000
+2024-11-05T17:39:38.429Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856971000/tmp/kld_log.enc in 1s;
+2024-11-05T17:39:38.429Z;METRIC;📄 Added kld_log.enc in 1s (1s + 76ms);5319c5a4-1730856971000
+2024-11-05T17:39:38.503Z;METRIC;🔒 Encrypted 60 sqrt frames in 73ms;5319c5a4-1730856971000
+2024-11-05T17:39:39.690Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856971000/tmp/bhattacharyya_sqrt.enc in 1s;
+2024-11-05T17:39:39.690Z;METRIC;📄 Added bhattacharyya_sqrt.enc in 1s (1s + 73ms);5319c5a4-1730856971000
+2024-11-05T17:39:39.765Z;METRIC;🔒 Encrypted 60 cumulativeSum of frames in 74ms;5319c5a4-1730856971000
+2024-11-05T17:39:40.946Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856971000/tmp/cramer.enc in 1s;
+2024-11-05T17:39:40.947Z;METRIC;📄 Added cramer.enc in 1s (1s + 74ms);5319c5a4-1730856971000
+2024-11-05T17:39:40.947Z;INFO;📄 Added meta.json in 572µs;5319c5a4-1730856971000
+2024-11-05T17:39:42.745Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856971000/sso-all.zip in 1s;
+2024-11-05T17:39:42.746Z;METRIC;📦 Packaged encrypted archive in 6s;5319c5a4-1730856971000
+2024-11-05T17:50:02.468Z;METRIC;⚙️ Processed in 159s {type: sso, frameCount: all, durationSeconds: 60, frameRange: 0 - 1500 };5319c5a4-1730856998000
+2024-11-05T17:50:02.668Z;METRIC;🔒 Encrypted 60 frames in 75ms;5319c5a4-1730856998000
+2024-11-05T17:50:03.836Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/kld.enc in 1s;
+2024-11-05T17:50:03.836Z;METRIC;📄 Added kld.enc in 1s (1s + 75ms);5319c5a4-1730856998000
+2024-11-05T17:50:03.910Z;METRIC;🔒 Encrypted 60 log frames in 73ms;5319c5a4-1730856998000
+2024-11-05T17:50:05.090Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/kld_log.enc in 1s;
+2024-11-05T17:50:05.090Z;METRIC;📄 Added kld_log.enc in 1s (1s + 73ms);5319c5a4-1730856998000
+2024-11-05T17:50:05.163Z;METRIC;🔒 Encrypted 60 sqrt frames in 72ms;5319c5a4-1730856998000
+2024-11-05T17:50:06.364Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/bhattacharyya_sqrt.enc in 1s;
+2024-11-05T17:50:06.365Z;METRIC;📄 Added bhattacharyya_sqrt.enc in 1s (1s + 72ms);5319c5a4-1730856998000
+2024-11-05T17:50:06.439Z;METRIC;🔒 Encrypted 60 cumulativeSum of frames in 74ms;5319c5a4-1730856998000
+2024-11-05T17:50:07.619Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/cramer.enc in 1s;
+2024-11-05T17:50:07.619Z;METRIC;📄 Added cramer.enc in 1s (1s + 74ms);5319c5a4-1730856998000
+2024-11-05T17:50:07.620Z;INFO;📄 Added meta.json in 393µs;5319c5a4-1730856998000
+2024-11-05T17:50:09.453Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/sso-all.zip in 1s;
+2024-11-05T17:50:09.453Z;METRIC;📦 Packaged encrypted archive in 6s;5319c5a4-1730856998000
+2024-11-05T17:50:19.782Z;METRIC;🔒 Encrypted 60 frames in 74ms;5319c5a4-1730856998000
+2024-11-05T17:50:21.025Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/kld.enc in 1s;
+2024-11-05T17:50:21.026Z;METRIC;📄 Added kld.enc in 1s (1s + 74ms);5319c5a4-1730856998000
+2024-11-05T17:50:21.103Z;METRIC;🔒 Encrypted 60 log frames in 77ms;5319c5a4-1730856998000
+2024-11-05T17:50:22.300Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/kld_log.enc in 1s;
+2024-11-05T17:50:22.300Z;METRIC;📄 Added kld_log.enc in 1s (1s + 77ms);5319c5a4-1730856998000
+2024-11-05T17:50:22.372Z;METRIC;🔒 Encrypted 60 sqrt frames in 71ms;5319c5a4-1730856998000
+2024-11-05T17:50:23.543Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/bhattacharyya_sqrt.enc in 1s;
+2024-11-05T17:50:23.543Z;METRIC;📄 Added bhattacharyya_sqrt.enc in 1s (1s + 71ms);5319c5a4-1730856998000
+2024-11-05T17:50:23.617Z;METRIC;🔒 Encrypted 60 cumulativeSum of frames in 73ms;5319c5a4-1730856998000
+2024-11-05T17:50:24.808Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/tmp/cramer.enc in 1s;
+2024-11-05T17:50:24.808Z;METRIC;📄 Added cramer.enc in 1s (1s + 73ms);5319c5a4-1730856998000
+2024-11-05T17:50:24.808Z;INFO;📄 Added meta.json in 403µs;5319c5a4-1730856998000
+2024-11-05T17:50:26.612Z;DEBUG;Wrote archive to /home/jeffmur/Documents/5319c5a4/0-1500-1730856998000/sso-all.zip in 1s;
+2024-11-05T17:50:26.612Z;METRIC;📦 Packaged encrypted archive in 6s;5319c5a4-1730856998000
+2024-11-05T17:50:41.067Z;METRIC;📊 KLD => 0.0 Plaintext Score took 317µs;
+2024-11-05T17:50:41.068Z;METRIC;📊 Bhattacharyya => 1.0 Plaintext Score took 87µs;
+2024-11-05T17:50:41.068Z;METRIC;📊 Cramer => 0.0 Plaintext Score took 104µs;
+2024-11-05T17:50:42.068Z;METRIC;📊 KLD => -1.1615111659621395e-11 Ciphertext Score in total: 191ms, encryptX: 72ms, encryptLogX: 71ms, computeScore: 47ms;
+2024-11-05T17:50:42.241Z;METRIC;📊 Bhattacharyya => 1.000000000197028 Ciphertext Score in total: 172ms, encryptX: 71ms, encryptSqrtX: 71ms, computeScore: 29ms;
+2024-11-05T17:50:42.428Z;METRIC;📊 Cramer => 6.623536763425768e-10 Ciphertext Score in total: 185ms, encryptCumulativeSumX: 70ms, computeScore: 114ms;
