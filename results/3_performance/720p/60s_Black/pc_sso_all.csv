@@ -1,46 +1,16 @@
 Timestamp;LogLevel;Message;CorrelationId
-2024-11-05T08:16:07.222Z;WARNING;Manifest not found;
-2024-11-05T08:17:58.243Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
-2024-11-05T08:17:58.304Z;INFO;Loaded Video in 161ms {name: Black_720p_60s.mp4, extension: mp4, created: 2024-11-05T08:17:49.000, modified: 2024-11-05T08:17:58.151767, path: /home/jeffmur/Videos/Performance/Black_720p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 822e3a31, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};822e3a31-1730823469000
-2024-11-05T08:17:58.556Z;INFO;Cached Video in 254ms;822e3a31-1730823469000
-2024-11-05T08:18:22.798Z;METRIC;⚙️ Processed in 13s {type: sso, frameCount: all, durationSeconds: 60, frameRange: 0 - 1500 };822e3a31-1730823469000
-2024-11-05T08:18:22.944Z;METRIC;🔒 Encrypted 60 frames in 77ms;822e3a31-1730823469000
-2024-11-05T08:18:24.209Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823469000/tmp/kld.enc in 1s;
-2024-11-05T08:18:24.209Z;METRIC;📄 Added kld.enc in 1s (1s + 77ms);822e3a31-1730823469000
-2024-11-05T08:18:24.288Z;METRIC;🔒 Encrypted 60 log frames in 78ms;822e3a31-1730823469000
-2024-11-05T08:18:25.465Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823469000/tmp/kld_log.enc in 1s;
-2024-11-05T08:18:25.466Z;METRIC;📄 Added kld_log.enc in 1s (1s + 78ms);822e3a31-1730823469000
-2024-11-05T08:18:25.540Z;METRIC;🔒 Encrypted 60 sqrt frames in 73ms;822e3a31-1730823469000
-2024-11-05T08:18:26.718Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823469000/tmp/bhattacharyya_sqrt.enc in 1s;
-2024-11-05T08:18:26.718Z;METRIC;📄 Added bhattacharyya_sqrt.enc in 1s (1s + 73ms);822e3a31-1730823469000
-2024-11-05T08:18:26.791Z;METRIC;🔒 Encrypted 60 cumulativeSum of frames in 73ms;822e3a31-1730823469000
-2024-11-05T08:18:27.956Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823469000/tmp/cramer.enc in 1s;
-2024-11-05T08:18:27.956Z;METRIC;📄 Added cramer.enc in 1s (1s + 73ms);822e3a31-1730823469000
-2024-11-05T08:18:27.957Z;INFO;📄 Added meta.json in 764µs;822e3a31-1730823469000
-2024-11-05T08:18:29.771Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823469000/sso-all.zip in 1s;
-2024-11-05T08:18:29.771Z;METRIC;📦 Packaged encrypted archive in 6s;822e3a31-1730823469000
-2024-11-05T08:18:44.807Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
-2024-11-05T08:18:44.856Z;INFO;Loaded Video in 57ms {name: Black_720p_60s.mp4, extension: mp4, created: 2024-11-05T08:18:37.000, modified: 2024-11-05T08:18:44.798533, path: /home/jeffmur/Videos/Performance/Black_720p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 822e3a31, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};822e3a31-1730823517000
-2024-11-05T08:18:45.110Z;INFO;Cached Video in 254ms;822e3a31-1730823517000
-2024-11-05T08:19:02.495Z;METRIC;⚙️ Processed in 13s {type: sso, frameCount: all, durationSeconds: 60, frameRange: 0 - 1500 };822e3a31-1730823517000
-2024-11-05T08:19:02.633Z;METRIC;🔒 Encrypted 60 frames in 74ms;822e3a31-1730823517000
-2024-11-05T08:19:03.804Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823517000/tmp/kld.enc in 1s;
-2024-11-05T08:19:03.804Z;METRIC;📄 Added kld.enc in 1s (1s + 74ms);822e3a31-1730823517000
-2024-11-05T08:19:03.877Z;METRIC;🔒 Encrypted 60 log frames in 72ms;822e3a31-1730823517000
-2024-11-05T08:19:05.082Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823517000/tmp/kld_log.enc in 1s;
-2024-11-05T08:19:05.082Z;METRIC;📄 Added kld_log.enc in 1s (1s + 72ms);822e3a31-1730823517000
-2024-11-05T08:19:05.162Z;METRIC;🔒 Encrypted 60 sqrt frames in 79ms;822e3a31-1730823517000
-2024-11-05T08:19:06.342Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823517000/tmp/bhattacharyya_sqrt.enc in 1s;
-2024-11-05T08:19:06.342Z;METRIC;📄 Added bhattacharyya_sqrt.enc in 1s (1s + 79ms);822e3a31-1730823517000
-2024-11-05T08:19:06.415Z;METRIC;🔒 Encrypted 60 cumulativeSum of frames in 73ms;822e3a31-1730823517000
-2024-11-05T08:19:07.613Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823517000/tmp/cramer.enc in 1s;
-2024-11-05T08:19:07.614Z;METRIC;📄 Added cramer.enc in 1s (1s + 73ms);822e3a31-1730823517000
-2024-11-05T08:19:07.614Z;INFO;📄 Added meta.json in 437µs;822e3a31-1730823517000
-2024-11-05T08:19:09.450Z;DEBUG;Wrote archive to /home/jeffmur/Documents/822e3a31/0-1500-1730823517000/sso-all.zip in 1s;
-2024-11-05T08:19:09.450Z;METRIC;📦 Packaged encrypted archive in 6s;822e3a31-1730823517000
-2024-11-05T08:19:19.940Z;METRIC;📊 KLD => 0.0 Plaintext Score took 729µs;
-2024-11-05T08:19:19.941Z;METRIC;📊 Bhattacharyya => 1.0 Plaintext Score took 200µs;
-2024-11-05T08:19:19.942Z;METRIC;📊 Cramer => 0.0 Plaintext Score took 212µs;
-2024-11-05T08:19:21.062Z;METRIC;📊 KLD => -6.116091798594204e-11 Ciphertext Score in total: 205ms, encryptX: 85ms, encryptLogX: 72ms, computeScore: 48ms;
-2024-11-05T08:19:21.234Z;METRIC;📊 Bhattacharyya => 0.999999999651381 Ciphertext Score in total: 171ms, encryptX: 71ms, encryptSqrtX: 71ms, computeScore: 29ms;
-2024-11-05T08:19:21.419Z;METRIC;📊 Cramer => 2.6238860959679364e-9 Ciphertext Score in total: 184ms, encryptCumulativeSumX: 71ms, computeScore: 113ms;
+2024-11-07T19:58:34.803Z;WARNING;Manifest not found;
+2024-11-07T19:59:08.964Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
+2024-11-07T19:59:09.023Z;INFO;Loaded Video in 155ms {name: Black_720p_60s.mp4, extension: mp4, created: 2024-11-07T19:58:48.000, modified: 2024-11-07T19:59:08.867569, path: /home/jeffmur/Videos/Performance/Black_720p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 822e3a31, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};822e3a31-1731038328000
+2024-11-07T19:59:09.320Z;INFO;Cached Video in 298ms;822e3a31-1731038328000
+2024-11-07T19:59:17.665Z;DEBUG;Final frame range after trimming: startFrame=0, endFrame=1500;
+2024-11-07T19:59:17.707Z;INFO;Loaded Video in 48ms {name: Black_720p_60s.mp4, extension: mp4, created: 2024-11-07T19:59:10.000, modified: 2024-11-07T19:59:17.659610, path: /home/jeffmur/Videos/Performance/Black_720p_60s.mp4, codec: h264, fps: 25, totalFrames: 1500, sha256: 822e3a31, durationSeconds: 60, startFrame: 0, endFrame: 1500, encryptionStatus: plain};822e3a31-1731038350000
+2024-11-07T19:59:17.984Z;INFO;Cached Video in 276ms;822e3a31-1731038350000
+2024-11-07T20:00:21.486Z;METRIC;⚙️ Processed in 13s {type: sso, frameCount: all, durationSeconds: 60, frameRange: 0 - 1500 };822e3a31-1731038350000
+2024-11-07T20:00:51.661Z;METRIC;⚙️ Processed in 14s {type: sso, frameCount: all, durationSeconds: 60, frameRange: 0 - 1500 };822e3a31-1731038328000
+2024-11-07T20:01:08.168Z;METRIC;📊 KLD => 0.0 Plaintext Score took 567µs;
+2024-11-07T20:01:08.170Z;METRIC;📊 Bhattacharyya => 1.0 Plaintext Score took 133µs;
+2024-11-07T20:01:08.170Z;METRIC;📊 Cramer => 0.0 Plaintext Score took 156µs;
+2024-11-07T20:01:08.902Z;METRIC;📊 KLD => 1.245112635608077e-10 Ciphertext Score in total: 218ms, encryptX: 89ms, encryptLogX: 76ms, computeScore: 52ms;
+2024-11-07T20:01:09.082Z;METRIC;📊 Bhattacharyya => 0.9999999992221272 Ciphertext Score in total: 180ms, encryptX: 74ms, encryptSqrtX: 73ms, computeScore: 31ms;
+2024-11-07T20:01:09.274Z;METRIC;📊 Cramer => 4.172045636897665e-9 Ciphertext Score in total: 117ms, encryptCumulativeSumX: 74ms, computeScore: 43ms;

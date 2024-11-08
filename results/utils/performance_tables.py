@@ -4,6 +4,27 @@ from utils.accuracy import *
 from utils.performance import *
 from utils import TARGET_SYS, FRAME_COUNTS
 
+from typing import Union, Dict, List
+
+def insert_or_append(old: Union[Dict[str, List[float]], Dict[str, Dict]], new: Union[Dict[str, float], Dict[str, Dict]]):
+    for k, v in new.items():
+        # If the key is present in the old dictionary
+        if k in old:
+            # If the value is a dictionary, recurse
+            if isinstance(v, dict) and isinstance(old[k], dict):
+                insert_or_append(old[k], v)
+            # Otherwise, append the value if old[k] is a list
+            elif isinstance(old[k], list) and isinstance(v, float):
+                old[k].append(v)
+        else:
+            # If the value is a dictionary, initialize with a dictionary and recurse
+            if isinstance(v, dict):
+                old[k] = {}
+                insert_or_append(old[k], v)
+            # Otherwise, initialize with a list containing the float value
+            elif isinstance(v, float):
+                old[k] = [v]
+
 def compute_diff(fhe:float, plain:float) -> float:
     return abs(fhe - plain)
 
@@ -81,6 +102,34 @@ def pre_processing_by_res_md_table(results:dict) -> Markdown:
     rows.append("---|---|---|---")
     for res, pp in results.items():
         rows.append(f"{res} | {(sum(pp) / len(pp)):.2f} | {min(pp):.2f} | {max(pp):.2f}")
+    return Markdown(textwrap.dedent('\n'.join(rows)))
+
+def operations_by_alg(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
+    """
+    Returns the sum of alg duration of operations for each algorithm.
+    """
+    results = {}
+    for s in sys:
+        if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
+        results[s] = compute_metrics(pathToAssertion, [s], frameCounts)
+        
+    algs = {}
+    for k in results.keys():
+        insert_or_append(algs, results[k])
+    return {k: {k2: sum(v) / len(v) for k2, v in v2.items()} for k, v2 in algs.items()}
+
+def operations_by_alg_md_table(results:dict) -> Markdown:
+    """
+    Returns a markdown table with the sum of alg duration of operations for each algorithm.
+    """
+    rows = []
+    rows.append("Algorithm | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
+    rows.append("---|---|---|---")
+    for alg, ops in results.items():
+        enc = sum(ops['enc']) / len(ops['enc'])
+        fhe = sum(ops['fhe']) / len(ops['fhe'])
+        pt = sum(ops['pt']) / len(ops['pt'])
+        rows.append(f"{alg} | {enc:.2f} | {fhe:.2f} | {pt:.2f}")
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
 def operations_by_sys(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:

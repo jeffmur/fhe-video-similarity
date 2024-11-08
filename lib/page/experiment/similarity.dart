@@ -125,6 +125,7 @@ class CiphertextSimilarityScores {
 
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
+        start = DateTime.now();
         score = cramer.score(cumulativeSumX, cumulativeSum(toPlaintext));
         Duration computeScore = DateTime.now().difference(start);
 
