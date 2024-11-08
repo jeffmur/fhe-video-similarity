@@ -111,6 +111,31 @@ def operations_by_sys_md_table(results:dict) -> Markdown:
         rows.append(f"{sys} | {enc:.2f} | {fhe:.2f} | {pt:.2f}")
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
+def operations_by_sys_alg(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
+    """
+    Returns operations by algorithm for each system.
+    """
+    results = {}
+    for s in sys:
+        if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
+        results[s] = compute_metrics(pathToAssertion, [s], frameCounts)
+    return results
+
+def operations_by_sys_alg_md_table(results:dict) -> Markdown:
+    """
+    Returns a markdown table with the sum of alg duration of operations for each system.
+    """
+    rows = []
+    rows.append("System [Algorithm] | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
+    rows.append("---|---|---|---")
+    for sys, ops in results.items():
+        for alg, data in ops.items():
+            enc = sum(data['enc']) / len(data['enc'])
+            fhe = sum(data['fhe']) / len(data['fhe'])
+            pt = sum(data['pt']) / len(data['pt'])
+            rows.append(f"{sys} [{alg}] | {enc:.2f} | {fhe:.2f} | {pt:.2f}")
+    return Markdown(textwrap.dedent('\n'.join(rows)))
+
 def mean_error(pathToAssertion:str, os=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
     """
     Returns the average of the absolute errors for each metric.
