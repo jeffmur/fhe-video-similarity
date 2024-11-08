@@ -43,4 +43,4 @@ Timestamp;LogLevel;Message;CorrelationId
 2024-11-05T08:38:16.943Z;METRIC;📊 Cramer => 0.0 Plaintext Score took 111µs;
 2024-11-05T08:38:18.538Z;METRIC;📊 KLD => 6.235992433030844e-11 Ciphertext Score in total: 195ms, encryptX: 77ms, encryptLogX: 71ms, computeScore: 45ms;
 2024-11-05T08:38:18.709Z;METRIC;📊 Bhattacharyya => 0.9999999995343317 Ciphertext Score in total: 170ms, encryptX: 70ms, encryptSqrtX: 72ms, computeScore: 27ms;
-2024-11-05T08:38:18.892Z;METRIC;📊 Cramer => 0 Ciphertext Score in total: 181ms, encryptCumulativeSumX: 70ms, computeScore: 111ms;
+2024-11-05T08:38:18.892Z;METRIC;📊 Cramer => NaN Ciphertext Score in total: 181ms, encryptCumulativeSumX: 70ms, computeScore: 111ms;
