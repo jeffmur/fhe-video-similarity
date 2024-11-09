@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
-import 'package:flutter_fhe_video_similarity/media/similarity.dart';
+import 'package:flutter_fhe_video_similarity/similarity.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart' show manifest;
@@ -248,7 +248,7 @@ Future<void> handleUploadedZip(BuildContext context, XFile xfile, Manager m,
                 children: [
                   Text('Metric'),
                   Text('Score'),
-                  Text('Percentile'),
+                  Text('Percent'),
                 ],
               ),
               TableRow(
