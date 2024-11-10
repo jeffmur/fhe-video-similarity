@@ -60,7 +60,7 @@ class LogEntry:
       self.log_level = log_level
       self.message = message
       self.correlation_id = correlation_id
-      emojis = re.findall(r'[⚙📊]', message)
+      emojis = re.findall(r'[⚙📊🔓]', message)
       self.emoji = emojis[0] if emojis else None
 
 class ProcessedMetric(LogEntry):
@@ -71,6 +71,17 @@ class ProcessedMetric(LogEntry):
     super().__init__(timestamp, log_level, message, correlation_id)
     self.duration = timedelta_from_unit(message.split('{')[0])
     self.params = dict_from_str(message)
+
+class DecryptionMetric(LogEntry):
+  """
+  Model for a decryption log entry.
+  Example:
+    🔓 Decrypted KLD in 30ms
+  """
+  def __init__(self, timestamp, log_level, message):
+    super().__init__(timestamp, log_level, message)
+    self.duration = timedelta_from_unit(message.split(' ')[-1])
+    self.name = str(message.split(' ')[2]) # Algorithm
 
 class SimilarityScoreMetric(LogEntry):
   """
@@ -141,6 +152,8 @@ class LogParser:
                 yield BaselineSimilarityScoreMetric(i.timestamp, i.log_level, i.message)
               elif "Ciphertext Score" in i.message:
                 yield CiphertextSimilarityScoreMetric(i.timestamp, i.log_level, i.message)
+              elif "Decrypted" in i.message:
+                yield DecryptionMetric(i.timestamp, i.log_level, i.message)
 
     def filter_by_metric(self, classType: LogEntry):
         """
@@ -246,6 +259,13 @@ class ImportSimilarityScores():
             algorithm_encrypt_total_durations_ms.append(encrypt_ms)
         
         return sum(algorithm_encrypt_total_durations_ms)
+    
+    def decryption_duration_ms(self, algorithm:str) -> float:
+        """
+        Returns the decryption duration for a given algorithm.
+        """
+        metrics = list(self.parser.filter_by_similarity_algorithm(algorithm, DecryptionMetric))
+        return sum(m.duration.total_seconds() * 1000 for m in metrics)
     
     def fhe_compute_score_ms(self, algorithm:str) -> float:
         """

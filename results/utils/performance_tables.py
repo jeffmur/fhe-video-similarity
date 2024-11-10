@@ -48,6 +48,7 @@ def compute_metrics(pathToAssertion:str, os=TARGET_SYS, frameCounts=FRAME_COUNTS
     pp = mean_pp_duration_s(pathToAssertion, os, frameCounts)
 
     kld_enc, bhattacharyya_enc, cramer_enc = mean_encryption_duration_ms(pathToAssertion, os, frameCounts).values()
+    kld_dec, bhattacharyya_dec, cramer_dec = mean_decryption_duration_ms(pathToAssertion, os, frameCounts).values()
     kld_fhe, bhattacharyya_fhe, cramer_fhe = mean_fhe_compute_score_ms(pathToAssertion, os, frameCounts).values()
     kld_pt, bhattacharyya_pt, cramer_pt = mean_pt_compute_score_ms(pathToAssertion, os, frameCounts).values()
 
@@ -59,9 +60,9 @@ def compute_metrics(pathToAssertion:str, os=TARGET_SYS, frameCounts=FRAME_COUNTS
     kld_diff_perc, bhattacharyya_diff_perc, cramer_diff_perc = compute_growth_percentage_dict(**_params).values()
 
     return {
-        'kld': {'score': kld, 'score_perc': kld_perc, 'err': kld_err, 'pp': pp, 'enc': kld_enc, 'fhe': kld_fhe, 'pt': kld_pt, 'diff': kld_diff, 'diff_perc': kld_diff_perc},
-        'bhattacharyya': {'score': bhattacharyya, 'score_perc': bhattacharyya_perc, 'err': bhattacharyya_err, 'pp': pp, 'enc': bhattacharyya_enc, 'fhe': bhattacharyya_fhe, 'pt': bhattacharyya_pt, 'diff': bhattacharyya_diff, 'diff_perc': bhattacharyya_diff_perc},
-        'cramer': {'score': cramer, 'score_perc': cramer_perc, 'err': cramer_err, 'pp': pp, 'enc': cramer_enc, 'fhe': cramer_fhe, 'pt': cramer_pt, 'diff': cramer_diff, 'diff_perc': cramer_diff_perc}
+        'kld': {'score': kld, 'score_perc': kld_perc, 'err': kld_err, 'pp': pp, 'enc': kld_enc, 'dec': kld_dec, 'fhe': kld_fhe, 'pt': kld_pt, 'diff': kld_diff, 'diff_perc': kld_diff_perc},
+        'bhattacharyya': {'score': bhattacharyya, 'score_perc': bhattacharyya_perc, 'err': bhattacharyya_err, 'pp': pp, 'enc': bhattacharyya_enc, 'dec': bhattacharyya_dec, 'fhe': bhattacharyya_fhe, 'pt': bhattacharyya_pt, 'diff': bhattacharyya_diff, 'diff_perc': bhattacharyya_diff_perc},
+        'cramer': {'score': cramer, 'score_perc': cramer_perc, 'err': cramer_err, 'pp': pp, 'enc': cramer_enc, 'dec': cramer_dec, 'fhe': cramer_fhe, 'pt': cramer_pt, 'diff': cramer_diff, 'diff_perc': cramer_diff_perc}
     }
 
 def pre_processing_by_sys(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
@@ -141,6 +142,7 @@ def operations_by_sys(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COU
         if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
         results[s] = {
             'encryption': sum(mean_encryption_duration_ms(pathToAssertion, [s], frameCounts).values()),
+            'decryption': sum(mean_decryption_duration_ms(pathToAssertion, [s], frameCounts).values()),
             'fhe_compute': sum(mean_fhe_compute_score_ms(pathToAssertion, [s], frameCounts).values()),
             'pt_compute': sum(mean_pt_compute_score_ms(pathToAssertion, [s], frameCounts).values())
         }
@@ -151,13 +153,14 @@ def operations_by_sys_md_table(results:dict) -> Markdown:
     Returns a markdown table with the sum of alg duration of operations for each system.
     """
     rows = []
-    rows.append("System | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
-    rows.append("---|---|---|---")
+    rows.append("System | Encryption (ms) | Decryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
+    rows.append("---|---|---|---|---")
     for sys, ops in results.items():
         enc = sum(ops['encryption']) / len(ops['encryption'])
+        dec = sum(ops['decryption']) / len(ops['decryption'])
         fhe = sum(ops['fhe_compute']) / len(ops['fhe_compute'])
         pt = sum(ops['pt_compute']) / len(ops['pt_compute'])
-        rows.append(f"{sys} | {enc:.2f} | {fhe:.2f} | {pt:.2f}")
+        rows.append(f"{sys} | {enc:.2f} | {dec:.2f} | {fhe:.2f} | {pt:.2f}")
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
 def operations_by_sys_alg(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
@@ -213,15 +216,15 @@ def mean_error_md_table(kld_err:list, bhattacharyya_err:list, cramer_err:list) -
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
 def _verbose_md_row(metric:str, os:str, frameCount:str, data:dict):
-    return f"{metric} [{os}] [{frameCount}] | {data['score']:.2e} [{data['score_perc']:.2f}%] | {data['err']:.2e} | {data['pp']:.2f} | {data['enc']:.2f} | {data['fhe']:.2f} | {data['pt']:.2f} | {data['diff']:.2f} [{data['diff_perc']:.2f}%]"
+    return f"{metric} [{os}] [{frameCount}] | {data['score']:.2e} [{data['score_perc']:.2f}%] | {data['err']:.2e} | {data['pp']:.2f} | {data['enc']:.2f} | {data['dec']:.2f} | {data['fhe']:.2f} | {data['pt']:.2f} | {data['diff']:.2f} [{data['diff_perc']:.2f}%]"
 
 def verbose_md_table(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> Markdown:
     """
     Returns a markdown table with the similarity scores for each metric.
     """
     rows = []
-    rows.append("Similarity [sys] [frameCount] | Score [%] | FHE Absolute Error | Pre-processing (s) | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms) | FHE/Plain Compute Growth (ms) [%]")
-    rows.append("---|---|---|---|---|---|---|---")
+    rows.append("Similarity [sys] [frameCount] | Score [%] | FHE Absolute Error | Pre-processing (s) | Encryption (ms) | Decryption (ms) | FHE Compute (ms) | Plaintext Compute (ms) | FHE/Plain Compute Growth (ms) [%]")
+    rows.append("---|---|---|---|---|---|---|---|---")
     for s in sys:
         if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
         for f in frameCounts:
@@ -233,15 +236,15 @@ def verbose_md_table(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUN
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
 def _mean_md_row(metric:str, os:str, data:dict):
-    return f"{metric} [{os}] | {data['score']:.2e} [{data['score_perc']:.2f}%] | {data['err']:.2e} | {data['pp']:.2f} | {data['enc']:.2f} | {data['diff']:.2f} [{data['diff_perc']:.2f}%]"
+    return f"{metric} [{os}] | {data['score']:.2e} [{data['score_perc']:.2f}%] | {data['err']:.2e} | {data['pp']:.2f} | {data['enc']:.2f} | {data['dec']:.2f} | {data['diff']:.2f} [{data['diff_perc']:.2f}%]"
 
 def mean_md_table(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> Markdown: 
     """
     Returns a markdown table with the average of all assertions
     """
     rows = []
-    rows.append("Similarity [sys] | Score [%] | Mean FHE Absolute Error | Pre-processing (s) | Encryption (ms) | FHE/Plain Compute Growth (ms) [%]")
-    rows.append("---|---|---|---|---|---")
+    rows.append("Similarity [sys] | Score [%] | Mean FHE Absolute Error | Pre-processing (s) | Encryption (ms) | Decryption (ms) | FHE/Plain Compute Growth (ms) [%]")
+    rows.append("---|---|---|---|---|---|---")
     for s in sys:
         if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
         kld, bhattacharyya, cramer = compute_metrics(pathToAssertion, [s], frameCounts).values()

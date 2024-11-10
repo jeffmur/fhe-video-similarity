@@ -35,6 +35,26 @@ def mean_encryption_duration_ms(pathToAssertion:str, sys, frameCounts) -> dict:
         'cramer_enc': cramer_enc / (len(frameCounts) * len(sys))
     }
 
+def mean_decryption_duration_ms(pathToAssertion:str, sys, frameCounts) -> dict:
+    """
+    Returns the average of the duration, in milliseconds, for each similarity score metric for the linux_sso logs.
+    """
+    kld_dec = bhattacharyya_dec = cramer_dec = 0
+    for s in sys:
+        for frameCount in frameCounts:
+            if not any(pre.startswith(s) for pre in os.listdir(pathToAssertion)): continue
+            linux_sso_logs = ImportSimilarityScores(f'{pathToAssertion}/{s}_sso_{frameCount}.csv')
+
+            kld_dec += linux_sso_logs.decryption_duration_ms("kld")
+            bhattacharyya_dec += linux_sso_logs.decryption_duration_ms("bhattacharyya")
+            cramer_dec += linux_sso_logs.decryption_duration_ms("cramer")
+
+    return {
+        'kld_dec': kld_dec / (len(frameCounts) * len(sys)),
+        'bhattacharyya_dec': bhattacharyya_dec / (len(frameCounts) * len(sys)),
+        'cramer_dec': cramer_dec / (len(frameCounts) * len(sys))
+    }
+
 
 def mean_fhe_compute_score_ms(pathToAssertion:str, sys, frameCounts):
     """
