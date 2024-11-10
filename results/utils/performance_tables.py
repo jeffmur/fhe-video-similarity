@@ -124,13 +124,14 @@ def operations_by_alg_md_table(results:dict) -> Markdown:
     Returns a markdown table with the sum of alg duration of operations for each algorithm.
     """
     rows = []
-    rows.append("Algorithm | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
-    rows.append("---|---|---|---")
+    rows.append("Algorithm | Encryption (ms) | Decryption(ms) | FHE Compute (ms) | Plaintext Compute (ms)")
+    rows.append("---|---|---|---|---")
     for alg, ops in results.items():
         enc = sum(ops['enc']) / len(ops['enc'])
+        dec = sum(ops['dec']) / len(ops['dec'])
         fhe = sum(ops['fhe']) / len(ops['fhe'])
         pt = sum(ops['pt']) / len(ops['pt'])
-        rows.append(f"{alg} | {enc:.2f} | {fhe:.2f} | {pt:.2f}")
+        rows.append(f"{alg} | {enc:.2f} | {dec:.2f} | {fhe:.2f} | {pt:.2f}")
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
 def operations_by_sys(pathToAssertion:str, sys=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
@@ -178,14 +179,15 @@ def operations_by_sys_alg_md_table(results:dict) -> Markdown:
     Returns a markdown table with the sum of alg duration of operations for each system.
     """
     rows = []
-    rows.append("System [Algorithm] | Encryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
-    rows.append("---|---|---|---")
+    rows.append("System [Algorithm] | Encryption (ms) | Decryption (ms) | FHE Compute (ms) | Plaintext Compute (ms)")
+    rows.append("---|---|---|---|---")
     for sys, ops in results.items():
         for alg, data in ops.items():
             enc = sum(data['enc']) / len(data['enc'])
+            dec = sum(data['dec']) / len(data['dec'])
             fhe = sum(data['fhe']) / len(data['fhe'])
             pt = sum(data['pt']) / len(data['pt'])
-            rows.append(f"{sys} [{alg}] | {enc:.2f} | {fhe:.2f} | {pt:.2f}")
+            rows.append(f"{sys} [{alg}] | {enc:.2f} | {dec:.2f} | {fhe:.2f} | {pt:.2f}")
     return Markdown(textwrap.dedent('\n'.join(rows)))
 
 def mean_error(pathToAssertion:str, os=TARGET_SYS, frameCounts=FRAME_COUNTS) -> dict:
