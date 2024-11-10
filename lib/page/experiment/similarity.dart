@@ -78,12 +78,13 @@ class CiphertextSimilarityScores {
   double compute(SimilarityType type) {
     double? score;
     DateTime start = DateTime.now();
-    List<Ciphertext> x = ciphertextHandler.encryptVecDouble(toCiphertext);
-    Duration encryptX = DateTime.now().difference(start);
     String typeName = similarityTypeToString(type);
 
     switch (type) {
       case SimilarityType.kld:
+        start = DateTime.now();
+        List<Ciphertext> x = ciphertextHandler.encryptVecDouble(toCiphertext);
+        Duration encryptX = DateTime.now().difference(start);
         start = DateTime.now();
         CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
         List<Ciphertext> logX =
@@ -112,8 +113,7 @@ class CiphertextSimilarityScores {
         Duration computeScore = DateTime.now().difference(start);
 
         Logging().metric('📊 $typeName => $score Ciphertext Score in '
-            'total: ${nonZeroDuration(encryptX + encryptSqrtX + computeScore)}, '
-            'encryptX: ${nonZeroDuration(encryptX)}, '
+            'total: ${nonZeroDuration(encryptSqrtX + computeScore)}, '
             'encryptSqrtX: ${nonZeroDuration(encryptSqrtX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
 
