@@ -4,9 +4,9 @@ import 'dart:math' as math;
 import 'dart:convert';
 import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
-import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
+import 'package:flutter_fhe_video_similarity/similarity.dart';
 
-import 'seal.dart';
+import '../seal.dart';
 import 'video.dart';
 import 'share_archive.dart';
 

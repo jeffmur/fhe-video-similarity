@@ -1,14 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/logging.dart';
-import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/seal.dart';
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:flutter_fhe_video_similarity/media/video.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' show Manager;
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
-import 'package:flutter_fhe_video_similarity/media/similarity.dart';
+import 'package:flutter_fhe_video_similarity/similarity.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
 import 'package:flutter_fhe_video_similarity/page/share_button.dart';
 
@@ -78,12 +78,13 @@ class CiphertextSimilarityScores {
   double compute(SimilarityType type) {
     double? score;
     DateTime start = DateTime.now();
-    List<Ciphertext> x = ciphertextHandler.encryptVecDouble(toCiphertext);
-    Duration encryptX = DateTime.now().difference(start);
     String typeName = similarityTypeToString(type);
 
     switch (type) {
       case SimilarityType.kld:
+        start = DateTime.now();
+        List<Ciphertext> x = ciphertextHandler.encryptVecDouble(toCiphertext);
+        Duration encryptX = DateTime.now().difference(start);
         start = DateTime.now();
         CiphertextKLD kld = CiphertextKLD(ciphertextHandler, plaintextEncoder);
         List<Ciphertext> logX =
@@ -112,8 +113,7 @@ class CiphertextSimilarityScores {
         Duration computeScore = DateTime.now().difference(start);
 
         Logging().metric('📊 $typeName => $score Ciphertext Score in '
-            'total: ${nonZeroDuration(encryptX + encryptSqrtX + computeScore)}, '
-            'encryptX: ${nonZeroDuration(encryptX)}, '
+            'total: ${nonZeroDuration(encryptSqrtX + computeScore)}, '
             'encryptSqrtX: ${nonZeroDuration(encryptSqrtX)}, '
             'computeScore: ${nonZeroDuration(computeScore)}');
 
@@ -125,6 +125,7 @@ class CiphertextSimilarityScores {
 
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
+        start = DateTime.now();
         score = cramer.score(cumulativeSumX, cumulativeSum(toPlaintext));
         Duration computeScore = DateTime.now().difference(start);
 

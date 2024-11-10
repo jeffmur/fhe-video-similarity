@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'primatives.dart';
+
 export 'package:image_picker/image_picker.dart' show XFile;
 
 /// A class that provides a template to store data.
@@ -67,4 +69,40 @@ class XFileStorage extends ApplicationStorage {
   Future<bool> exists() async {
     return (await file).exists();
   }
+}
+
+/// Media uploaded by the user
+///
+class UploadedMedia {
+  late XFile xfile;
+  DateTime created;
+  DateTime lastModified = DateTime.now();
+
+  UploadedMedia(this.xfile, this.created);
+
+  UploadedMedia.fromBytes(
+      Uint8List bytes, this.created, String pwd, String name) {
+    xfile = XFileStorage.fromBytes(pwd, name, bytes).xfile;
+  }
+
+  Future<Uint8List> get asBytes async => await xfile.readAsBytes();
+
+  String get path => xfile.path;
+
+  Meta get meta => Meta(xfile.name, xfile.path.split('.').last, created,
+      lastModified, xfile.path);
+}
+
+dynamic resolveNestedValue(Map<String, dynamic> json, List<String> keyPath) {
+  dynamic current = json;
+
+  for (String key in keyPath) {
+    if (current is Map && current.containsKey(key)) {
+      current = current[key];
+    } else {
+      return null; // Key not found at some level
+    }
+  }
+
+  return current;
 }

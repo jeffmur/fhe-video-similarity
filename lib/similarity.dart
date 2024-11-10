@@ -2,8 +2,20 @@ import 'dart:math' as math;
 import 'package:fhe_similarity_score/kld.dart' as kld;
 import 'package:fhe_similarity_score/bhattacharyya.dart' as bhattacharyya;
 import 'package:fhe_similarity_score/cramer.dart' as cramer;
-import 'package:flutter_fhe_video_similarity/page/experiment/preprocess.dart';
+import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'seal.dart';
+
+/// Used for preprocessing byte array for Cramer
+///
+List<double> cumulativeSum(List<double> list) {
+  List<double> result = [];
+  double sum = 0;
+  for (var i = 0; i < list.length; i++) {
+    sum += list[i];
+    result.add(sum);
+  }
+  return result;
+}
 
 enum SimilarityType { kld, bhattacharyya, cramer }
 
@@ -36,7 +48,7 @@ class Similarity {
       case SimilarityType.bhattacharyya:
         return bhattacharyya.coefficient(v1, v2);
       case SimilarityType.cramer:
-        return cramer.distance(cumulativeSum(v1), cumulativeSum(v2));
+        return cramer.distance(v1, v2);
     }
   }
 
@@ -50,6 +62,15 @@ class Similarity {
 // ciphertextHandler: Session that encrypts and decrypts Ciphertexts (untrusted 3rd party)
 // plaintextEncoder: Session that encodes and decodes plaintexts (current user)
 
+double decryptScore(String distanceMeaure, List<Ciphertext> ctxt,
+    double Function(List<Ciphertext>) decrypt) {
+  DateTime start = DateTime.now();
+  double score = decrypt(ctxt);
+  String decryptDuration = nonZeroDuration(DateTime.now().difference(start));
+  Logging().metric('🔓 Decrypted $distanceMeaure in $decryptDuration');
+  return score;
+}
+
 class CiphertextKLD {
   final Session ciphertextHandler;
   final Session plaintextEncoder;
@@ -60,9 +81,11 @@ class CiphertextKLD {
   }
 
   double score(List<Ciphertext> x, List<Ciphertext> logX, List<double> y) {
-    return ciphertextHandler
-        .decryptedSumOfDoubles(kld.divergenceOfCiphertextVecDouble(
-            plaintextEncoder.seal, x, logX, y))
+    return decryptScore(
+            'KLD',
+            kld.divergenceOfCiphertextVecDouble(
+                plaintextEncoder.seal, x, logX, y),
+            ciphertextHandler.decryptedSumOfDoubles)
         .abs();
   }
 
@@ -87,9 +110,11 @@ class CiphertextBhattacharyya {
   }
 
   double score(List<Ciphertext> sqrtX, List<double> sqrtY) {
-    return ciphertextHandler
-        .decryptedSumOfDoubles(bhattacharyya.coefficientOfCiphertextVecDouble(
-            plaintextEncoder.seal, sqrtX, sqrtY))
+    return decryptScore(
+            'Bhattacharyya',
+            bhattacharyya.coefficientOfCiphertextVecDouble(
+                plaintextEncoder.seal, sqrtX, sqrtY),
+            ciphertextHandler.decryptedSumOfDoubles)
         .abs();
   }
 
@@ -111,9 +136,11 @@ class CiphertextCramer {
   CiphertextCramer(this.ciphertextHandler, this.plaintextEncoder);
 
   double score(List<Ciphertext> cumulativeSumX, List<double> cumulativeSumY) {
-    return math.sqrt(ciphertextHandler
-        .decryptedSumOfDoubles(cramer.distanceOfCiphertextVecDouble(
-            plaintextEncoder.seal, cumulativeSumX, cumulativeSumY))
+    return math.sqrt(decryptScore(
+            'Cramer',
+            cramer.distanceOfCiphertextVecDouble(
+                plaintextEncoder.seal, cumulativeSumX, cumulativeSumY),
+            ciphertextHandler.decryptedSumOfDoubles)
         .abs());
   }
 

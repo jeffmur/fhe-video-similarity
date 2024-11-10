@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:opencv_dart/opencv_dart.dart' as cv;
-import 'primatives.dart';
+import 'storage.dart';
 import 'video.dart';
 
 Uint8List resize(Uint8List bytes, ImageFormat format, int length, int width) {

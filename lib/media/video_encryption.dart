@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_fhe_video_similarity/logging.dart';
-import 'package:flutter_fhe_video_similarity/media/primatives.dart';
 import 'package:flutter_fhe_video_similarity/media/storage.dart';
 import 'package:opencv_dart/opencv_dart.dart';
 
@@ -9,7 +8,7 @@ import 'image.dart';
 import 'package:flutter/material.dart' as mat;
 import 'package:flutter_fhe_video_similarity/media/cache.dart';
 
-import 'seal.dart';
+import '../seal.dart';
 import 'video.dart';
 export 'dart:io' show File;
 
@@ -94,7 +93,6 @@ class CiphertextVideo extends UploadedMedia implements Video {
   @override
   Future<void> cache() async {} // [ctFrames] are already cached
 
-  @override
   int get frameCount => meta.totalFrames;
 
   @override
@@ -136,13 +134,11 @@ class CiphertextVideo extends UploadedMedia implements Video {
     return Image.fromBytes(Uint8List(0), DateTime.now(), meta.path, filename);
   }
 
-  @override
   Future<List<Uint8List>> probeFrames(
       {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
     throw UnsupportedError('CiphertextVideo does not support frames');
   }
 
-  @override
   Future<List<int>> probeFrameSizes(
       {List<int> frameIds = const [0], String frameFormat = 'png'}) async {
     throw UnsupportedError('CiphertextVideo does not support frames');

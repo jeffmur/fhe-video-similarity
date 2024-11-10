@@ -79,14 +79,14 @@ class _ExperimentState extends State<Experiment> {
     super.initState();
     _baselineConfig = Config(
       PreprocessType.sso,
-      FrameCount.firstLast,
+      FrameCount.all,
       widget.baseline.video.startFrame,
       widget.baseline.video.endFrame,
       encryptionSettings: SessionChanges(),
     );
     _comparisonConfig = Config(
       PreprocessType.sso,
-      FrameCount.firstLast,
+      FrameCount.all,
       widget.comparison.video.startFrame,
       widget.comparison.video.endFrame,
       encryptionSettings: SessionChanges(),

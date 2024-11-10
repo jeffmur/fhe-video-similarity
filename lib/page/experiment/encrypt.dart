@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/media/manager.dart' as m;
-import 'package:flutter_fhe_video_similarity/media/seal.dart';
+import 'package:flutter_fhe_video_similarity/seal.dart';
 import 'package:flutter_fhe_video_similarity/page/experiment/validator.dart';
 import 'dart:math';
 

@@ -33,7 +33,7 @@ class ShareArchiveState extends State<ShareArchive> {
     super.initState();
     _config = Config(
       PreprocessType.sso,
-      FrameCount.firstLast,
+      FrameCount.all,
       widget.thumbnail.video.startFrame,
       widget.thumbnail.video.endFrame,
       encryptionSettings: SessionChanges(),
