@@ -1,3 +1,5 @@
+import 'dart:ffi';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:flutter_fhe_video_similarity/media/share_encryption_archive.dart';
@@ -12,6 +14,13 @@ import 'package:flutter_fhe_video_similarity/page/thumbnail.dart';
 import 'package:flutter_fhe_video_similarity/media/video_encryption.dart';
 import 'package:flutter_fhe_video_similarity/logging.dart';
 import 'package:flutter_fhe_video_similarity/page/logs.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:archive/archive_io.dart';
+import 'package:video_player/video_player.dart';
+import 'package:mime/mime.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
+import 'package:flutter_fhe_video_similarity/page/progress_button.dart';
+
 
 class SelectableGrid extends StatefulWidget {
   const SelectableGrid({super.key});
@@ -46,108 +55,161 @@ class _SelectableGridState extends State<SelectableGrid> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Manager m = Manager();
-    manifest.init();
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('GhostPeerShare'),
-          actions: [
-            Row(
+  Future<void> _mockTask() async {
+    // This is where you would implement the actual task.
+    // For now, it just simulates a delay.
+    await Future.delayed(const Duration(seconds: 10));
+  }
+
+
+@override
+Widget build(BuildContext context) {
+  Manager m = Manager();
+  manifest.init();
+
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text(
+        'GhostPeerShare',
+        style: TextStyle(
+          fontFamily: 'sans-serif',
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      centerTitle: true, // Centers the title in the AppBar
+      backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+      toolbarHeight: 80, // Adjust height to accommodate the centered title
+    ),
+    body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color.fromARGB(255, 0, 11, 71),
+            Color.fromARGB(255, 2, 15, 87), 
+            Color.fromARGB(255, 2, 22, 134), 
+            Color.fromARGB(255, 4, 140, 182), 
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 0, 6, 36),
+                  ),
                   onPressed: () {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const LoggingPage()));
                   },
-                  child: const Text('View Logs'),
+                  child: const Text('View Logs', style: TextStyle(fontFamily: 'SourceCodePro', fontWeight:FontWeight.bold, color:Color.fromARGB(255, 9, 226, 255)),),
                 ),
                 const SizedBox(width: 10),
-                const Text('Load'),
-                OverflowBar(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: () async {
-                        clearRender();
+                const Text('Load', style: TextStyle(fontFamily: 'SourceCodePro', fontWeight:FontWeight.bold, color:Colors.white)),
+                IconButton(
+                  icon: const Icon(Icons.refresh,
+                      color: Color.fromARGB(255, 0, 204, 255)),
+                  onPressed: () async {
+                    clearRender();
 
-                        List<String> thumbnailPaths = manifest.paths
-                            .where((path) => path.contains('thumbnail'))
-                            .toList();
+                    List<String> thumbnailPaths = manifest.paths
+                        .where((path) => path.contains('thumbnail'))
+                        .toList();
 
-                        for (var path in thumbnailPaths) {
-                          final thumbnail = await m.loadThumbnail(path);
-                          addThumbnailToRender(thumbnail);
-                        }
-                        deselectAll(); // using new thumbnails
-                      },
-                    ),
-                  ],
+                    for (var path in thumbnailPaths) {
+                      final thumbnail = await m.loadThumbnail(path);
+                      addThumbnailToRender(thumbnail);
+                    }
+                    deselectAll(); // using new thumbnails
+                  },
                 ),
                 const SizedBox(width: 10),
-                const Text('Select'),
+                const Text('Select', style: TextStyle(fontFamily: 'SourceCodePro', fontWeight:FontWeight.bold,color: Colors.white)),
                 Checkbox(
                   value: _allowMultiSelect,
                   onChanged: (val) => setState(() => _allowMultiSelect = val!),
-                )
+                  activeColor: const Color.fromARGB(255, 0, 172, 252),
+                  checkColor: const Color.fromARGB(255, 197, 187, 187),
+                ),
               ],
             ),
-          ],
-        ),
-        body: GridView.count(
-          crossAxisCount: 2,
-          children: List.generate(render.length, (idx) {
-            return OverlayWidget(
-                onTap: () {
-                  if (_allowMultiSelect) {
-                    setState(() {
-                      _selected[idx] = !_selected[idx];
-                    });
-                  } else {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ShareArchive(
-                                  thumbnail: render[idx],
-                                )));
-                  }
-                },
-                enableOverlay: _allowMultiSelect,
-                overlay: Container(
-                  color: Colors.black
-                      .withOpacity(0.5), // Semi-transparent background
-                  child: const Center(
-                    child: Text(
-                      'Selected',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
+          ),
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 2,
+              padding: const EdgeInsets.all(8.0),
+              children: List.generate(render.length, (idx) {
+                return OverlayWidget(
+                  onTap: () {
+                    if (_allowMultiSelect) {
+                      setState(() {
+                        _selected[idx] = !_selected[idx];
+                      });
+                    } else {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => ShareArchive(
+                                    thumbnail: render[idx],
+                                  )));
+                    }
+                  },
+                  enableOverlay: _allowMultiSelect,
+                  overlay: Container(
+                    color: Colors.black.withOpacity(0.5), // Semi-transparent background
+                    child: const Center(
+                      child: Text(
+                        'Selected',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                child: ThumbnailWidget(thumbnail: render[idx]));
-          }),
+                  child: ThumbnailWidget(thumbnail: render[idx]),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    ),
+    floatingActionButton: Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        ProgressButton(
+          onPressed: _mockTask,
+          text: 'Progress',
         ),
-        floatingActionButton: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: _selected.where((isTrue) => isTrue).length >= 2
-                ? [
-                    compareSelectedThumbnails(_selected, render, context, m),
-                    const SizedBox(height: 10),
-                    uploadVideo(m, context, addThumbnailToRender),
-                    const SizedBox(height: 10),
-                    uploadZip(m, context, addThumbnailToRender)
-                  ]
-                : [
-                    uploadVideo(m, context, addThumbnailToRender),
-                    const SizedBox(height: 10),
-                    uploadZip(m, context, addThumbnailToRender)
-                  ]));
-  }
+        const SizedBox(height: 10),
+        ..._selected.where((isTrue) => isTrue).length >= 2
+            ? [
+                compareSelectedThumbnails(_selected, render, context, m),
+                const SizedBox(height: 10),
+                uploadVideo(m, context, addThumbnailToRender),
+                const SizedBox(height: 10),
+                uploadZip(m, context, addThumbnailToRender)
+              ]
+            : [
+                uploadVideo(m, context, addThumbnailToRender),
+                const SizedBox(height: 10),
+                uploadZip(m, context, addThumbnailToRender)
+              ],
+      ],
+    ),
+  );
+}
 }
 
 Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
@@ -159,12 +221,10 @@ Future<void> handleUploadedVideo(XFile xfile, DateTime timestamp, int trimStart,
   //          {sha256}/{start}-{end}-{timestamp}/meta.json
   final video = Video(xfile, timestamp,
       start: Duration(seconds: trimStart), end: Duration(seconds: trimEnd));
-
   Duration processed = DateTime.now().difference(start);
   log.info(
       'Loaded Video in ${nonZeroDuration(processed)} ${video.stats.toString()}',
       correlationId: video.stats.id);
-
   await video.cache().then((value) {
     // Store the thumbnail
     // Target: {sha256}/{start}-{end}-{timestamp}/thumbnail.png
