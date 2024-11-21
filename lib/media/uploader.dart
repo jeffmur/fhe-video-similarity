@@ -33,36 +33,90 @@ Future<XFile> selectFile() async {
   return XFile(path!);
 }
 
-/// A floating action button to select an image.
-///
-FloatingActionButton selectVideoFromGallery(
+Widget selectVideoFromGallery(
     BuildContext context, Function(XFile, DateTime, int, int) onVideoSelected) {
-  return FloatingActionButton(
-    heroTag: 'selectVideoFromGallery',
-    onPressed: () async {
-      videoContextDialog(context,
-          (DateTime start, int trimStart, int trimEnd) async {
-        final XFile video = await selectVideo(ImageSource.gallery);
-
-        onVideoSelected(video, start, trimStart, trimEnd);
-      });
-    },
-    tooltip: 'Select video',
-    child: const Icon(Icons.image),
+  return SizedBox(
+    width: 125,
+    height: 56,
+    child: FloatingActionButton.extended(
+      heroTag: 'selectVideoFromGallery',
+      onPressed: () async {
+        videoContextDialog(context,
+            (DateTime start, int trimStart, int trimEnd) async {
+          final XFile video = await selectVideo(ImageSource.gallery);
+          onVideoSelected(video, start, trimStart, trimEnd);
+        });
+      },
+      tooltip: 'Select video',
+      backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+      splashColor: Colors.blueAccent,
+      icon: const Icon(Icons.video_library, size: 20, color: Color.fromARGB(255, 8, 0, 44)),
+      label: const Text(
+        'Upload Video',
+        style: TextStyle(
+          color: Color.fromARGB(255, 8, 0, 44),
+          fontSize: 14,
+        ),
+      ),
+    ),
   );
 }
 
-/// A floating action button to select a zip file.
-///
-FloatingActionButton selectZipFromSystem(
+Widget selectZipFromSystem(
     BuildContext context, Function(XFile) onZipSelected) {
-  return FloatingActionButton(
-    heroTag: 'selectZipFromSystem',
-    onPressed: () async => onZipSelected(await selectFile()),
-    tooltip: 'Select zip',
-    child: const Icon(Icons.archive),
+  return SizedBox(
+    width: 125,
+    height: 56,
+    child: FloatingActionButton.extended(
+      heroTag: 'selectZipFromSystem',
+      onPressed: () async => onZipSelected(await selectFile()),
+      tooltip: 'Select zip',
+      backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+      splashColor: Colors.blueAccent,
+      icon: const Icon(Icons.archive, size: 20, color: Color.fromARGB(255, 8, 0, 44)),
+      label: const Text(
+        'Upload Zip',
+        style: TextStyle(
+          color: Color.fromARGB(255, 8, 0, 44),
+          fontSize: 14,
+        ),
+      ),
+    ),
   );
 }
+
+//STANDARD DEFAULT BELOW
+// FloatingActionButton selectVideoFromGallery(
+//     BuildContext context, Function(XFile, DateTime, int, int) onVideoSelected) {
+//   return FloatingActionButton.extended(
+//     heroTag: 'selectVideoFromGallery',
+//     onPressed: () async {
+//       videoContextDialog(context,
+//           (DateTime start, int trimStart, int trimEnd) async {
+//         final XFile video = await selectVideo(ImageSource.gallery);
+
+//         onVideoSelected(video, start, trimStart, trimEnd);
+//       });
+//     },
+//     tooltip: 'Select video',
+//     backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+//     icon: const Icon(Icons.video_library, color: Color.fromARGB(255, 8, 0, 44)),
+//     label: const Text('Upload Video', style: TextStyle(color: Color.fromARGB(255, 8, 0, 44))),
+//   );
+// }
+
+
+// FloatingActionButton selectZipFromSystem(
+//     BuildContext context, Function(XFile) onZipSelected) {
+//   return FloatingActionButton.extended(
+//     heroTag: 'selectZipFromSystem',
+//     onPressed: () async => onZipSelected(await selectFile()),
+//     tooltip: 'Select zip',
+//     backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+//     icon: const Icon(Icons.archive, color: Color.fromARGB(255, 8, 0, 44)),
+//     label: const Text('Upload Zip', style: TextStyle(color: Color.fromARGB(255, 8, 0, 44))),
+//   );
+// }
 
 /// Format a [DateTime] object as a string.
 ///
