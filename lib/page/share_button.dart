@@ -125,7 +125,8 @@ class ShareFileFloatingActionButton extends StatelessWidget {
       builder: (onPressed) {
         return FloatingActionButton(
           onPressed: onPressed,
-          child: const Icon(Icons.share),
+          backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+          child: const Icon(Icons.share, color: Color.fromARGB(255, 8, 0, 44)),
         );
       },
     );

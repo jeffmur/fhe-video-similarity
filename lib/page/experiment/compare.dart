@@ -35,8 +35,10 @@ class ConfigureVideoState extends State<ConfigureVideo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 0, 8, 44),
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: const Color.fromARGB(255, 0, 8, 44),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
@@ -130,8 +132,10 @@ class _ExperimentState extends State<Experiment> {
         GlobalKey<SimilarityResultsState>();
 
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 0, 8, 44),
       appBar: AppBar(
-        title: const Text('Compare Videos'),
+        backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+        title: const Text('Compare Videos', style: TextStyle(color: Color.fromARGB(255, 0, 0, 0))),
       ),
       body: Column(
         children: [

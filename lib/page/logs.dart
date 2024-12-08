@@ -47,17 +47,37 @@ class LoggingPageState extends State<LoggingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Log History'),
+        title: const Text(
+          'Log History',
+          style: TextStyle(color: Color.fromARGB(255, 0, 172, 252)),
+        ),
+        backgroundColor:
+            const Color.fromARGB(255, 0, 8, 44), // Set AppBar background color
+        iconTheme: const IconThemeData(color: Color.fromARGB(255, 0, 172, 252)),
         actions: [
           SizedBox(
             width: 125,
             height: 50,
             child: MultiSelectDialogField<LogLevel>(
-              title: const Text('Filter by Log Level'),
-              buttonText: const Text('Log Level'),
-              buttonIcon: const Icon(Icons.filter_list),
+              backgroundColor:
+                  const Color.fromARGB(255, 0, 8, 44), // Set background color
+              title: const Text(
+                'Filter by Log Level',
+                style: TextStyle(
+                    color: Color.fromARGB(
+                        255, 0, 172, 252)), // Set title text color
+              ),
+              buttonText: const Text(
+                'Log Level',
+                style: TextStyle(
+                    color: Color.fromARGB(
+                        255, 0, 172, 252)), // Set button text color
+              ),
+              buttonIcon: const Icon(Icons.menu,
+                  color: Color.fromARGB(255, 0, 172, 252)), // Set icon color
               items: LogLevel.values
-                  .map((level) => MultiSelectItem<LogLevel>(level, level.name.toUpperCase()))
+                  .map((level) => MultiSelectItem<LogLevel>(
+                      level, level.name.toUpperCase()))
                   .toList(),
               initialValue: LogLevel.values,
               chipDisplay: MultiSelectChipDisplay.none(),
@@ -67,18 +87,38 @@ class LoggingPageState extends State<LoggingPage> {
                   _fetchLogHistory();
                 });
               },
+              selectedColor:
+                  const Color.fromARGB(255, 0, 172, 252), // Set selected option color
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(15)),
+                border: Border.all(
+                  color: const Color.fromARGB(255, 0, 172, 252), // Set border color
+                  width: 2,
+                ),
+              ),
+              dialogHeight: 400,
+              itemsTextStyle: const TextStyle(
+                  color:
+                      Color.fromARGB(255, 0, 172, 252)), // Set items text color
+              selectedItemsTextStyle: const TextStyle(
+                  color: Color.fromARGB(255, 0, 172, 252),
+                  fontFamily: 'SourceCodePro',
+                  fontWeight: FontWeight.bold), // Set selected items text color
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete),
+            icon: const Icon(Icons.delete,
+                color: Color.fromARGB(255, 0, 172, 252)), // Set icon color
             onPressed: _clearLogFile,
             tooltip: 'Clear Log',
           ),
         ],
       ),
+      backgroundColor:
+          const Color.fromARGB(255, 0, 8, 44), // Set Scaffold background color
       body: _buildLogList(),
       floatingActionButton: ShareFileFloatingActionButton(
-        file: Future.value(XFile(Logging().getLogFilePath()))
+        file: Future.value(XFile(Logging().getLogFilePath())),
       ),
     );
   }
@@ -86,7 +126,13 @@ class LoggingPageState extends State<LoggingPage> {
   // Build the ListView to display the log history
   Widget _buildLogList() {
     if (_logHistory.isEmpty) {
-      return const Center(child: Text('No logs available.'));
+      return const Center(
+        child: Text(
+          'No logs available.',
+          style: TextStyle(
+              color: Color.fromARGB(255, 0, 172, 252)), // Set text color
+        ),
+      );
     }
 
     return ListView.builder(
@@ -97,12 +143,39 @@ class LoggingPageState extends State<LoggingPage> {
         final _level = csvHeaders[1];
         final _message = csvHeaders[2];
         final _identifier = csvHeaders[3];
-        return ListTile(
-          title: log.containsKey(_identifier) && log[_identifier] != ''
-              ? Text(
-                  '${log[_timestamp]} - ${log[_level]} - ${log[_identifier]}')
-              : Text('${log[_timestamp]} - ${log[_level]}'),
-          subtitle: Text(log[_message]!),
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color:
+                const Color.fromARGB(255, 8, 0, 44), // Set container background color
+            borderRadius: BorderRadius.circular(15), // Circular border
+            border: Border.all(
+              color: const Color.fromARGB(255, 0, 172, 252), // Border color
+              width: 2.0, // Border width
+            ),
+          ),
+          child: ListTile(
+            title: log.containsKey(_identifier) && log[_identifier] != ''
+                ? Text(
+                    '${log[_timestamp]} - ${log[_level]} - ${log[_identifier]}',
+                    style: const TextStyle(
+                        color: Color.fromARGB(
+                            255, 0, 172, 252)), 
+                  )
+                : Text(
+                    '${log[_timestamp]} - ${log[_level]}',
+                    style: const TextStyle(
+                        color: Color.fromARGB(
+                            255, 0, 172, 252)), // Set title text color
+                  ),
+            subtitle: Text(
+              log[_message]!,
+              style: const TextStyle(
+                  color: Color.fromARGB(
+                      255, 0, 172, 252)), // Set subtitle text color
+            ),
+          ),
         );
       },
     );

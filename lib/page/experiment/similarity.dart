@@ -186,7 +186,8 @@ class ImportCiphertextSimilarityScores {
       case SimilarityType.cramer:
         CiphertextCramer cramer =
             CiphertextCramer(ciphertextHandler, plaintextEncoder);
-        result = cramer.homomorphicScore(importCiphertext.cramer, cumulativeSum(toPlaintext));
+        result = cramer.homomorphicScore(
+            importCiphertext.cramer, cumulativeSum(toPlaintext));
 
       default:
         throw ArgumentError('Unsupported similarity type');
@@ -334,7 +335,10 @@ class SimilarityResultsState extends State<SimilarityResults> {
 
   Widget computePlaintextComparison() {
     return ElevatedButton(
-      child: const Text('Compute Plaintext Similarity Scores'),
+      child: const Text('Compute Plaintext Similarity Scores',
+          style: TextStyle(
+            color: Color.fromARGB(255, 0, 172, 252),
+          )),
       onPressed: () async {
         // Fetch normalized data in parallel
         var baselineData = await _manager.getCachedNormalized(widget.baseline,
@@ -404,7 +408,10 @@ class SimilarityResultsState extends State<SimilarityResults> {
         isImportedCiphertextComparison()
             ? ShareFileElevatedButton(
                 file: computeImportCiphertextSimilarityScore(),
-                child: const Text('Export Homomorphic Similarity Scores'))
+                child: const Text('Export Homomorphic Similarity Scores',
+                    style: TextStyle(
+                      color: Color.fromARGB(255, 0, 172, 252),
+                    )))
             : const SizedBox(),
       ],
     );

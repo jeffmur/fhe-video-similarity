@@ -28,35 +28,96 @@ class ThumbnailWidget extends StatefulWidget {
 }
 
 class _ThumbnailWidgetState extends State<ThumbnailWidget> {
-  final textStyle = const TextStyle(
+  final TextStyle textStyle = const TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 16,
+    color: Color.fromARGB(255, 0, 180, 252), 
+    fontFamily: 'SourceCodePro', 
+    backgroundColor: Color.fromARGB(255, 0, 8, 44), 
+  );
+
+  final TextStyle popupMenuTextStyle = const TextStyle(
       fontWeight: FontWeight.bold,
-      fontSize: 16,
-      color: Colors.white,
-      backgroundColor: Colors.grey);
+      fontSize: 14, 
+      color: Color.fromARGB(255, 0, 172, 252), 
+      fontFamily: 'SourceCodePro', 
+      backgroundColor: Color.fromARGB(255, 0, 8, 44));
+
+  bool showStats = false;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       // onTap: () => widget.onTap(widget.thumbnail),
       child: GridTile(
-          header: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-            Text("Duration: ${widget.thumbnail.video.duration}",
-                style: textStyle),
-            Text("Created: ${widget.thumbnail.video.created.toLocal()}",
-                style: textStyle)
-          ]),
-          child: Wrap(spacing: 8.0, children: [
+        header: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment:
+                  MainAxisAlignment.start, 
+              children: [
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    popupMenuTheme: PopupMenuThemeData(
+                      color: const Color.fromARGB(
+                          255, 0, 8, 44), 
+                      textStyle: popupMenuTextStyle, 
+                    ),
+                  ),
+                  child: PopupMenuButton(
+                    icon: const Icon(Icons.menu,
+                        color:
+                            Color.fromARGB(255, 0, 180, 252)), // Set icon color
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'toggle',
+                        child: Text(
+                          showStats ? 'Hide Stats' : 'Show Stats',
+                          style: popupMenuTextStyle,
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      if (value == 'toggle') {
+                        setState(() {
+                          showStats = !showStats;
+                        });
+                      }
+                    },
+                  ),
+                )
+              ],
+            ),
+            if (showStats) ...[
+              Text("Duration: ${widget.thumbnail.video.duration}",
+                  style: textStyle),
+              Text("Created: ${widget.thumbnail.video.created.toLocal()}",
+                  style: textStyle),
+            ],
+          ],
+        ),
+        child: Wrap(
+          spacing: 8.0,
+          children: [
             FutureBuilder<Widget>(
-                future: widget.thumbnail.widget,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return snapshot.data!;
-                  } else if (snapshot.hasError) {
-                    return Text('Error loading image: ${snapshot.error}');
-                  } else {
-                    return const CircularProgressIndicator();
-                  }
-                }),
-          ])),
+              future: widget.thumbnail.widget,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return snapshot.data!;
+                } else if (snapshot.hasError) {
+                  return Text(
+                    'Error loading image: ${snapshot.error}',
+                    style: textStyle,
+                  );
+                } else {
+                  return const CircularProgressIndicator();
+                }
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
