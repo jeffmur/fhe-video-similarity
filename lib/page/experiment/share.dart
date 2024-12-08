@@ -76,43 +76,75 @@ class ShareArchiveState extends State<ShareArchive> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Encrypt & Share Video'), actions: [
-        Row(children: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const LoggingPage()));
-            },
-            child: const Text('View Logs'),
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const FittedBox(
+        fit: BoxFit.fitWidth,
+        child: Text(
+          'Encrypt & Share Video',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 0, 0, 0), // Make text stand out
           ),
-        ]),
-      ]),
-      body: Column(
-        children: [
-          ...videoInfo(widget.thumbnail.video),
-          PreprocessForm(
-            thumbnail: widget.thumbnail,
-            config: _config,
-            onConfigChange: (Config config) {
-              _config = config;
-              checkShareButtonStatus(); // Call the state update function
-            },
-            onVideoTrim: () {
-              checkShareButtonStatus(); // Call the state update function
-            },
-            onFormSubmit: () {
-              checkShareButtonStatus(); // Call the state update function
-            },
-            key: preprocessFormKey,
-          )
-        ],
+        ),
       ),
-      floatingActionButton: _showShareButton
-          ? ShareFileFloatingActionButton(file: serializedVideo(_config))
-          : null,
-    );
-  }
+      backgroundColor: const Color.fromARGB(255, 0, 172, 252), // Set AppBar background color
+      actions: [
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoggingPage()));
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all(
+                  const Color.fromARGB(255, 8, 0, 44), // Button background color
+                ),
+                foregroundColor: MaterialStateProperty.all(
+                  const Color.fromARGB(255, 0, 172, 252), // Button text color
+                ),
+                textStyle: MaterialStateProperty.all(
+                  const TextStyle(fontFamily: 'SourceCodePro', fontWeight: FontWeight.bold
+                  ),
+                ),
+              ),
+              child: const Text('View Logs' ),
+            ),
+          ],
+        ),
+      ],
+    ),
+    backgroundColor: const Color.fromARGB(255, 8, 0, 44), // Set the background color of the Scaffold
+    body: Column(
+      children: [
+        const SizedBox(height:16),
+        ...videoInfo(widget.thumbnail.video),
+        PreprocessForm(
+          thumbnail: widget.thumbnail,
+          config: _config,
+          onConfigChange: (Config config) {
+            _config = config;
+            checkShareButtonStatus(); // Call the state update function
+          },
+          onVideoTrim: () {
+            checkShareButtonStatus(); // Call the state update function
+          },
+          onFormSubmit: () {
+            checkShareButtonStatus(); // Call the state update function
+          },
+          key: preprocessFormKey,
+        ),
+      ],
+    ),
+    floatingActionButton: _showShareButton
+        ? ShareFileFloatingActionButton(file: serializedVideo(_config))
+        : null,
+  );
+}
 }

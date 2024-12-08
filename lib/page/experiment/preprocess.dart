@@ -37,16 +37,32 @@ class Config {
 
 List<Widget> videoInfo(Video video) {
   return [
-    Text("sha256: ${video.hash}"),
-    Text("Created: ${video.created}"),
-    Text("Duration: ${video.duration} seconds"),
-    Text("Frame Range: "
-        "${video.startFrame} - "
-        "${video.endFrame} of "
-        "${video.totalFrames}"),
-    Text("Encoding: ${video.stats.codec}"),
+    Container(
+      color: Color.fromARGB(255, 0, 8, 44), // Set background color
+      padding: const EdgeInsets.all(8.0), // Add some padding for better aesthetics
+      child: DefaultTextStyle(
+        style: const TextStyle(
+          color: Color.fromARGB(255, 0, 172, 252),
+          fontFamily: 'SourceCodePro',
+          fontWeight: FontWeight.bold,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("sha256: ${video.hash}"),
+            Text("Created: ${video.created}"),
+            Text("Duration: ${video.duration} seconds"),
+            Text(
+              "Frame Range: ${video.startFrame} - ${video.endFrame} of ${video.totalFrames}",
+            ),
+            Text("Encoding: ${video.stats.codec}"),
+          ],
+        ),
+      ),
+    ),
   ];
 }
+
 
 class PreprocessForm extends StatefulWidget {
   final Thumbnail thumbnail;
@@ -71,6 +87,7 @@ class PreprocessForm extends StatefulWidget {
 class PreprocessFormState extends State<PreprocessForm> {
   final Manager _manager = Manager();
   bool isCached = false;
+  bool isProcessing = false;
   late RangeValues frameRange;
   late double lowerLimit;
   late double upperLimit;
@@ -104,88 +121,112 @@ class PreprocessFormState extends State<PreprocessForm> {
     return widget.thumbnail.video is CiphertextVideo;
   }
 
-  Widget preprocessTypeDropdown() {
-    return DropdownButton<PreprocessType>(
-      value: widget.config.type,
-      onChanged: (PreprocessType? value) {
-        setState(() {
-          widget.config.type = value!;
-          widget.onConfigChange(widget.config);
-          _reloadCache();
-        });
-      },
-      items: PreprocessType.values
-          .map((type) => DropdownMenuItem(
-                value: type,
+Widget preprocessTypeDropdown() {
+  return DropdownButton<PreprocessType>(
+    value: widget.config.type,
+    onChanged: (PreprocessType? value) {
+      setState(() {
+        widget.config.type = value!;
+        widget.onConfigChange(widget.config);
+        _reloadCache();
+      });
+    },
+    items: PreprocessType.values
+        .map((type) => DropdownMenuItem(
+              value: type,
+              child: DefaultTextStyle(
+                style: TextStyle(color: Color.fromARGB(255, 0, 172, 252)),
                 child: Text(type.toString()),
-              ))
-          .toList(),
-    );
-  }
+              ),
+            ))
+        .toList(),
+  );
+}
+
 
   Widget frameSlider() {
     // Calculate the total number of seconds in the video based on FPS
     int fps = widget.thumbnail.video.fps;
 
-    return RangeSlider(
-      values: RangeValues(
-        frameRange.start / fps,  // Convert frames to seconds
-        frameRange.end / fps,    // Convert frames to seconds
+    return SliderTheme(
+      data: SliderTheme.of(context).copyWith(
+        activeTrackColor:
+            Color.fromARGB(255, 0, 172, 252), // Active track color
+        inactiveTrackColor:
+            Color.fromARGB(100, 0, 172, 252), // Inactive track color
+        thumbColor: Color.fromARGB(255, 0, 172, 252), // Thumb color
+        overlayColor: Color.fromARGB(50, 0, 172, 252), // Overlay color
+        valueIndicatorColor:
+            Color.fromARGB(255, 0, 172, 252), // Value indicator color
       ),
-      min: lowerLimit / fps,     // Convert frames to seconds
-      max: upperLimit / fps,     // Convert frames to seconds
-      divisions: (upperLimit - lowerLimit).toInt() ~/ fps,  // Use second-based divisions
-      labels: RangeLabels(
-        '${(frameRange.start / fps).round()}s',  // Display seconds
-        '${(frameRange.end / fps).round()}s',    // Display seconds
+      child: RangeSlider(
+        values: RangeValues(
+          frameRange.start / fps, // Convert frames to seconds
+          frameRange.end / fps, // Convert frames to seconds
+        ),
+        min: lowerLimit / fps, // Convert frames to seconds
+        max: upperLimit / fps, // Convert frames to seconds
+        divisions: (upperLimit - lowerLimit).toInt() ~/
+            fps, // Use second-based divisions
+        labels: RangeLabels(
+          '${(frameRange.start / fps).round()}s', // Display seconds
+          '${(frameRange.end / fps).round()}s', // Display seconds
+        ),
+        onChanged: (RangeValues values) {
+          setState(() {
+            // Convert the seconds back to frames, ensuring whole-second adjustments
+            frameRange = RangeValues(
+              (values.start * fps).round().toDouble(),
+              (values.end * fps).round().toDouble(),
+            );
+          });
+        },
+        onChangeEnd: (RangeValues values) {
+          setState(() {
+            // Convert seconds back to frames and update start/end frames
+            widget.thumbnail.video.startFrame =
+                (values.start * fps).round().toInt();
+            widget.thumbnail.video.endFrame =
+                (values.end * fps).round().toInt();
+            widget.onVideoTrim();
+            _reloadCache();
+          });
+        },
+        onChangeStart: (RangeValues values) {
+          setState(() {
+            widget.thumbnail.video.startFrame =
+                (values.start * fps).round().toInt();
+            widget.thumbnail.video.endFrame =
+                (values.end * fps).round().toInt();
+            widget.onVideoTrim();
+            _reloadCache();
+          });
+        },
       ),
-      onChanged: (RangeValues values) {
-        setState(() {
-          // Convert the seconds back to frames, ensuring whole-second adjustments
-          frameRange = RangeValues(
-            (values.start * fps).round().toDouble(),
-            (values.end * fps).round().toDouble(),
-          );
-        });
-      },
-      onChangeEnd: (RangeValues values) {
-        setState(() {
-          // Convert seconds back to frames and update start/end frames
-          widget.thumbnail.video.startFrame = (values.start * fps).round().toInt();
-          widget.thumbnail.video.endFrame = (values.end * fps).round().toInt();
-          widget.onVideoTrim();
-          _reloadCache();
-        });
-      },
-      onChangeStart: (RangeValues values) {
-        setState(() {
-          widget.thumbnail.video.startFrame = (values.start * fps).round().toInt();
-          widget.thumbnail.video.endFrame = (values.end * fps).round().toInt();
-          widget.onVideoTrim();
-          _reloadCache();
-        });
-      },
     );
   }
 
-  Widget frameCountDropdown() {
-    return DropdownButton<FrameCount>(
-      value: widget.config.frameCount,
-      onChanged: (FrameCount? value) {
-        setState(() {
-          widget.config.frameCount = value!;
-          widget.onConfigChange(widget.config);
-          _reloadCache();
-        });
-      },
-      items: FrameCount.values
-          .map((frameCount) => DropdownMenuItem(
-                value: frameCount,
+ Widget frameCountDropdown() {
+  return DropdownButton<FrameCount>(
+    value: widget.config.frameCount,
+    onChanged: (FrameCount? value) {
+      setState(() {
+        widget.config.frameCount = value!;
+        widget.onConfigChange(widget.config);
+        _reloadCache();
+      });
+    },
+    items: FrameCount.values
+        .map((frameCount) => DropdownMenuItem(
+              value: frameCount,
+              child: DefaultTextStyle(
+                style: TextStyle(color: Color.fromARGB(255, 0, 172, 252)),
                 child: Text(frameCount.toString()),
-              ))
-          .toList(),
-    );
-  }
+              ),
+            ))
+        .toList(),
+  );
+}
 
   Future<void> process() async {
     DateTime start = DateTime.now();
@@ -236,39 +277,66 @@ class PreprocessFormState extends State<PreprocessForm> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Checkbox(
-          value: widget.config.isEncrypted,
-          onChanged: widget.config.isEncryptionDisabled
+        ElevatedButton.icon(
+          onPressed: widget.config.isEncryptionDisabled
               ? null
-              : (bool? value) {
+              : () {
                   setState(() {
-                    widget.config.isEncrypted = value!;
+                    widget.config.isEncrypted = !widget.config.isEncrypted;
                     widget.onConfigChange(widget.config);
                   });
                 },
+          icon: const Icon(Icons.lock),
+          label: Text(
+            widget.config.isEncrypted
+                ? 'Encryption Enabled'
+                : 'Enable Encryption',
+            style: TextStyle(color: Color.fromARGB(255, 0, 172, 252)),
+          ),
+          style: ButtonStyle(
+            backgroundColor: MaterialStateProperty.all<Color>(
+              Color.fromARGB(255, 8, 0, 44),
+            ),
+            foregroundColor: MaterialStateProperty.all<Color>(
+                Color.fromARGB(255, 0, 172, 252)),
+          ),
         ),
+        const SizedBox(width: 10),
         Expanded(
-          child: ListTile(
-            leading: const Icon(Icons.lock),
-            title: Text('Encrypt? ${widget.config.isEncrypted}'),
-            subtitle: const Text('Tap to configure encryption settings'),
-            onTap: () {
+          child: OutlinedButton(
+            onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => EncryptionSettings(session: session)),
+                  builder: (context) => EncryptionSettings(session: session),
+                ),
               );
             },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(
+                color: Color.fromARGB(255, 0, 172, 252), // Blue border color
+                width: 2.0,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.0), // Circular button
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+            ),
+            child: const Text(
+              'Configure Encryption Settings',
+              style: TextStyle(color: Color.fromARGB(255, 0, 172, 252)),
+            ),
           ),
-        )
+        ),
       ],
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => SessionChanges(),
+@override
+Widget build(BuildContext context) {
+  return ChangeNotifierProvider(
+    create: (context) => SessionChanges(),
+    child: Container(
+      color: Color.fromARGB(255, 0, 8, 44), // Set background color
       child: Form(
         child: Column(
           children: isImportedCiphertextComparison()
@@ -287,6 +355,8 @@ class PreprocessFormState extends State<PreprocessForm> {
                 ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }

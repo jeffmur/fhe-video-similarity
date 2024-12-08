@@ -47,33 +47,53 @@ class LoadButtonState extends State<LoadButton> {
       });
     }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ElevatedButton(
-          onPressed: isLoading ? null : _handleButtonPress,
-          child: !isLoading
-              ? Text(widget.text)
-              : const SizedBox(
-                  // Wrap CircularProgressIndicator in SizedBox
-                  width: 24, // Set desired width
-                  height: 24, // Set desired height
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2, // Adjust stroke width as needed
-                  ),
-                ),
+@override
+@override
+Widget build(BuildContext context) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      ElevatedButton(
+        onPressed: isLoading ? null : _handleButtonPress,
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all<Color>(
+            const Color.fromARGB(255, 0, 8, 44), // Background color
+          ),
+          side: MaterialStateProperty.all<BorderSide>(
+            const BorderSide(
+              color: Color.fromARGB(255, 0, 172, 252), // Light blue border color (RGBA equivalent of LightBlue)
+              width: 2.0, // Border width
+            ),
+          ),
         ),
-        !widget.timer || _elapsedTime == Duration.zero
-            ? const SizedBox.shrink()
-            : Row(children: [
+        child: !isLoading
+            ? Text(
+                widget.text,
+                style: const TextStyle(color: Color.fromARGB(255, 0, 172, 252)), // Explicit text color
+              )
+            : const SizedBox(
+                width: 24, // Set desired width
+                height: 24, // Set desired height
+                child: CircularProgressIndicator(
+                  strokeWidth: 2, // Adjust stroke width as needed
+                  color: Color.fromARGB(255,0, 172, 252),
+                ),
+              ),
+      ),
+      !widget.timer || _elapsedTime == Duration.zero
+          ? const SizedBox.shrink()
+          : Row(
+              children: [
                 const SizedBox(width: 5),
                 Text(
-                    '${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s'),
-              ])
-      ],
-    );
-  }
+                  '${_elapsedTime.inSeconds}.${(_elapsedTime.inMilliseconds % 1000) ~/ 100} s',
+                  style: const TextStyle(
+                    color: Color.fromARGB(255, 0, 172, 252), // Seconds text color
+                  ),
+                ),
+              ],
+            ),
+    ],
+  );
+}
 }

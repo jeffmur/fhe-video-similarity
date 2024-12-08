@@ -39,9 +39,7 @@ class Manager {
   Widget get backendInfoWidget =>
       Expanded(child: SingleChildScrollView(child: Text(backendInfo)));
 
-  /// Select media from the gallery
-  ///
-  FloatingActionButton floatingSelectMediaFromGallery(
+Widget floatingSelectMediaFromGallery(
       MediaType mediaType, BuildContext context,
       {void Function(XFile)? onXFileSelected,
       void Function(XFile, DateTime, int, int)? onMediaSelected}) {
@@ -59,7 +57,7 @@ class Manager {
   Map<String, dynamic> loadManifest() {
     return manifest.map;
   }
-
+  
   bool isProcessed(Video video, PreprocessType type, FrameCount frameCount) {
     List<String> pwd = video.pwd.split('/');
     pwd.add("${type.name}-${frameCount.name}");

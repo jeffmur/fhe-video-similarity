@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-
+import 'package:opencv_dart/opencv_dart.dart';
 export 'package:image_picker/image_picker.dart' show ImageSource;
 export 'package:file_picker/file_picker.dart' show FileType;
 
@@ -17,12 +17,59 @@ Future<XFile> selectImage(ImageSource source) async {
   return image!;
 }
 
-/// Pop up a dialog to select a video from the [ImageSource].
-///
-Future<XFile> selectVideo(ImageSource source) async {
+Future<XFile> selectVideo(ImageSource source, BuildContext context) async {
   final ImagePicker picker = ImagePicker();
-  final XFile? video = await picker.pickVideo(source: source);
-  return video!;
+
+  // Show a customized "Please wait" dialog
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return WillPopScope(
+        onWillPop: () async => false, // Prevent dismissal
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Colors.blue.shade700),
+              const SizedBox(height: 20),
+              const Text(
+                "Please wait a moment...",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+            
+          ),
+        ),
+      );
+    },
+  );
+
+  try {
+    // Pick the video asynchronously
+    final video = await picker.pickVideo(source: source);
+
+    // Handle the case where no video is selected
+    if (video == null) {
+      throw Exception("No video selected");
+    }
+
+    return video;
+  } catch (e) {
+    print("Error picking video: $e");
+    throw Exception("Failed to pick video: $e");
+  } finally {
+    // Ensure the dialog is dismissed
+    Navigator.of(context, rootNavigator: true).pop();
+  }
 }
 
 /// Pop up a dialog to select a file.
@@ -33,34 +80,57 @@ Future<XFile> selectFile() async {
   return XFile(path!);
 }
 
-/// A floating action button to select an image.
-///
-FloatingActionButton selectVideoFromGallery(
+Widget selectVideoFromGallery(
     BuildContext context, Function(XFile, DateTime, int, int) onVideoSelected) {
-  return FloatingActionButton(
-    heroTag: 'selectVideoFromGallery',
-    onPressed: () async {
-      videoContextDialog(context,
-          (DateTime start, int trimStart, int trimEnd) async {
-        final XFile video = await selectVideo(ImageSource.gallery);
-
-        onVideoSelected(video, start, trimStart, trimEnd);
-      });
-    },
-    tooltip: 'Select video',
-    child: const Icon(Icons.image),
+  return SizedBox(
+    width: 125,
+    height: 56,
+    child: FloatingActionButton.extended(
+      heroTag: 'selectVideoFromGallery',
+      onPressed: () async {
+        videoContextDialog(context,
+            (DateTime start, int trimStart, int trimEnd) async {
+          final XFile video = await selectVideo(ImageSource.gallery, context);
+          onVideoSelected(video, start, trimStart, trimEnd);
+        });
+      },
+      tooltip: 'Select video',
+      backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+      splashColor: Colors.blueAccent,
+      icon: const Icon(Icons.video_library,
+          size: 20, color: Color.fromARGB(255, 8, 0, 44)),
+      label: const Text(
+        'Upload Video',
+        style: TextStyle(
+          color: Color.fromARGB(255, 8, 0, 44),
+          fontSize: 14,
+        ),
+      ),
+    ),
   );
 }
 
-/// A floating action button to select a zip file.
-///
-FloatingActionButton selectZipFromSystem(
+Widget selectZipFromSystem(
     BuildContext context, Function(XFile) onZipSelected) {
-  return FloatingActionButton(
-    heroTag: 'selectZipFromSystem',
-    onPressed: () async => onZipSelected(await selectFile()),
-    tooltip: 'Select zip',
-    child: const Icon(Icons.archive),
+  return SizedBox(
+    width: 125,
+    height: 56,
+    child: FloatingActionButton.extended(
+      heroTag: 'selectZipFromSystem',
+      onPressed: () async => onZipSelected(await selectFile()),
+      tooltip: 'Select zip',
+      backgroundColor: const Color.fromARGB(255, 0, 172, 252),
+      splashColor: Colors.blueAccent,
+      icon: const Icon(Icons.archive,
+          size: 20, color: Color.fromARGB(255, 8, 0, 44)),
+      label: const Text(
+        'Upload Zip',
+        style: TextStyle(
+          color: Color.fromARGB(255, 8, 0, 44),
+          fontSize: 14,
+        ),
+      ),
+    ),
   );
 }
 
@@ -95,7 +165,8 @@ Future<void> videoContextDialog(
       builder: (BuildContext context) {
         final formKey = GlobalKey<FormState>();
         return AlertDialog(
-            title: const Text('Context for the video'),
+            backgroundColor: const Color.fromARGB(255, 0, 8, 44),
+            title: const Text('Context for the video', style: TextStyle(color:Color.fromARGB(255, 0, 172, 252))),
             content: Form(
                 key: formKey,
                 child: Column(
@@ -104,10 +175,13 @@ Future<void> videoContextDialog(
                     TextFormField(
                       controller: videoStartDateTimeController,
                       decoration: const InputDecoration(
-                        icon: Icon(Icons.calendar_today),
+                        icon: Icon(Icons.calendar_today, color: Color.fromARGB(255, 0, 172, 252)),
                         labelText: "YYYY-MM-DDTHH:MM:SSZ",
                         hintText: "UTC Date and Time the video was taken",
+                        labelStyle: TextStyle(color: Color.fromARGB(255, 0, 172, 252)), 
+                        hintStyle: TextStyle(fontSize: 12, color: Color.fromARGB(255, 0, 172, 252)),
                       ),
+                      style: const TextStyle(color: Colors.blue),
                       onSaved: (String? value) =>
                           timestamp = DateTime.parse(value!).toLocal(),
                       validator: (String? value) {
@@ -125,29 +199,32 @@ Future<void> videoContextDialog(
                         TextButton(
                           onPressed: () => videoStartDateTimeController.text =
                               formatDateTime(timestamp),
-                          child: const Text('Now'),
+                          child: const Text('Now', style: TextStyle(color:Color.fromARGB(255, 0, 172, 252))),
                         ),
                         TextButton(
                           onPressed: () => videoStartDateTimeController.text =
                               formatDateTime(
                                   timestamp.subtract(const Duration(hours: 1))),
-                          child: const Text('Last Hour'),
+                          child: const Text('Last Hour', style: TextStyle(color:Color.fromARGB(255, 0, 172, 252))),
                         ),
                         TextButton(
                           onPressed: () => videoStartDateTimeController.text =
                               formatDateTime(
                                   timestamp.subtract(const Duration(days: 1))),
-                          child: const Text('Yesterday'),
+                          child: const Text('Yesterday', style: TextStyle(color:Color.fromARGB(255, 0, 172, 252))),
                         ),
                       ],
                     ),
                     TextFormField(
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        icon: Icon(Icons.start),
-                        hintText: "Duration in seconds",
-                        labelText: "Trim the first N seconds of the video",
+                        icon: Icon(Icons.cut_outlined, color: Color.fromARGB(255, 0, 172, 252)),
+                        hintText: "Duration in seconds (optional)",
+                        labelText: "Trim the first N seconds of video",
+                        labelStyle: TextStyle(color: Color.fromARGB(255, 0, 172, 252), fontSize: 12),
+                        hintStyle: TextStyle(color: Color.fromARGB(255, 0, 172, 252), fontSize: 10), 
                       ),
+                      style: const TextStyle(color: Colors.blue),
                       onSaved: (String? value) {
                         if (value != null && value.isNotEmpty) {
                           trimStart = int.parse(value);
@@ -168,10 +245,13 @@ Future<void> videoContextDialog(
                     TextFormField(
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        icon: Icon(Icons.stop),
-                        hintText: "Duration in seconds",
-                        labelText: "Trim the last N seconds of the video",
+                        icon: Icon(Icons.cut_outlined, color: Color.fromARGB(255, 0, 172, 252)),
+                        hintText: "Duration in seconds (optional)",
+                        labelText: "Trim the last N seconds of video",
+                        labelStyle: TextStyle(color: Color.fromARGB(255, 0, 172, 252), fontSize: 12),
+                        hintStyle: TextStyle(color: Color.fromARGB(255, 0, 172, 252), fontSize: 10), 
                       ),
+                      style: const TextStyle(color: Colors.blue),
                       onSaved: (String? value) {
                         if (value != null && value.isNotEmpty) {
                           trimEnd = int.parse(value);
@@ -195,7 +275,7 @@ Future<void> videoContextDialog(
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-                          child: const Text('Cancel'),
+                          child: const Text('Cancel', style: TextStyle(color: Color.fromARGB(255, 0, 172, 252))),
                         ),
                         TextButton(
                           onPressed: () {
@@ -205,7 +285,7 @@ Future<void> videoContextDialog(
                               callback(timestamp, trimStart, trimEnd);
                             }
                           },
-                          child: const Text('OK'),
+                          child: const Text('OK', style: TextStyle(color: Color.fromARGB(255, 0, 172, 252))),
                         ),
                       ],
                     )

@@ -186,3 +186,37 @@ class CiphertextThumbnail implements Thumbnail {
   @override
   Future<mat.Widget> get widget async => mat.Image.memory(bytes);
 }
+
+class SkeletonThumbnail implements Thumbnail {
+@override
+  bool isCached = false;
+  @override
+  int frameIdx = 0;
+  @override
+  String filename = 'thumbnail.jpg';
+  @override
+  Video video;
+
+  SkeletonThumbnail({required this.video});
+
+  Uint8List get bytes => Uint8List(0);  // Empty or placeholder bytes
+
+  @override
+  Future<Image> get image => Future.value(
+      Image.fromBytes(Uint8List(0), DateTime.now(), video.meta.path, filename));
+
+  @override
+  Future<Uint8List> get cachedBytes => Future.value(bytes);
+
+  @override
+  Future<void> cache() async {
+    // No-op for skeleton
+  }
+
+  @override
+  Future<mat.Widget> get widget async => mat.Container(
+      color: mat.Colors.grey[600],
+      child: mat.Center(child: mat.CircularProgressIndicator()));
+}
+
+
